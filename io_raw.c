@@ -25,13 +25,17 @@ iom_WriteRaw(
     FILE *fp = NULL;
 
     if (!force_write && access(fname, F_OK) == 0){
-        fprintf(stderr, "File %s already exists.\n", fname);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s already exists.\n", fname);
+		}
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-        fprintf(stderr, "Unable to write %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         return 0;
     }
 
@@ -39,8 +43,10 @@ iom_WriteRaw(
     item_ct_out = fwrite(data, iom_NBYTESI(h->format), item_ct_in, fp);
     
     if (item_ct_in != item_ct_out){
-        fprintf(stderr, "Failed to write to %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Failed to write to %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         fclose(fp);
         unlink(fname);
         return 0;

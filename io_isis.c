@@ -74,24 +74,26 @@ iom_GetISISHeader(
     /* memset(h, '\0', sizeof(struct _iheader)); */
     iom_init_iheader(h);
 
-#if 0
-    if (iom_VERBOSE > 0) err_file = NULL;
-    else {
+    /* err_file = msg_file; */
+	if (iom_is_ok2print_details()){
+		err_file = msg_file;
+	}
+	else {
 #ifdef _WIN32
-	err_file = "nul:";
+		err_file = "nul:";
 #else
-	err_file = "/dev/null";
+		err_file = "/dev/null";
 #endif /* _WIN32 */
     }
-#endif
-    err_file = msg_file;
 
     ob = (OBJDESC *)OdlParseLabelFptr(fp, err_file,
                                       ODL_EXPAND_STRUCTURE, 0);
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
         OdlFreeTree(ob);
-        fprintf(stderr, "%s is not a PDS file.", filename);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "%s is not a PDS file.", filename);
+		}
         return(0);
     } else {
         rlen = atoi(key->value);
@@ -119,8 +121,10 @@ iom_GetISISHeader(
             else if (!strcmp(p1,"BAND") && !strcmp(p2,"SAMPLE") && !strcmp(p3,"LINE")) 
                 org = iom_BIP;
             else {
-                fprintf(stderr, "Unrecognized data organization: %s = %s",
-                        "AXIS_NAME", key->value);
+				if (iom_is_ok2print_unsupp_errors()){
+					fprintf(stderr, "Unrecognized data organization: %s = %s",
+							"AXIS_NAME", key->value);
+				}
             }
         }
         
@@ -149,9 +153,11 @@ iom_GetISISHeader(
                                      key2 ? key2->value : NULL);
 
         if (format == iom_EDF_INVALID){
-            fprintf(stderr,
-                    "%s has unsupported/illegal SIZE+TYPE combination.\n",
-                    filename);
+			if (iom_is_ok2print_unsupp_errors()){
+				fprintf(stderr,
+						"%s has unsupported/illegal SIZE+TYPE combination.\n",
+						filename);
+			}
             return 0;
         }
         
@@ -178,9 +184,7 @@ iom_GetISISHeader(
             }
         }
 
-#if 0
-        if (iom_VERBOSE > 2) {
-#endif
+		if (iom_is_ok2print_details()){
             fprintf(stderr, "ISIS Qube: ");
             fprintf(stderr, "%dx%dx%d %s %s\t\n",
                     iom_GetSamples(size, org),
@@ -198,9 +202,7 @@ iom_GetISISHeader(
                             i, suffix_size[i]);
                 }
             }
-#if 0
         }
-#endif
         
         /**
          ** Cram everything into the appropriate header, and
@@ -250,9 +252,11 @@ iom_GetISISHeader(
                                       NULL);
         
         if (format == iom_EDF_INVALID){
-          fprintf(stderr,
-                  "%s has unsupported/illegal SIZE+TYPE combination.\n",
-                  filename);
+			if (iom_is_ok2print_unsupp_errors()){
+				fprintf(stderr,
+					  "%s has unsupported/illegal SIZE+TYPE combination.\n",
+					  filename);
+			}
           return 0;
 	    }
         
@@ -316,13 +320,17 @@ iom_WriteISIS(
     FILE *fp = NULL;
 
     if (!force_write && access(fname, F_OK) == 0){
-        fprintf(stderr, "File %s exists already.\n");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s exists already.\n");
+		}
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         return 0;
     }
     
@@ -334,8 +342,10 @@ iom_WriteISIS(
     ** DATA FILE I/O.
     */
     if (h->format > iom_INT) {
-        fprintf(stderr, "Unable to write ISIS files with %s format.\n",
-                iom_Format2Str(h->format));
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Unable to write ISIS files with %s format.\n",
+					iom_Format2Str(h->format));
+		}
         fclose(fp);
         unlink(fname);
         return(0);
@@ -390,8 +400,10 @@ iom_WriteISIS(
     fwrite(data, iom_NBYTESI(h->format), dsize, fp);
 
     if (ferror(fp)){
-        fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         fclose(fp);
         unlink(fname);
         return 0;

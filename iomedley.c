@@ -372,7 +372,9 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 
         d[i] = h->size[i] * nbytes + h->suffix[i] + h->prefix[i];
         if (i && (h->suffix[i] + h->prefix[i]) % nbytes != 0) {
-            fprintf(stderr, "Warning!  Prefix+suffix not divisible by pixel size\n");
+			if (iom_is_ok2print_warnings()){
+				fprintf(stderr, "Warning!  Prefix+suffix not divisible by pixel size\n");
+			}
         }
         dsize *= (dim[i] - 1) / h->s_skip[i] + 1; 
     }
@@ -384,7 +386,9 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
      **/
 
     if ((data = malloc(dsize * nbytes)) == NULL) {
-        fprintf(stderr, "Unable to allocate %d bytes of memory.\n", dsize * nbytes);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "Unable to allocate %d bytes of memory.\n", dsize * nbytes);
+		}
         return (NULL);
     }
     /**
@@ -422,7 +426,9 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
             lseek(fd, offset, 0);
             
             if ((err = read(fd, p_data, plane)) != plane) {
-                fprintf(stderr, "Early EOF.\n");
+				if (iom_is_ok2print_errors()){
+					fprintf(stderr, "Early EOF.\n");
+				}
                 break;
             }
         }
@@ -455,8 +461,9 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
                 }
             }
         }
-        /* if (iom_VERBOSE > 1) */
+		if (iom_is_ok2print_progress()){
             fprintf(stderr, ".");
+		}
     }
 
     /**
@@ -572,8 +579,10 @@ iom_byte_swap_data(
 		break;
 	
 	default:
-		fprintf(stderr, "Unsupported format. See file %s line %d.\n",
-			__FILE__, __LINE__);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Unsupported format. See file %s line %d.\n",
+				__FILE__, __LINE__);
+		}
 		format = -1;
 		break;
 	}
@@ -657,8 +666,9 @@ iom_uncompress(FILE * fp, char *fname)
     tptr = tempnam(NULL, NULL);
     sprintf(buf, "gzip -d < %s > %s ; echo 1", fname, tptr);
 
-    /* if (iom_VERBOSE > 1) */
+	if (iom_is_ok2print_details()){
         fprintf(stderr, "Uncompressing %s\n", fname);
+	}
 
     if ((pfp = popen(buf, "r")) == NULL) {
         sprintf(buf, "compress -d < %s > %s ; echo 1", fname, tptr);
@@ -708,8 +718,10 @@ iom_expand_filename(char *s)
             }
             strncpy(ebuf, p + 1, q - p - 1);
             if ((e = getenv(ebuf)) == NULL) {
-                fprintf(stderr, "error: unknown environment variable: %s\n",
-                        ebuf);
+				if (iom_is_ok2print_errors()){
+					fprintf(stderr, "error: unknown environment variable: %s\n",
+							ebuf);
+				}
                 return (NULL);
             } else {
                 strcat(buf, e);
@@ -723,22 +735,37 @@ iom_expand_filename(char *s)
             if (q == p + 1) {   /* no username specified, use $HOME */
 #ifdef _WIN32
 				e = getenv("HOMEDRIVE");
-				if (e == NULL){ fprintf(stderr, "error: \"~\" expansion failed.\n"); return NULL; }
+				if (e == NULL){
+					if (iom_is_ok2print_errors()){
+						fprintf(stderr, "error: \"~\" expansion failed.\n");
+					}
+					return NULL;
+				}
 				strcat(buf, e);
 				strcat(buf, "\\");
 				e = getenv("HOMEPATH");
-				if (e == NULL){ fprintf(stderr, "error: \"~\" expansion failed.\n"); return NULL; }
+				if (e == NULL){
+					if (iom_is_ok2print_errors()){
+						fprintf(stderr, "error: \"~\" expansion failed.\n");
+					}
+					return NULL;
+				}
 				strcat(buf, e);
 #else
                 strcat(buf, getenv("HOME"));
 #endif /* _WIN32 */
             } else {
 #ifdef _WIN32
-				fprintf(stderr, "error: \"~user\" expansion not supported.\n"); return NULL;
+				if (iom_is_ok2print_errors()){
+					fprintf(stderr, "error: \"~user\" expansion not supported.\n");
+				}
+				return NULL;
 #else
                 strncpy(ebuf, p + 1, q - p - 1);
                 if ((pwent = getpwnam(ebuf)) == NULL) {
-                    fprintf(stderr, "error: unknown user: %s\n", ebuf);
+					if (iom_is_ok2print_errors()){
+						fprintf(stderr, "error: unknown user: %s\n", ebuf);
+					}
                     return (NULL);
                 } else {
                     strcat(buf, pwent->pw_dir);
@@ -845,3 +872,45 @@ iom_ieee_vax_r(int *from, float *to)
     *to = g;
 }
 
+
+/*
+** Stuff related to the verbosity of error messages.
+*/
+
+int iom_VERBOSITY = 5;
+
+int
+iom_is_ok2print_errors()
+{
+	return (iom_VERBOSITY > 2);
+}
+
+int
+iom_is_ok2print_sys_errors()
+{
+	return (iom_VERBOSITY > 0);
+}
+
+int
+iom_is_ok2print_unsupp_errors()
+{
+	return (iom_VERBOSITY > 1);
+}
+
+int
+iom_is_ok2print_details()
+{
+	return (iom_VERBOSITY > 5);
+}
+
+int
+iom_is_ok2print_warnings()
+{
+	return (iom_VERBOSITY > 3);
+}
+
+int
+iom_is_ok2print_progress()
+{
+	return (iom_VERBOSITY > 4);
+}

@@ -25,10 +25,10 @@ iom_isAVIRIS(FILE *fp)
 
 
 /**
- ** GetAvirisHeader() - read and parse an aviris header
+ ** GetAVIRISHeader() - read and parse an aviris header
  **
  ** This routine returns 
- **         0 if the specified file is not a Vicar file.
+ **         0 if the specified file is not an AVIRIS file.
  **         1 on success
  **/
 
@@ -87,8 +87,10 @@ iom_GetAVIRISHeader(
     ** That matches davinci, so go with it.
     **/
     if (org != 1 /* iom_BIL */) {
-        fprintf(stderr, "io_aviris(): Unrecognized org.\n"
-                "please mail this whole file to gorelick@asu.edu\n");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "io_aviris(): Unrecognized org.\n"
+					"please mail this whole file to gorelick@asu.edu\n");
+		}
         return(0);
     }
 
@@ -97,8 +99,10 @@ iom_GetAVIRISHeader(
     ** That matches davinci, so go with it.
     **/
     if (format != 2 /* iom_SHORT */) {
-        fprintf(stderr, "io_aviris(): Unrecognized format.\n"
-                "please mail this whole file to gorelick@asu.edu\n");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "io_aviris(): Unrecognized format.\n"
+					"please mail this whole file to gorelick@asu.edu\n");
+		}
         return(0);
     }
 

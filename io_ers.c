@@ -74,13 +74,17 @@ iom_WriteERS(
     z = iom_GetBands(h->size, h->org);
 
 	if (z > 1 && h->org != iom_BIL) {
-        fprintf(stderr, "ERS files must be BIL format");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "ERS files must be BIL format");
+		}
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-        fprintf(stderr, "Unable to open %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to open %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         return 0;
     }
     
@@ -92,8 +96,10 @@ iom_WriteERS(
     items_out = fwrite(data, iom_iheaderItemBytesI(h), items_in, fp);
 
     if (items_in != items_out){
-        fprintf(stderr, "Write to %s failed. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Write to %s failed. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         fclose(fp);
         unlink(fname);
         return 0;
@@ -105,8 +111,10 @@ iom_WriteERS(
     ** write header
     */
 	if ((fp = fopen(lblfname, "w")) == NULL) {
-        fprintf(stderr, "Unable to write %s. Reason: %s.\n",
-                lblfname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write %s. Reason: %s.\n",
+					lblfname, strerror(errno));
+		}
         unlink(fname);
 		return 0;
 	}
@@ -121,8 +129,10 @@ iom_WriteERS(
 
 	items_out = fprintf(fp, ers_header, byte_order, format, y, x, z);
     if (items_out < 0){
-        fprintf(stderr, "Unable to write to %s. Reason: %s.\n",
-                lblfname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write to %s. Reason: %s.\n",
+					lblfname, strerror(errno));
+		}
         fclose(fp);
         unlink(fname); unlink(lblfname);
         return 0;

@@ -154,12 +154,17 @@ ReadPNMHeader(FILE *fp, int *xout, int *yout,
         *bits = 8;
         break;
     default:
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Unsupported PNM format %d.\n", format);
+		}
         return(0);
     }
 
 	if (ferror(fp)){
-		fprintf(stderr, "Error while reading PNM header. Reason: %s.\n",
-			strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Error while reading PNM header. Reason: %s.\n",
+				strerror(errno));
+		}
 		return 0;
 	}
 
@@ -192,8 +197,10 @@ iom_WritePNM(
     FILE *fp = NULL;
 
 	if (h->format != iom_BYTE){
-		fprintf(stderr, "Cannot write %s data in a PNM file.\n",
-			iom_FORMAT2STR[h->format]);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Cannot write %s data in a PNM file.\n",
+				iom_FORMAT2STR[h->format]);
+		}
 		return 0;
 	}
 
@@ -202,24 +209,32 @@ iom_WritePNM(
     z = iom_GetBands(h->size, h->org);
 
     if (z != 1 && z != 3){
-        fprintf(stderr, "Cannot write PNM files with depths other than 1 or 3.\n");
-        fprintf(stderr, "See file %s  line %d.\n", __FILE__, __LINE__);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Cannot write PNM files with depths other than 1 or 3.\n");
+			fprintf(stderr, "See file %s  line %d.\n", __FILE__, __LINE__);
+		}
         return 0;
     }
 
 	if (z == 3 && h->org != iom_BIP){
-		fprintf(stderr, "For depth 3 data must be in BIP organization.");
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "For depth 3 data must be in BIP organization.");
+		}
 		return 0;
 	}
     
     if (!force_write && access(fname, F_OK) == 0){
-        fprintf(stderr, "File %s already exists.\n", fname);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s already exists.\n", fname);
+		}
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         return 0;
     }
     
@@ -232,8 +247,10 @@ iom_WritePNM(
     fwrite(data, z, x*y, fp);
     
     if (ferror(fp)){
-        fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         fclose(fp);
         unlink(fname);
         return 0;
@@ -364,8 +381,10 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
 #endif /* WORDS_BIGENDIAN */
             
         } else {
-            fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",
-                    filename == NULL ? "(null)" : filename);
+			if (iom_is_ok2print_unsupp_errors()){
+				fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",
+						filename == NULL ? "(null)" : filename);
+			}
             return(0);
         }
         break;
@@ -373,8 +392,10 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         maxval = get_int(fp);
 		*data_offset = ftell(fp);
         if (maxval > 255) {
-            fprintf(stderr, "Unable to read ppm file %s with maxval > 255.\n",
-                    filename == NULL ? "(null)" : filename);
+			if (iom_is_ok2print_unsupp_errors()){
+				fprintf(stderr, "Unable to read ppm file %s with maxval > 255.\n",
+						filename == NULL ? "(null)" : filename);
+			}
             return(0);
         }
         data = (unsigned char *)calloc(3, x*y);
@@ -383,6 +404,9 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         *bits = 8;
         break;
     default:
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Unsupported PNM format %d.\n", format);
+		}
         return(0);
     }
 
@@ -400,7 +424,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
 **
 **  T H I S    F U N C T I O N    M U S T    B E    R E M O V E D    F R O M    H E R E
 */
-int
+static int
 iom_LoadPNM(
     FILE *fp,
     char *fname,

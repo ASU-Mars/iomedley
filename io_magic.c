@@ -96,8 +96,10 @@ iom_WriteGFXImage(
   	ImageInfo image_info;
 
 	if (h->format != iom_BYTE){
-		fprintf(stderr, "Only %s type data is supported. File: %s Line: %d.\n",
-			iom_FORMAT2STR[iom_BYTE], __FILE__, __LINE__);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Only %s type data is supported. File: %s Line: %d.\n",
+				iom_FORMAT2STR[iom_BYTE], __FILE__, __LINE__);
+		}
 		return 0;
 	}
     
@@ -106,25 +108,33 @@ iom_WriteGFXImage(
     z = h->size[2];
 
     if (!force_write && access(fname, F_OK) == 0){
-        fprintf(stderr, "File %s exists already.\n", fname);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s exists already.\n", fname);
+		}
         return 0;
     }
 
     newfn=(char *)calloc(strlen(fname)+strlen(GFX_type)+2,sizeof(char));
     if (newfn == NULL){
-        fprintf(stderr, "Mem allocation error.\n");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "Mem allocation error.\n");
+		}
         return 0;
     }
 
 	if(z>3 && (strcmp(GFX_type,"mpgc") && strcmp(GFX_type,"mpgg") && 
                strcmp(GFX_type,"gifc") && strcmp(GFX_type,"gifg"))){
-		fprintf(stderr, "A movie type must be specified if > 3 bands\n");
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "A movie type must be specified if > 3 bands\n");
+		}
         free(newfn);
 		return 0;
 	}
 
 	if (z==2) {
-		fprintf(stderr, "Incorrect number of bands %d ... aborting.\n", z);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "Incorrect number of bands %d ... aborting.\n", z);
+		}
         free(newfn);
 		return 0;
 	}
@@ -306,7 +316,9 @@ iom_ToMiff(
 	  	image=AllocateImage(&image_info);
 
 		if (image == (Image *) NULL){
-			fprintf(stderr, "Can't allocate memory for image write");
+			if (iom_is_ok2print_errors()){
+				fprintf(stderr, "Can't allocate memory for image write");
+			}
 			return(NULL);
 		}
 
@@ -319,7 +331,9 @@ iom_ToMiff(
  		image->packets=image->columns*image->rows;
 		image->pixels=(RunlengthPacket *) malloc(image->packets*sizeof(RunlengthPacket));
   		if (image->pixels == (RunlengthPacket *) NULL) {
-			fprintf(stderr, "Can't allocate memory for image write");
+			if (iom_is_ok2print_errors()){
+				fprintf(stderr, "Can't allocate memory for image write");
+			}
             DestroyImage(image);
 			return (NULL);
 		}

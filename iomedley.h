@@ -396,5 +396,17 @@ int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_da
 #endif /* HAVE_LIBMAGICK */
 
 
+/*
+** Message verbosity control in iomedley.
+*/
+extern int iom_VERBOSITY;             /* default = 5 i.e. errors/warnings & progress only */
+
+int iom_is_ok2print_sys_errors();     /* verbosity > 0 */
+int iom_is_ok2print_unsupp_errors();  /* verbosity > 1 */
+int iom_is_ok2print_errors();         /* verbosity > 2 */
+int iom_is_ok2print_warnings();       /* verbosity > 3 */
+int iom_is_ok2print_progress();       /* verbosity > 4 */
+int iom_is_ok2print_details();        /* verbosity > 9 */
+
 
 #endif /* _IOMEDLEY_H_ */

@@ -148,7 +148,9 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         if (!strncmp(q, "'BIP'", 5)) org = iom_BIP;
     }
     if (org == -1) {
-        fprintf(stderr, "%s has no org.", fname);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has no org.", fname);
+		}
         free(p);
         return(0);
     }
@@ -163,7 +165,9 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         intfmt = VICAR_INTFMT_LOW;
     }
     if (intfmt == VICAR_INTFMT_INVALID){
-        fprintf(stderr, "%s has unsupported/invalid INTFMT.\n", fname);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/invalid INTFMT.\n", fname);
+		}
         free(p);
         return 0;
     }
@@ -179,7 +183,9 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         realfmt = VICAR_REALFMT_VAX;
     }
     if (realfmt == VICAR_REALFMT_INVALID){
-        fprintf(stderr, "%s has unsupported/invalid REALFMT.\n", fname);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/invalid REALFMT.\n", fname);
+		}
         free(p);
         return 0;
     }
@@ -223,7 +229,9 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     }
 
     if (format == iom_EDF_INVALID) {
-        fprintf(stderr, "%s has unsupported/invalid format.", fname);
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/invalid format.", fname);
+		}
         free(p);
         return(0);
     }
@@ -327,7 +335,9 @@ iom_WriteVicar(
     case iom_INT:   sprintf(ptr+strlen(ptr), "FORMAT='FULL'  "); break;
     case iom_FLOAT: sprintf(ptr+strlen(ptr), "FORMAT='REAL'  "); break;
     default:
-        fprintf(stderr, "VICAR files support bytes, shorts, ints, and floats only.");
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "VICAR files support bytes, shorts, ints, and floats only.");
+		}
         return 0;
         break;
     }
@@ -342,7 +352,9 @@ iom_WriteVicar(
     case iom_BIP: sprintf(ptr+strlen(ptr), "ORG='BIP'  "); break;
     case iom_BSQ: sprintf(ptr+strlen(ptr), "ORG='BSQ'  "); break;
     default:
-        fprintf(stderr,"VICAR files support BIL, BIP, & BSQ organzations only.");
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr,"VICAR files support BIL, BIP, & BSQ organzations only.");
+		}
         fclose(fp);
         return 0;
         break;
@@ -427,8 +439,10 @@ iom_WriteVicar(
     /* fwrite(data, iom_NBYTESI(h->format), h->size[0]*h->size[1]*h->size[2], fp); */
 
     if (ferror(fp)){
-        fprintf(stderr, "Unable to write to file %s. Reason: %s.\n",
-                filename, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write to file %s. Reason: %s.\n",
+					filename, strerror(errno));
+		}
         fclose(fp);
         unlink(filename);
         return 0;

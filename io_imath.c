@@ -103,13 +103,17 @@ iom_WriteIMath(
     FILE *fp = NULL;
 
     if (!force_write && access(filename, F_OK)){
-        fprintf(stderr, "File %s already exists.\n", filename);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s already exists.\n", filename);
+		}
         return 0;
     }
 
     if ((fp = fopen(filename, "wb")) == NULL){
-        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
-                filename, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+					filename, strerror(errno));
+		}
         return 0;
     }
 
@@ -146,8 +150,10 @@ iom_WriteIMath(
     }
 
     if (ferror(fp)){ /* Catch all write errors here. */
-        fprintf(stderr, "Error writing file %s. Reason: %s.\n",
-                filename, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Error writing file %s. Reason: %s.\n",
+					filename, strerror(errno));
+		}
         fclose(fp);
         unlink(filename);
         
@@ -156,5 +162,5 @@ iom_WriteIMath(
     
     fclose(fp);
 
-    return(1);
+    return 1;
 }

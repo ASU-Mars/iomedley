@@ -93,11 +93,13 @@ iom_GetGRDHeader(
     iom_MSB4((char *)&grd->nz);
 #endif /* WORDS_BIGENDIAN */
     
-    fprintf(stderr, "GRD file - ");
-    fprintf(stderr, "Title: %s, program: %s\n", grd->id, grd->pgm);
-    fprintf(stderr, "Size: %dx%d [%d]\n", grd->ncol, grd->nrow, grd->nz);
-    fprintf(stderr, "X,Y: %f,%f\tdx,dy: %f,%f\n", 
-            grd->xo,grd->yo,grd->dx,grd->dy);
+	if (iom_is_ok2print_details()){
+		fprintf(stderr, "GRD file - ");
+		fprintf(stderr, "Title: %s, program: %s\n", grd->id, grd->pgm);
+		fprintf(stderr, "Size: %dx%d [%d]\n", grd->ncol, grd->nrow, grd->nz);
+		fprintf(stderr, "X,Y: %f,%f\tdx,dy: %f,%f\n", 
+				grd->xo,grd->yo,grd->dx,grd->dy);
+	}
 
     h->dptr = size+8;
     h->prefix[0]= 8;
@@ -146,13 +148,17 @@ iom_WriteGRD(
     FILE *fp = NULL;
 
     if (!force_write && access(fname, F_OK) == 0){
-        fprintf(stderr, "File %s already exists.\n", fname);
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "File %s already exists.\n", fname);
+		}
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
-                fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+					fname, strerror(errno));
+		}
         return 0;
     }
     
@@ -169,7 +175,9 @@ iom_WriteGRD(
     grd->dx = grd->dy = 1.0;
 
     if (z != 1) {
-        fprintf(stderr, "Cannot write GRD files with more than 1 band.\n");
+		if (iom_is_ok2print_errors()){
+			fprintf(stderr, "Cannot write GRD files with more than 1 band.\n");
+		}
         fclose(fp);
         unlink(fname);
         return 0;
@@ -206,8 +214,10 @@ iom_WriteGRD(
             case iom_FLOAT:  f =        fptr[j+i*x]; break;
             case iom_DOUBLE: f = (float)dptr[j+i*x]; break;
             default:
-                fprintf(stderr, "Unsupported internal file format for GRD file.\n");
-                fprintf(stderr, "See file: %s  line: %d.\n", __FILE__, __LINE__);
+				if (iom_is_ok2print_unsupp_errors()){
+					fprintf(stderr, "Unsupported internal file format for GRD file.\n");
+					fprintf(stderr, "See file: %s  line: %d.\n", __FILE__, __LINE__);
+				}
 				fclose(fp);
                 return 0;
             }
@@ -221,8 +231,10 @@ iom_WriteGRD(
     }
 
 	if (ferror(fp)){
-		fprintf(stderr, "Unable to write to %s. Reason: %s.\n",
-			fname, strerror(errno));
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write to %s. Reason: %s.\n",
+				fname, strerror(errno));
+		}
 		fclose(fp);
 		unlink(fname);
 		return 0;
