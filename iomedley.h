@@ -186,6 +186,7 @@ int iom_isGRD(FILE *fp);
 int iom_isGOES(FILE *fp);
 int iom_isAVARIS(FILE *fp);
 int iom_isPNM(FILE *fp);
+int iom_isENVI(FILE *fp);
 
 
 /*
@@ -209,6 +210,7 @@ int iom_GetISISHeader(FILE *fp, char *fname, struct iom_iheader *h, OBJDESC **r_
 int iom_GetGRDHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetGOESHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetAVIRISHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
+int iom_GetENVIHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 
 /*
 ** The following functions do not support data-retrievel

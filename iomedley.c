@@ -207,6 +207,8 @@ iom_LoadHeader(
 	if (!success) success = iom_GetGRDHeader(fp, fname, header);
 	if (!success) success = iom_GetGOESHeader(fp, fname, header);
 	if (!success) success = iom_GetIMathHeader(fp, fname, header);
+	if (!success) success = iom_GetENVIHeader(fp, fname, header);
+	
     
 	/*
 	** We don't have header loaders any more, try loading the
@@ -509,10 +511,16 @@ iom_byte_swap_data(
 		break;
 
 	case iom_IEEE_REAL_4:      /* IEEE-Floats to Floats */
+      #ifdef _LITTLE_ENDIAN
+         for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((float *)data)[i]); }
+      #endif
 		format = iom_FLOAT;
 		break;
 
 	case iom_IEEE_REAL_8:      /* IEEE-Doubles to Doubles */
+      #ifdef _LITTLE_ENDIAN
+         for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((double *)data)[i]); }
+      #endif
 		format = iom_DOUBLE;
 		break;
 	

@@ -12,6 +12,7 @@ OBJS= \
 	io_magic.o \
 	io_pnm.o \
 	io_vicar.o \
+	io_envi.o \
 	iomedley.o \
 	tools.o
 

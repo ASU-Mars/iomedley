@@ -43,6 +43,9 @@ iom_GetIMathHeader(
     int  wt, ht;
 	int  transpose;
 
+	if (!(iom_isIMath(fp)))
+		return 0;
+
     rewind(fp);
     fread(buf, strlen(BINARY_LABEL)+1, 1, fp);
     fread(&wt, sizeof(int), 1, fp);
