@@ -163,9 +163,12 @@ iom_cleanup_iheader(struct iom_iheader *h)
 /*
 ** iheaderDataSize()
 **
-** Calculates the size (in bytes) of data as the product
+** Calculates the size (in items) of data as the product
 ** of dimension-lengths in the _iheader structure
 ** and the size of each element.
+**
+** Byte-size can be calculated by multiplying the returned
+** value with iom_NBYTESI(h->format).
 */
 int
 iom_iheaderDataSize(struct iom_iheader *h)
@@ -179,7 +182,6 @@ iom_iheaderDataSize(struct iom_iheader *h)
 
     return (dsize * iom_NBYTESI(h->format));
 }
-
 
 
 int

@@ -159,6 +159,14 @@ typedef char *iom_cptr;
 
 
 
+/*
+** Returns data size in number of items. Item size depending upon
+** the internal data format.
+**
+** Byte-size can be calculated by multiplying the returned
+** value with iom_NBYTESI(h->format).
+**
+*/
 int iom_iheaderDataSize(struct iom_iheader *h);
 
 

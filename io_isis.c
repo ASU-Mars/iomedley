@@ -301,7 +301,7 @@ iom_WriteISIS(
     int fsize;
     char buf[1025];
     
-    dsize = iom_iheaderDataSize(h)/iom_NBYTESI(h->format); /* >>> I GUESS <<< */
+    dsize = iom_iheaderDataSize(h); /* >>> I GUESS <<< */
     fsize = dsize/512+1;
 
     /*
