@@ -124,7 +124,7 @@ iom_GetENVIHeader(FILE *fp, char *fname,
 	unsigned char *value_object=NULL;
 
 	/* memset(h,0x0,sizeof(struct iom_iheader)); */
-	iom_init_iheader(&h);
+	iom_init_iheader(h);
 	memset(&Eh,0x0,sizeof(ENVI_Header));
 
 	if (!(iom_isENVI(fp)))
