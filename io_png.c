@@ -331,6 +331,7 @@ iom_WritePNG(char *filename,
   unsigned int	row_stride;
   unsigned int	i;
   unsigned int	color_type, bit_depth;
+  int free_data = 0;
 
   png_structp	png_ptr;
   png_infop	info_ptr;
@@ -414,13 +415,14 @@ iom_WritePNG(char *filename,
 
   /* Convert data to BIP if not already BIP. */
 
-  if (h->org == iom_BIP) {
+  if (h->org == iom_BIP || z == 1) {
     data = indata;
   } else {
     /* iom__ConvertToBIP allocates memory, don't forget to free it! */
     if (!iom__ConvertToBIP(indata, h, &data)) {
       return 0;
     }
+	free_data = 1;
   }
 
   /* Open file. */
@@ -431,7 +433,7 @@ iom_WritePNG(char *filename,
       fprintf(stderr, "ERROR: couldn't open %s for writing\n", filename);
     }
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    if (h->org != iom_BIP) {
+    if (free_data) {
       free(data);
     }
     return 0;
@@ -445,7 +447,7 @@ iom_WritePNG(char *filename,
       fprintf(stderr, "ERROR: png_create_write_struct()\n");
     }
     fclose(fp);
-    if (h->org != iom_BIP) {
+    if (free_data) {
       free(data);
     }
     return 0;
@@ -459,7 +461,7 @@ iom_WritePNG(char *filename,
     fclose(fp);
     /* Cleanup png_ptr; info_ptr and end_info not allocated. */
     png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
-    if (h->org != iom_BIP) {
+    if (free_data) {
       free(data);
     }
     return 0;
@@ -472,7 +474,7 @@ iom_WritePNG(char *filename,
       fprintf(stderr, "ERROR: libpng encountered error writing %s\n", filename);
     }
     /* Cleanup png_ptr and info_ptr; not using end_info. */
-    if (h->org != iom_BIP) {
+    if (free_data) {
       free(data);
     }
     if (row_pointers) {
@@ -508,7 +510,7 @@ iom_WritePNG(char *filename,
 
   row_pointers = (png_bytep *) malloc(y * sizeof(png_bytep));
   if (!row_pointers) {
-    if (h->org != iom_BIP) {
+    if (free_data) {
       free(data);
     }
     if (iom_is_ok2print_unsupp_errors()) {
@@ -540,7 +542,7 @@ iom_WritePNG(char *filename,
     free(row_pointers);
   }
 
-  if (h->org != iom_BIP) {
+  if (free_data) {
     free(data);
   }
 
