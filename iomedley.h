@@ -2,6 +2,9 @@
 #define _IOMEDLEY_H_
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include "io_lablib3.h"
 
 #ifdef HAVE_CONFIG_H
