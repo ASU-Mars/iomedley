@@ -101,9 +101,15 @@ iom_GetISISHeader(
 
     /**
      ** Check if this is an ISIS QUBE first.  If not, check for an IMAGE
+	  ** Fri Mar 29 15:28:44 MST 2002: We're now dealing with SPECTAL_QUBE
+	  **		in addition.
      **/
+	 qube = NULL;
+	 qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
+	 if (qube == NULL)
+		qube = OdlFindObjDesc(ob, "SPECTRAL_QUBE", NULL, 0, 0, 0);
     
-    if ((qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0)) != NULL) {
+    if (qube != NULL) {
         
         /**
          ** Get data organization
@@ -221,8 +227,19 @@ iom_GetISISHeader(
         h->suffix[1] = suffix_size[1];
         h->suffix[2] = suffix_size[2];
         h->corner = suffix[0]*suffix[1]*suffix_bytes;
+
+		  /*
+		  ** Fri Mar 29 15:44:18 MST 2002: We've added ^SPECTRAL_QUBE as
+		  ** as object pointer
+		  */
+
+		  key = NULL;
+		  key = OdlFindKwd(ob, "^QUBE", NULL, 0, 0);
+		  if (key == NULL)
+				key = OdlFindKwd(ob, "^SPECTRAL_QUBE", NULL, 0, 0);
+
         
-        if ((key = OdlFindKwd(ob, "^QUBE", NULL, 0, 0)) != NULL) {
+        if (key != NULL) {
             OdlGetFileName(key, &start, &start_type);
             if (start_type == ODL_RECORD_LOCATION) {
                 start = (start-1)*rlen;
