@@ -16,6 +16,10 @@
 #include <magick/magick.h>
 #endif
 
+/*
+** CAUTION:
+** iom_EFORMAT2STR[] in iomedley.c depends upon these values
+*/
 typedef enum {
 	iom_EDF_INVALID = 0, /* Invalid external-format. */
 
@@ -41,6 +45,10 @@ typedef enum {
 #define iom_NBYTES(ef) ((ef) > 40 ? ((ef) - 40) : ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef)))))
 
 
+/*
+** CAUTION:
+** iom_FORMAT2STR[] in iomedley.c depends upon these values
+*/
 typedef enum {
 	iom_BYTE   = 1,
 	iom_SHORT  = 2,
@@ -59,6 +67,10 @@ typedef enum {
  **              indices below.
  **/
  
+/*
+** CAUTION:
+** iom_ORG2STR[] in iomedley.c depends upon these values
+*/
 typedef enum {
 	iom_BSQ = 0,
 	iom_BIL = 1,

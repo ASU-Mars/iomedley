@@ -292,11 +292,11 @@ iom_MergeHeaderAndSlice(
 
             j = iom_orders[org][i];
 
-            if (s->s_lo[j] > 0) h->s_lo[i] = s->s_lo[j];
-            if (s->s_hi[j] > 0) h->s_hi[i] = s->s_hi[j];
-            if (s->s_skip[j] > 0) h->s_skip[i] = s->s_skip[j];
-            if (s->prefix[j] > 0) h->prefix[i] = s->prefix[j];
-            if (s->suffix[j] > 0) h->suffix[i] = s->suffix[j];
+            if (s->s_lo[i] > 0) h->s_lo[j] = s->s_lo[i];
+            if (s->s_hi[i] > 0) h->s_hi[j] = s->s_hi[i];
+            if (s->s_skip[i] > 0) h->s_skip[j] = s->s_skip[i];
+            if (s->prefix[i] > 0) h->prefix[j] = s->prefix[i];
+            if (s->suffix[i] > 0) h->suffix[j] = s->suffix[i];
         }
     }
 }

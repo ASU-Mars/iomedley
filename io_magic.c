@@ -5,7 +5,6 @@
 #include <string.h>
 #include <magick/magick.h>
 #include <magick/api.h>
-#include <magick/xwindows.h>
 
 
 Image *iom_ToMiff(
@@ -284,10 +283,10 @@ iom_ToMiff(
 	int scene=0;
 	QuantizeInfo quantize_info;
 	ImageInfo	tmp_info,image_info;
-	Display *display;
+	/* Display *display; */
 	unsigned long state;
-  	XResourceInfo resource;
-  	XrmDatabase resource_database;
+  	/* XResourceInfo resource; */
+  	/* XrmDatabase resource_database; */
 
 
 	unsigned char r,g,b;

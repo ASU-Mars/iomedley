@@ -29,7 +29,13 @@ AC_C_CONST
 AC_TYPE_OFF_T
 AC_STRUCT_TM
 
-dnl AC_C_BIGENDIAN
+dnl Check for endian
+AC_C_BIGENDIAN
+if test $ac_cv_c_bigendian = yes; then
+	AC_DEFINE(_BIG_ENDIAN)
+else
+	AC_DEFINE(_LITTLE_ENDIAN)
+fi
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -49,7 +55,7 @@ AC_CHECK_LIB(Xext, XShmPutImage)
 
 
 dnl Checks for libraries.
-if test "x$prefix" != "x" 
+if test "$prefix" != "NONE" 
 then
 	CPPFLAGS="$CPPFLAGS -I${prefix:-.}/include "
 	LDFLAGS="$LDFLAGS -L${prefix:-.}/lib"

@@ -1,16 +1,16 @@
 # Generated automatically from Makefile.in by configure.
-prefix=/home/saadat/transient
+prefix=/usr/local
 
 CC=gcc
 DEFS=-DHAVE_CONFIG_H
-CPPFLAGS=-I.   -I/usr/X11R6/include -I/home/saadat/transient/include 
-# X_CFLAGS= -I/usr/X11R6/include
+CPPFLAGS=-I.   -I/usr/X11R6/include/X11
+# X_CFLAGS= -I/usr/X11R6/include/X11
 # X_PRE_LIBS= -lSM -lICE
 # X_LIBS= -L/usr/X11R6/lib
 # X_EXTRA_LIBS=
 CFLAGS=-g -O2 $(X_CFLAGS)
-# LDLIBS= -L/home/saadat/transient/lib -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib  $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
-LDLIBS= -L/home/saadat/transient/lib -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib 
+# LDLIBS= -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib  $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
+LDLIBS= -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib 
 RANLIB=ranlib
 
 OBJS= \

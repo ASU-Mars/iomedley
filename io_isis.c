@@ -460,7 +460,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         case 4: format = iom_MSB_INT_4; break;
         }
     }
-    else if (!strcmp(q, "PC_INT")){
+    else if (!strcmp(q, "PC_INTEGER")){
         switch(item_bytes){
         case 1: format = iom_LSB_INT_1; break;
         case 2: format = iom_LSB_INT_2; break;
