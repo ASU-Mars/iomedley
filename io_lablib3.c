@@ -5781,11 +5781,11 @@ char *OdlTempFname()
     tmpnam(temp_str);
     sprintf(base_name, "sys$login:%s.tmp", temp_str);
 
-#elseif defined(MAC_THINK)
+#elif defined(MAC_THINK)
 
     tmpnam(temp_str);
     sprintf(base_name, "%s.tmp", temp_str);
-#elseif defined(MSDOS)
+#elif defined(MSDOS)
     {
         time_t t;
         t = (time_t) time(NULL);
