@@ -44,14 +44,13 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(math.h string.h strings.h)
 
 dnl Check for X
-AC_PATH_XTRA
+dnl AC_PATH_XTRA
+dnl CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+dnl LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
+dnl AC_CHECK_LIB(X11, XOpenDisplay)
+dnl AC_CHECK_LIB(Xt, XtToolkitInitialize)
+dnl AC_CHECK_LIB(Xext, XShmPutImage)
 
-CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
-
-AC_CHECK_LIB(X11, XOpenDisplay)
-AC_CHECK_LIB(Xt, XtToolkitInitialize)
-AC_CHECK_LIB(Xext, XShmPutImage)
 AC_CHECK_LIB(z, compress, [found_libz=yes], [found_libz=no])
 
 dnl Warn the user if zlib not found
@@ -89,10 +88,9 @@ AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
+AC_CONFIG_SUBDIRS(libjpeg libgif libtiff)
 if test "$found_libz" = "yes"; then
-	AC_CONFIG_SUBDIRS(libjpeg libgif libtiff libpng-1.2.3)
-else
-	AC_CONFIG_SUBDIRS(libjpeg libgif libtiff)
+	AC_CONFIG_SUBDIRS(libpng-1.2.3)
 fi
 
 AC_OUTPUT(Makefile)
