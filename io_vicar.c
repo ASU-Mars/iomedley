@@ -344,6 +344,7 @@ iom_WriteVicar(
     case iom_SHORT: sprintf(ptr+strlen(ptr), "FORMAT='HALF'  "); break;
     case iom_INT:   sprintf(ptr+strlen(ptr), "FORMAT='FULL'  "); break;
     case iom_FLOAT: sprintf(ptr+strlen(ptr), "FORMAT='REAL'  "); break;
+    case iom_DOUBLE: sprintf(ptr+strlen(ptr), "FORMAT='DOUB'  "); break;
     default:
 		if (iom_is_ok2print_unsupp_errors()){
 			fprintf(stderr, "VICAR files support bytes, shorts, ints, and floats only.");
@@ -375,7 +376,7 @@ iom_WriteVicar(
             iom_GetSamples(h->size, h->org),
             iom_GetBands(h->size, h->org));
 
-    if (org == iom_BSQ) {           /* done cause we may have forced bsq */
+    if (org == iom_BSQ) { /* done cause we may have forced bsq (DIM=2 case: bands==1) */
         sprintf(ptr+strlen(ptr), "N1=%d  N2=%d  N3=%d  ",
                 iom_GetSamples(h->size, h->org),
                 iom_GetLines(h->size, h->org),
