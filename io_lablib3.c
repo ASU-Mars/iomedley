@@ -5777,43 +5777,19 @@ char *OdlTypeString (unsigned short type, char *type_string)
 
 char *OdlTempFname()
 {
-    FILE *fptr = {NULL};
-    char *fname = {NULL};
-    char temp_str  [TB_MAXPATH + TB_MAXFNAME];
-    char base_name [TB_MAXPATH + TB_MAXFNAME];
+        int fd;
+		char pathbuf[256];
+        char *tmpdir = getenv("TMPDIR");
 
-#if (defined( VAX) || defined( ALPHA_VMS))
-    tmpnam(temp_str);
-    sprintf(base_name, "sys$login:%s.tmp", temp_str);
+        if (tmpdir == NULL) tmpdir = "/tmp";
 
-#elif defined(MAC_THINK)
-
-    tmpnam(temp_str);
-    sprintf(base_name, "%s.tmp", temp_str);
-#elif defined(MSDOS)
-    {
-        time_t t;
-        t = (time_t) time(NULL);
-        sprintf(base_name, "C:\\%ld", t);
-        base_name[8] = '\0';	/* EOS; */
-        strcat(base_name, ".tmp");
-    }
-#else
-    tmpnam(temp_str);
-    strcpy( base_name, temp_str);  /* Bug fix 11/2/94 SM                     */
-                                   /* Was:    sprintf(base_name, "~/%s.tmp", */
-                                   /*                 temp_str);             */
-#endif
-
-    CopyString(fname, base_name)
-
-    if ((fptr = (FILE *) fopen(fname, "w")) == NULL)
-        LemmeGo(fname)
-    else
-        CloseMe(fptr)
-
-    return(fname);
-
+        sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+        fd = mkstemp(pathbuf);
+        if (fd == -1) {
+                return(NULL);
+        }
+        close(fd);
+        return(strdup(pathbuf));
 }  /*  End:  "OdlTempFname"  */
 
 
