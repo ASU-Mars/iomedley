@@ -32,11 +32,17 @@ AC_STRUCT_TM
 
 dnl Check for endian
 AC_C_BIGENDIAN
-dnl if test $ac_cv_c_bigendian = yes; then
-dnl 	AC_DEFINE(_BIG_ENDIAN)
-dnl else
-dnl 	AC_DEFINE(_LITTLE_ENDIAN)
-dnl fi
+
+dnl Check input arguments for ImageMagick
+AC_ARG_WITH(magick,
+[  --without-magick        build without ImageMagick support (default is --with-magick)
+                          (without ImageMagick only VICAR, ISIS, and PNM formats are supported)], ,
+						  with_magick=yes)
+
+dnl Set some defaults
+test "$prefix" = NONE && prefix=/usr/local
+test "$exec_prefix" = NONE && exec_prefix=${prefix}
+
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -55,45 +61,57 @@ AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext, XShmPutImage)
 
 
-dnl Check if ImageMagick is available.
-
-AC_PATH_PROG(MAGICK_CONFIG,Magick-config)
-if test -n "$MAGICK_CONFIG"
+if test "$with_magick" = "yes"
 then
-	MAGICK_VERSION=`$MAGICK_CONFIG --version`
-	MAGICK_CPPFLAGS=`$MAGICK_CONFIG --cppflags`
-	MAGICK_CFLAGS=`$MAGICK_CONFIG --cflags`
-	MAGICK_LIBS=`$MAGICK_CONFIG --libs`
-	MAGICK_LDFLAGS=`$MAGICK_CONFIG --ldflags`
-fi
 
-dnl Check if ImageMagick is of correct version
-if test "$MAGICK_VERSION" = "4.2.9"
-then
-	save_CPPFLAGS="$CPPFLAGS"
-	save_CFLAGS="$CFLAGS"
-	save_LIBS="$LIBS"
-	save_LDFLAGS="$LDFLAGS"
+	dnl Check if ImageMagick is available.
 
-	CPPFLAGS="$CPPFLAGS $MAGICK_CPPFLAGS"
-	CFLAGS="$CFLAGS $MAGICK_CFLAGS"
-	LIBS="$LIBS $MAGICK_LIBS"
-	LDFLAGS="$LDFLAGS $MAGICK_LDFLAGS"
+	AC_PATH_PROG(MAGICK_CONFIG,Magick-config)
+	if test -n "$MAGICK_CONFIG"
+	then
+		MAGICK_VERSION=`$MAGICK_CONFIG --version`
+		MAGICK_CPPFLAGS=`$MAGICK_CONFIG --cppflags`
+		MAGICK_CFLAGS=`$MAGICK_CONFIG --cflags`
+		MAGICK_LIBS=`$MAGICK_CONFIG --libs`
+		MAGICK_LDFLAGS=`$MAGICK_CONFIG --ldflags`
+	fi
 
-	dnl AC_CHECK_LIB(m, sin)
-	dnl AC_CHECK_LIB(z, compress)
-	dnl AC_CHECK_LIB(bz2, bzopen)
-	dnl AC_CHECK_LIB(png, png_info_init)
-	dnl AC_CHECK_LIB(jpeg, jpeg_read_header)
-	dnl AC_CHECK_LIB(tiff, TIFFOpen)
+	dnl Check if ImageMagick is of correct version
+	if test "$MAGICK_VERSION" = "4.2.9"
+	then
+		save_CPPFLAGS="$CPPFLAGS"
+		save_CFLAGS="$CFLAGS"
+		save_LIBS="$LIBS"
+		save_LDFLAGS="$LDFLAGS"
 
-	dnl Make sure we can use libMagick to compile.
-	AC_CHECK_LIB(Magick, GetMagickInfo,,[
-		CPPFLAGS="$save_CPPFLAGS"
-		CFLAGS="$save_CFLAGS"
-		LIBS="$save_LIBS"
-		LDFLAGS="$save_LDFLAGS"
-	])
+		dnl Linux nuance - ImageMagick include files located in
+		dnl /usr/X11R6/include/X11/magick instead of /usr/X11R6/magick.
+		case "$target" in
+		*-linux-gnu)  CFLAGS="$CFLAGS -I/usr/X11R6/include/X11"
+		esac
+
+		CPPFLAGS="$CPPFLAGS $MAGICK_CPPFLAGS"
+		CFLAGS="$CFLAGS $MAGICK_CFLAGS"
+		LIBS="$LIBS $MAGICK_LIBS"
+		LDFLAGS="$LDFLAGS $MAGICK_LDFLAGS"
+
+		dnl AC_CHECK_LIB(m, sin)
+		dnl AC_CHECK_LIB(z, compress)
+		dnl AC_CHECK_LIB(bz2, bzopen)
+		dnl AC_CHECK_LIB(png, png_info_init)
+		dnl AC_CHECK_LIB(jpeg, jpeg_read_header)
+		dnl AC_CHECK_LIB(tiff, TIFFOpen)
+
+		dnl Make sure we can use libMagick to compile.
+		AC_CHECK_LIB(Magick, GetMagickInfo,,[
+			CPPFLAGS="$save_CPPFLAGS"
+			CFLAGS="$save_CFLAGS"
+			LIBS="$save_LIBS"
+			LDFLAGS="$save_LDFLAGS"
+		])
+	else
+		AC_MSG_WARN([ImageMagick version 4.2.9 required for compiling with ImageMagick])
+	fi
 fi
 
 dnl Checks for library functions.
