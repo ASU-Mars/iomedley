@@ -5225,12 +5225,16 @@ char *OdlValueEnd( char *text)
 {
     char *c = {NULL};
 
-    /*  find a character that is a brace, paren, or comma  */
-    c = strpbrk(text, "{}(),");
+	if (*text == '"') {
+		/* go until we find another '"' */
+		for (c = text+1 ; *c && *c != '"' ; c++);
+	} else {
+		/*  find a character that is a brace, paren, or comma  */
+		c = strpbrk(text, "{}(),");
 
-    /*  backup over any trailing blanks  */
-    for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
-
+		/*  backup over any trailing blanks  */
+		for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
+	}
     return(c);
 
 }  /*  End routine:  "OdlValueEnd"  */
