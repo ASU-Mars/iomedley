@@ -3,7 +3,7 @@ AC_INIT(iomedley.h)
 dnl AM_CONFIG_HEADER(iom_config.h)
 AC_CONFIG_HEADER(iom_config.h)
 
-AC_CONFIG_AUX_DIR(aux)
+dnl AC_CONFIG_AUX_DIR(aux)
 AC_CANONICAL_HOST
 AC_CANONICAL_SYSTEM
 
