@@ -7,6 +7,10 @@
 #include "iomedley.h"
 
 
+Image *iom_ToMiff(
+    char *data,             /* input: image data to write */
+    int x, int y, int z     /* input: image dimensions    */
+    );
 
 
 /*
@@ -23,6 +27,7 @@
 
 int
 iom_GetGFXHeader(
+    FILE *fp,  /* Unused */
     char *fname,
     struct iom_iheader *h
 )
@@ -72,23 +77,44 @@ iom_GetGFXHeader(
 **
 ** The only data organization supported is BSQ.
 **
-** Parameter "filename" specifies the prefix of the output
+** Parameter "fname" specifies the prefix of the output
 ** file's name.
 */
 int
 iom_WriteGFXImage(
-    void *data,           /* input: image data              */
-    int x, int y, int z,  /* input: image dimensions        */
-    char *filename,       /* input: output file name prefix */
-    char *GFX_type        /* input/output: GFX type         */
+    char *fname,           /* input: output file name prefix         */
+    void *data,            /* input: image data                      */
+    struct iom_iheader *h, /* input: image dimensions                */
+    int force_write,       /* input: force write even if file exists */
+    char *GFX_type         /* input/output: GFX type                 */
     )
 {
 	char *newfn;
+    int x, y, z;
     
 	Image *image;
   	ImageInfo image_info;
 
-    newfn=(char *)calloc(strlen(filename)+strlen(GFX_type)+1,sizeof(char));
+	if (h->format != iom_BYTE){
+		fprintf(stderr, "Only %s type data is supported. File: %s Line: %d.\n",
+			iom_FORMAT2STR[iom_BYTE], __FILE__, __LINE__);
+		return 0;
+	}
+    
+    x = h->size[0];
+    y = h->size[1];
+    z = h->size[2];
+
+    if (!force_write && access(fname, F_OK) == 0){
+        fprintf(stderr, "File %s exists already.\n", fname);
+        return 0;
+    }
+
+    newfn=(char *)calloc(strlen(fname)+strlen(GFX_type)+1,sizeof(char));
+    if (newfn == NULL){
+        fprintf(stderr, "Mem allocation error.\n");
+        return 0;
+    }
 
 	if(z>3 && (strcmp(GFX_type,"mpgc") && strcmp(GFX_type,"mpgg") && 
                strcmp(GFX_type,"gifc") && strcmp(GFX_type,"gifg"))){
@@ -115,9 +141,9 @@ iom_WriteGFXImage(
     /* <GFX_type:filename> will designate desired file type */
 	strcpy(newfn,GFX_type);
 	strcat(newfn,":");
-	strcat(newfn,filename);
+	strcat(newfn,fname);
 
-    if ((image=ToMiff(data, x, y, z)) == NULL){ free(newfn); return 0; }
+    if ((image=iom_ToMiff(data, x, y, z)) == NULL){ free(newfn); return 0; }
 	GetImageInfo(&image_info);
 	strcpy(image->filename,newfn);
 
@@ -128,7 +154,29 @@ iom_WriteGFXImage(
     return 1;
 }
 
+#if 0
+/* >>>>>>> May be I wanna go with this structure. <<<<<<<< */
+int
+iom_WriteGIF(char *fname, void *data, struct iom_iheader *h, int force_write)
+{
+    char GFX_type[128] = "gif";
+    return iom_WriteGFXImage(fname, data, h, force_write, GFX_type);
+}
 
+int
+iom_WriteGIFC(char *fname, void *data, struct iom_iheader *h, int force_write)
+{
+    char GFX_type[128] = "gifc";
+    return iom_WriteGFXImage(fname, data, h, force_write, GFX_type);
+}
+
+int
+iom_WriteGIFG(char *fname, void *data, struct iom_iheader *h, int force_write)
+{
+    char GFX_type[128] = "gifg";
+    return iom_WriteGFXImage(fname, data, h, force_write, GFX_type);
+}
+#endif
 
 /*
 ** Image Reader
@@ -219,7 +267,7 @@ iom_ExtractMiffData(
 ** a Miff Image out of it.
 */
 Image *
-ToMiff(
+iom_ToMiff(
     char *data,             /* input: image data to write */
     int x, int y, int z     /* input: image dimensions    */
     )

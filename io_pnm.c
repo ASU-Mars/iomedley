@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
 #include <string.h>
 #include <unistd.h>
 #include "iomedley.h"
 
 
 
-static int ReadPNMHeader(FILE *fp, int *xout, int *yout, int *zout, int *bits);
+static int ReadPNMHeader(FILE *fp, int *xout, int *yout, int *zout, int *bits, off_t *data_offset);
 static int get_int(FILE *fp);
 static int getbit(FILE *fp);
 
@@ -40,21 +42,40 @@ iom_GetPNMHeader(
     int bits;
 	int offset;
 
+    if (!iom_isPNM(fp)){ return 0; }
+
+    /* offset = ftell(fp); */
+    
     /**
     *** Get format
     **/
-    if (iom_ReadPNM(fp, fname, &x, &y, &z, &bits, &data) == 0){
+    if (iom_ReadPNM(fp, fname, &x, &y, &z, &bits, &data, &offset) == 0){
         return 0;
     }
-    offset = ftell(fp);
 
 	iom_init_iheader(h);
 
-	h->dptr = offset;
-	h->org = (z == 1 ? iom_BSQ : iom_BIP);           /* data organization */
-	h->size[0] = x;
-	h->size[1] = y;
-	h->size[2] = z;
+	/* h->dptr = offset; */
+
+	if (z == 1) {
+		h->size[0] = x;
+		h->size[1] = y;
+		h->size[2] = z;
+		h->org = iom_BSQ;
+	}
+	else {
+		h->size[0] = z;
+		h->size[1] = x;
+		h->size[2] = y;
+		h->org = iom_BIP;
+	}
+	/* h->org = (z == 1 ? iom_BSQ : iom_BIP); */       /* data organization */
+	/*
+	iom_GetSamples(h->size, h->org) = x;
+	iom_GetBands(h->size, h->org) = z;
+	iom_GetLines(h->size, h->org) = y;
+	*/
+
 	if (bits == 16)  {
         h->eformat = iom_MSB_INT_2;
 		h->format = iom_SHORT;
@@ -63,10 +84,13 @@ iom_GetPNMHeader(
 		h->format = iom_BYTE;
 	}
 
+	/*
 	h->offset = 0;
 	h->gain = 0;
 	h->prefix[0] = h->prefix[1] = h->prefix[2] = 0;
 	h->suffix[0] = h->suffix[1] = h->suffix[2] = 0;
+	*/
+
     h->data = data;
 
 	return(1);
@@ -74,7 +98,7 @@ iom_GetPNMHeader(
 
 static int
 ReadPNMHeader(FILE *fp, int *xout, int *yout, 
-              int *zout, int *bits)
+              int *zout, int *bits, off_t *data_offset)
 {
     char id,format;
     int x,y,z,count;
@@ -131,6 +155,14 @@ ReadPNMHeader(FILE *fp, int *xout, int *yout,
         return(0);
     }
 
+	if (ferror(fp)){
+		fprintf(stderr, "Error while reading PNM header. Reason: %s.\n",
+			strerror(errno));
+		return 0;
+	}
+
+	*data_offset = ftell(fp);
+
     *xout = x;
     *yout = y;
     *zout = z;
@@ -148,38 +180,71 @@ ReadPNMHeader(FILE *fp, int *xout, int *yout,
 
 int
 iom_WritePNM(
-    FILE *fp,
     char *fname,
     void *data,
-    struct iom_iheader *h
+    struct iom_iheader *h,
+    int force_write
     )
 {
     int   x, y, z;
+    FILE *fp = NULL;
 
-    x = iom_GetSamples(h->dim, h->org);
-    y = iom_GetLines(h->dim, h->org);
-    z = iom_GetBands(h->dim, h->org);
+	if (h->format != iom_BYTE){
+		fprintf(stderr, "Cannot write %s data in a PNM file.\n",
+			iom_FORMAT2STR[h->format]);
+		return 0;
+	}
 
-    if (z != 1 || z != 3){
+    x = iom_GetSamples(h->size, h->org);
+    y = iom_GetLines(h->size, h->org);
+    z = iom_GetBands(h->size, h->org);
+
+    if (z != 1 && z != 3){
         fprintf(stderr, "Cannot write PNM files with depths other than 1 or 3.\n");
         fprintf(stderr, "See file %s  line %d.\n", __FILE__, __LINE__);
         return 0;
     }
 
+	if (z == 3 && h->org != iom_BIP){
+		fprintf(stderr, "For depth 3 data must be in BIP organization.");
+		return 0;
+	}
+    
+    if (!force_write && access(fname, F_OK) == 0){
+        fprintf(stderr, "File %s already exists.\n", fname);
+        return 0;
+    }
+
+    if ((fp = fopen(fname, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                fname, strerror(errno));
+        return 0;
+    }
+    
     fprintf(fp, "P%c\n%d %d\n255\n", (z == 1 ? '5' : '6'), x, y);
 
     /*
-    ** We should be byte-swapping data here but there is no
+    ** Ordinarily we would be byte-swapping data here but there is no
     ** need to do so, since we will only be writing byte data.
     */
     fwrite(data, z, x*y, fp);
+    
+    if (ferror(fp)){
+        fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
+                fname, strerror(errno));
+        fclose(fp);
+        unlink(fname);
+        return 0;
+    }
+
+    fclose(fp);
     
     return 1;
 }
 
 int
 iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout, 
-            int *zout, int *bits, void **dout)
+            int *zout, int *bits, void **dout, off_t *data_offset)
 {
     char id,format;
     int x,y,z,count;
@@ -206,6 +271,8 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
     y = get_int(fp);
     z = 1;
 
+	*data_offset = ftell(fp);
+
     count = 0;
     switch (format) {
     case '1':                 /* plain pbm format */
@@ -219,6 +286,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         break;
     case '2':                 /* plain pgm format */
         maxval = get_int(fp);
+		*data_offset = ftell(fp);
         if (maxval == 255) {
             data = (unsigned char *)calloc(1, x*y);
             k = x*y;
@@ -242,6 +310,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         break;
     case '3':                 /* plain ppm format */
         maxval = get_int(fp);
+		*data_offset = ftell(fp);
         data = (unsigned char *)calloc(3, x*y);
         for (i = 0 ; i < y ; i++) {
             for (j = 0 ; j < x ; j++) {
@@ -275,6 +344,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         break;
     case '5':                 /* raw pgm format */
         maxval = get_int(fp);
+		*data_offset = ftell(fp);
         if (maxval <= 255) {
             data = (unsigned char *)calloc(1, x*y);
             fread(data, 1, x*y, fp);
@@ -299,6 +369,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         break;
     case '6':                 /* raw ppm format */
         maxval = get_int(fp);
+		*data_offset = ftell(fp);
         if (maxval > 255) {
             fprintf(stderr, "Unable to read ppm file %s with maxval > 255.\n",
                     filename == NULL ? "(null)" : filename);
@@ -336,12 +407,13 @@ iom_LoadPNM(
 {
     int   x, y, z, bits;
     void *data;
+	off_t offset;
 
     iom_init_iheader(h);
     
     if (!iom_isPNM(fp)){ return 0; }
     
-    if (iom_ReadPNM(fp, fname, &x, &y, &z, &bits, &data) == 0){
+    if (iom_ReadPNM(fp, fname, &x, &y, &z, &bits, &data, &offset) == 0){
         return 0;
     }
 
@@ -353,6 +425,7 @@ iom_LoadPNM(
     h->dim[0] = x;
     h->dim[1] = y;
     h->dim[2] = z;
+	/* h->dptr = offset; */
     
     return 1;
 }

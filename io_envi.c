@@ -89,11 +89,17 @@ Envi2iheader(ENVI_Header *e, struct iom_iheader *h)
 			break;
 
 		case 4:
-			h->eformat=iom_IEEE_REAL_4;
+			if (e->byte_order)
+				h->eformat=iom_MSB_IEEE_REAL_4;
+			else
+				h->eformat=iom_LSB_IEEE_REAL_4;
 			break;
 
 		case 5:
-			h->eformat=iom_IEEE_REAL_8;
+			if (e->byte_order)
+				h->eformat=iom_MSB_IEEE_REAL_8;
+			else
+				h->eformat=iom_LSB_IEEE_REAL_8;
 			break;
 
 		default:

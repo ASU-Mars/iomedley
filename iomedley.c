@@ -36,12 +36,22 @@ char *iom_EFORMAT2STR[] = {
 	"(invalid)",
 	"(invalid)",
 	"(invalid)",
-	"IEEE FLOAT",
+	"MSB IEEE FLOAT",
 	"(invalid)",
 	"(invalid)",
 	"(invalid)",
-	"IEEE DOUBLE",	
+	"MSB IEEE DOUBLE",	
 	"(invalid)",
+    "(invalid)",
+    "(invalid)",
+    "(invalid)",
+    "(invalid)",
+    "LSB IEEE FLOAT",
+    "(invalid)",
+    "(invalid)",
+    "(invalid)",
+    "LSB IEEE DOUBLE",
+    "(invalid)",
 	"(invalid)",
 	"(invalid)",
 	"VAX INTEGER",
@@ -132,6 +142,7 @@ iom_detach_iheader_data(struct iom_iheader *h)
 }
 
 
+
 /*
 ** >> CAUTION << This will go away.
 **
@@ -157,7 +168,6 @@ void
 iom_cleanup_iheader(struct iom_iheader *h)
 {
     if (h->data){ free(h->data); }
-    if (h->title){ free(h->title); }
 }
 
 /*
@@ -180,8 +190,20 @@ iom_iheaderDataSize(struct iom_iheader *h)
 	    dsize *= h->size[i];
     }
 
-    return (dsize * iom_NBYTESI(h->format));
+    return (dsize);
 }
+
+
+/*
+** Returns the number of bytes per data item for the internal
+** data format stored in the iom_iheader "h".
+*/
+int
+iom_iheaderItemBytesI(struct iom_iheader *h)
+{
+	return iom_NBYTESI(h->format);
+}
+
 
 
 int
@@ -202,7 +224,7 @@ iom_LoadHeader(
 
 	success = 0;
 	if (!success) success = iom_GetVicarHeader(fp, fname, header);
-	if (!success) success = iom_GetISISHeader(fp, fname, header, NULL);
+	if (!success) success = iom_GetISISHeader(fp, fname, header, NULL, NULL);
 	if (!success) success = iom_GetAVIRISHeader(fp, fname, header);
 	if (!success) success = iom_GetGRDHeader(fp, fname, header);
 	if (!success) success = iom_GetGOESHeader(fp, fname, header);
@@ -218,7 +240,7 @@ iom_LoadHeader(
 	*/
 	if (!success) success = iom_GetPNMHeader(fp, fname, header);
 #ifdef HAVE_LIBMAGICK
-	if (!success) success = iom_GetGFXHeader(fname, header);
+	if (!success) success = iom_GetGFXHeader(fp, fname, header);
 #endif /* HAVE_LIBMAGICK */
 
 	return success;
@@ -389,7 +411,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
             lseek(fd, offset, 0);
             
             if ((err = read(fd, p_data, plane)) != plane) {
-                fprintf(stderr, "Early EOF");
+                fprintf(stderr, "Early EOF.\n");
                 break;
             }
         }
@@ -398,7 +420,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
             ** Otherwise, get the data from iom_iheader->data.
             */
             if (h->data == NULL){ return NULL; }
-            memcpy(p_data, (char *)((long)h->data + offset), plane);
+            memcpy(p_data, h->data + offset, plane);
         }
 
 
@@ -478,16 +500,16 @@ iom_byte_swap_data(
 		break;
 	
 	case iom_MSB_INT_2:        /* MSB-Shorts to Shorts */
-		#ifdef _LITTLE_ENDIAN
+#ifdef _LITTLE_ENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB2(&((short *)data)[i]); }
-		#endif /* _LITTLE_ENDIAN */
+#endif /* _LITTLE_ENDIAN */
 		format = iom_SHORT;
 		break;
 	
 	case iom_MSB_INT_4:        /* MSB-Ints to Ints */
-		#ifdef _LITTLE_ENDIAN
+#ifdef _LITTLE_ENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((int *)data)[i]); }
-		#endif /* _LITTLE_ENDIAN */
+#endif /* _LITTLE_ENDIAN */
 		format = iom_INT;
 		break;
 
@@ -497,30 +519,44 @@ iom_byte_swap_data(
 	
 	case iom_VAX_INT:          /* Vax Integers to Integers */
 	case iom_LSB_INT_2:        /* LSB-Shorts to Shorts */
-		#ifndef _LITTLE_ENDIAN
+#ifndef _LITTLE_ENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB2(&((short *)data)[i]); }
-		#endif /* _LITTLE_ENDIAN */
+#endif /* _LITTLE_ENDIAN */
 		format = iom_SHORT;
 		break;
 	
 	case iom_LSB_INT_4:        /* LSB-Ints to Ints */
-		#ifndef _LITTLE_ENDIAN
+#ifndef _LITTLE_ENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB4(&((int *)data)[i]); }
-		#endif /* _LITTLE_ENDIAN */
+#endif /* _LITTLE_ENDIAN */
 		format = iom_INT;
 		break;
 
-	case iom_IEEE_REAL_4:      /* IEEE-Floats to Floats */
-      #ifdef _LITTLE_ENDIAN
-         for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((float *)data)[i]); }
-      #endif
+	case iom_MSB_IEEE_REAL_4:  /* MSB-IEEE-Floats to Floats */
+#ifdef _LITTLE_ENDIAN
+		for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((float *)data)[i]); }
+#endif /* _LITTLE_ENDIAN */
 		format = iom_FLOAT;
 		break;
 
-	case iom_IEEE_REAL_8:      /* IEEE-Doubles to Doubles */
-      #ifdef _LITTLE_ENDIAN
-         for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((double *)data)[i]); }
-      #endif
+	case iom_LSB_IEEE_REAL_4:  /* LSB-IEEE-Floats to Floats */
+#ifndef _LITTLE_ENDIAN
+		for (i = 0 ; i < dsize ; i++) { iom_LSB4(&((float *)data)[i]); }
+#endif /* _LITTLE_ENDIAN */
+		format = iom_FLOAT;
+		break;
+
+	case iom_MSB_IEEE_REAL_8:  /* MSB-IEEE-Doubles to Doubles */
+#ifdef _LITTLE_ENDIAN
+		for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((float *)data)[i]); }
+#endif /* _LITTLE_ENDIAN */
+		format = iom_DOUBLE;
+		break;
+	
+	case iom_LSB_IEEE_REAL_8:  /* LSB-IEEE-Doubles to Doubles */
+#ifndef _LITTLE_ENDIAN
+		for (i = 0 ; i < dsize ; i++) { iom_LSB8(&((float *)data)[i]); }
+#endif /* _LITTLE_ENDIAN */
 		format = iom_DOUBLE;
 		break;
 	
@@ -557,12 +593,14 @@ iom_Eformat2Iformat(iom_edf efmt)
         ifmt = iom_INT;
         break;
 
-    case iom_IEEE_REAL_4:
+    case iom_MSB_IEEE_REAL_4:
+    case iom_LSB_IEEE_REAL_4:
     case iom_VAX_REAL_4:
         ifmt = iom_FLOAT;
         break;
 
-    case iom_IEEE_REAL_8:
+    case iom_MSB_IEEE_REAL_8:
+    case iom_LSB_IEEE_REAL_8:
     case iom_VAX_REAL_8:
         ifmt = iom_DOUBLE;
         break;

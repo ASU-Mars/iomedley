@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 #include "iomedley.h"
 #include "io_lablib3.h"
 
@@ -33,7 +37,8 @@ int
 iom_GetISISHeader(
     FILE *fp, 
     char *filename, 
-    struct iom_iheader *h, 
+    struct iom_iheader *h,
+    char *msg_file,     /* file to which the parse-messages should go */
     OBJDESC **r_obj     /* NULL allowed */
     )
 {
@@ -54,6 +59,11 @@ iom_GetISISHeader(
 
     suffix[0] = suffix[1] = suffix[2] = 0;
     suffix_size[0] = suffix_size[1] = suffix_size[2] = 0;
+
+    if (!iom_isISIS(fp)){
+        return 0;
+    }
+    
     /**
      ** Parse the label
      **/
@@ -72,6 +82,7 @@ iom_GetISISHeader(
 #endif /* _WIN32 */
     }
 #endif
+    err_file = msg_file;
 
     ob = (OBJDESC *)OdlParseLabelFptr(fp, err_file,
                                       ODL_EXPAND_STRUCTURE, 0);
@@ -290,16 +301,28 @@ iom_GetISISHeader(
 
 int
 iom_WriteISIS(
-    FILE *fp,
     char *fname,
     void *data,
     struct iom_iheader *h,
+    int force_write,
 	char *title
     )
 {
     int dsize;
     int fsize;
     char buf[1025];
+    FILE *fp = NULL;
+
+    if (!force_write && access(fname, F_OK) == 0){
+        fprintf(stderr, "File %s exists already.\n");
+        return 0;
+    }
+
+    if ((fp = fopen(fname, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                fname, strerror(errno));
+        return 0;
+    }
     
     dsize = iom_iheaderDataSize(h); /* >>> I GUESS <<< */
     fsize = dsize/512+1;
@@ -311,6 +334,8 @@ iom_WriteISIS(
     if (h->format > iom_INT) {
         fprintf(stderr, "Unable to write ISIS files with %s format.\n",
                 iom_Format2Str(h->format));
+        fclose(fp);
+        unlink(fname);
         return(0);
     }
 
@@ -334,18 +359,43 @@ iom_WriteISIS(
 	    h->size[0], h->size[1], h->size[2]);
     sprintf(buf+strlen(buf), "    CORE_ITEM_BYTES = %d\r\n", 
             iom_NBYTESI(h->format));
+
+    /* Always output native-endian data. */
+#ifdef _LITTLE_ENDIAN
+    sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
+#else
     sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
+#endif /* _LITTLE_ENDIAN */
+    
     sprintf(buf+strlen(buf), "    CORE_BASE = 0.0\r\n");
     sprintf(buf+strlen(buf), "    CORE_MULTIPLIER = 1.0\r\n");
     sprintf(buf+strlen(buf), "    CORE_NAME = RAW_DATA_NUMBERS\r\n");
     sprintf(buf+strlen(buf), "    CORE_UNIT = DN\r\n");
-    sprintf(buf+strlen(buf), "    OBSERVATION_NOTE = \"%s\"\r\n", title);
+    sprintf(buf+strlen(buf), "    OBSERVATION_NOTE = \"%s\"\r\n",
+            (title ? title : "BLANK"));
     sprintf(buf+strlen(buf), "END_OBJECT = QUBE\r\n");
     sprintf(buf+strlen(buf), "END\r\n");
     memset(buf+strlen(buf), ' ', 1024-strlen(buf));
 
+    /* write header to file */
     fwrite(buf, 1, 1024, fp);
+
+    /*
+    ** Write data to file.
+    ** We don't need to byte-swap data because it is written in
+    ** the machine's native format.
+    */
     fwrite(data, iom_NBYTESI(h->format), dsize, fp);
+
+    if (ferror(fp)){
+        fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
+                fname, strerror(errno));
+        fclose(fp);
+        unlink(fname);
+        return 0;
+    }
+    
+    fclose(fp);
 
     return(1); /* success */
 }
@@ -417,9 +467,23 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         case 4: format = iom_LSB_INT_4; break;
         }
     }
-    else if (!strcmp(q, "REAL") || !strcmp(q, "SUN_REAL")) {
+    else if (!strcmp(q, "REAL")){
         switch(item_bytes){
-        case 4: format = iom_IEEE_REAL_4; break;
+#ifdef _LITTLE_ENDIAN
+        case 4: format = iom_LSB_IEEE_REAL_4; break;
+#else /* _BIG_ENDIAN */
+        case 4: format = iom_MSB_IEEE_REAL_4; break;
+#endif /* _LITTLE_ENDIAN */
+        }
+    }
+    else if (!strcmp(q, "SUN_REAL")) {
+        switch(item_bytes){
+        case 4: format = iom_MSB_IEEE_REAL_4; break;
+        }
+    }
+    else if (!strcmp(q, "PC_REAL")){
+        switch(item_bytes){
+        case 4: format = iom_LSB_IEEE_REAL_4; break;
         }
     }
     else if (!strcmp(q, "VAX_REAL")) {

@@ -1,6 +1,8 @@
 /*********************************** vicar.c **********************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
 #include <string.h>
 #include "iomedley.h"
 
@@ -156,6 +158,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     if ((q = get_value(p, "REALFMT=")) != NULL){
         if (strncmp(q, "'VAX'", 5) == 0) realfmt = VICAR_REALFMT_VAX;
         else if (strncmp(q, "'IEEE'", 6) == 0) realfmt = VICAR_REALFMT_IEEE;
+        else if (strncmp(q, "'RIEEE'", 4) == 0) realfmt = VICAR_REALFMT_RIEEE;
     }
     else {
         /* Default REALFMT=VAX */
@@ -190,13 +193,15 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         else if (!strncmp(q, "'REAL'", 6)){
             switch(realfmt){
             case VICAR_REALFMT_VAX: format = iom_VAX_REAL_4; break;
-            case VICAR_REALFMT_IEEE: format = iom_IEEE_REAL_4; break;
+            case VICAR_REALFMT_IEEE: format = iom_MSB_IEEE_REAL_4; break;
+            case VICAR_REALFMT_RIEEE: format = iom_LSB_IEEE_REAL_4; break;
             }
         }
         else if (!strncmp(q, "'DOUB'", 6)){
             switch(realfmt){
             case VICAR_REALFMT_VAX: format = iom_VAX_REAL_8; break;
-            case VICAR_REALFMT_IEEE: format = iom_IEEE_REAL_8; break;
+            case VICAR_REALFMT_IEEE: format = iom_MSB_IEEE_REAL_8; break;
+            case VICAR_REALFMT_RIEEE: format = iom_LSB_IEEE_REAL_8; break;
             }
         }
         /* 'COMP'/'COMPLEX' - complex -- UNIMPLEMENTED */
@@ -238,18 +243,15 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
 ** Writes the given data into a vicar file. The data should
 ** be in the current machine's native-internal format.
 **
-** The output file pointer must point to an open file. The
-** file name is used for reference purpose only.
-**
 ** This operation is not desctructive on the input data.
 */
 
 int
 iom_WriteVicar(
-    FILE *fp,              /* An already opened file pointer */
     char *filename,        /* File name for reference purpose */
     void *data,            /* The data to the written out - "native" format */
-    struct iom_iheader *h  /* A header describing the data */
+    struct iom_iheader *h, /* A header describing the data */
+    int force_write        /* Overwrite existing file */
     )
 {
     char ptr[4096];     
@@ -259,9 +261,20 @@ iom_WriteVicar(
     int dim;
     int len;
     time_t t = time(0);
+    FILE *fp = NULL;
 
+    if (!force_write && access(filename, F_OK) == 0) {
+        fprintf(stderr, "File %s already exits.\n", filename);
+        return 0;
+    }
 
-    memset(ptr, ' ', sizeof(ptr));
+    if ((fp = fopen(filename, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                filename, strerror(errno));
+        return 0;
+    }
+    
+    memset(ptr, 0, sizeof(ptr));
 
     org = h->org;
     bands = iom_GetBands(h->size, org);
@@ -284,20 +297,22 @@ iom_WriteVicar(
     ** This ensures no output endian-translation.
     */
     
-    sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  ");
+    sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  ");
 #else
     /*
     ** Write high-endian output.
     ** This ensures no output endian-translation.
     */
     
-    sprintf(ptr+strlen(ptr), "HOST='SUN-SOLR'  INTFMT='HIGH' ");
+    sprintf(ptr+strlen(ptr), "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  ");
 #endif /* _LITTLE_ENDIAN */
 
+#if 0
     /*
     ** Always write IEEE-floats.
     */
     sprintf(ptr+strlen(ptr), "REALFMT='IEEE'  ");
+#endif 
     
     switch(h->format) {
     case iom_BYTE:  sprintf(ptr+strlen(ptr), "FORMAT='BYTE'  "); break;
@@ -321,6 +336,7 @@ iom_WriteVicar(
     case iom_BSQ: sprintf(ptr+strlen(ptr), "ORG='BSQ'  "); break;
     default:
         fprintf(stderr,"VICAR files support BIL, BIP, & BSQ organzations only.");
+        fclose(fp);
         return 0;
         break;
     }
@@ -385,11 +401,11 @@ iom_WriteVicar(
 
     fprintf(fp, "LBLSIZE=%-5d           ",len);
     fwrite(ptr, strlen(ptr), 1, fp);
-    fprintf(fp, "%*s", len-strlen(ptr)-24-2, " ");
+    fprintf(fp, "%*s", len-strlen(ptr)-24-2, "");
 	{
         /* zero does not change form in any-endian machine */
-		int i = 0;
-		fwrite(&i, 1, sizeof(int), fp);
+		short i = 0;
+		fwrite(&i, 1, sizeof(i), fp);
 	}
     
     /*
@@ -400,7 +416,18 @@ iom_WriteVicar(
     ** and vice-versa.
     **
     */
-    fwrite(data, iom_NBYTESI(h->format), h->size[0]*h->size[1]*h->size[2], fp);
+    fwrite(data, iom_iheaderItemBytesI(h), iom_iheaderDataSize(h), fp);
+    /* fwrite(data, iom_NBYTESI(h->format), h->size[0]*h->size[1]*h->size[2], fp); */
 
+    if (ferror(fp)){
+        fprintf(stderr, "Unable to write to file %s. Reason: %s.\n",
+                filename, strerror(errno));
+        fclose(fp);
+        unlink(filename);
+        return 0;
+    }
+
+    fclose(fp);
+    
     return(1);
 }

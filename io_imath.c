@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
 #include "iomedley.h"
 
 
@@ -24,6 +26,11 @@ iom_isIMath(FILE *fp)
 
     rewind(fp);
     fread(buf, strlen(BINARY_LABEL), 1, fp);
+
+    if (ferror(fp)){
+        perror(NULL);
+        return 0;
+    }
 	
     if (!strncasecmp(buf, BINARY_LABEL, strlen(BINARY_LABEL))) {
         return(1);
@@ -43,9 +50,8 @@ iom_GetIMathHeader(
     int  wt, ht;
 	int  transpose;
 
-	if (!(iom_isIMath(fp)))
-		return 0;
-
+    if (iom_isIMath(fp) == 0){ return 0; }
+    
     rewind(fp);
     fread(buf, strlen(BINARY_LABEL)+1, 1, fp);
     fread(&wt, sizeof(int), 1, fp);
@@ -67,7 +73,7 @@ iom_GetIMathHeader(
     h->size[0] = ht;
     h->size[1] = wt;
     h->size[2] = 1;
-    h->eformat = iom_IEEE_REAL_8;
+    h->eformat = iom_MSB_IEEE_REAL_8;
     h->format = iom_DOUBLE;
     h->org = iom_BSQ;
     h->transposed = transpose;
@@ -80,23 +86,36 @@ iom_GetIMathHeader(
 
 int
 iom_WriteIMath(
-    FILE *fp,
     char *filename,
     void *data,
-    struct iom_iheader *h
+    struct iom_iheader *h,
+    int force_write
     )
 {
     int i, j;
     double d;
 	int height, width;
+    FILE *fp = NULL;
 
- 
+    if (!force_write && access(filename, F_OK)){
+        fprintf(stderr, "File %s already exists.\n", filename);
+        return 0;
+    }
+
+    if ((fp = fopen(filename, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                filename, strerror(errno));
+        return 0;
+    }
+
+    errno = 0; /* Avoid checking for errno at every instance */
+    
     /* Write header */
     fwrite(BINARY_LABEL, strlen(BINARY_LABEL)+1, 1, fp);
 
     /* Get image width and height */
-    height = iom_GetLines(h->dim, h->org);
-    width = iom_GetSamples(h->dim, h->org);
+    height = iom_GetLines(h->size, h->org);
+    width = iom_GetSamples(h->size, h->org);
 
 #ifdef _LITTLE_ENDIAN
     /* Convert LSB -> MSB */
@@ -110,14 +129,27 @@ iom_WriteIMath(
     /* Write data. */
     for (i = 0 ; i < width ; i++) {
         for (j = 0 ; j < height ; j++) {
-            /*
-            ** IEEE reals are stored the same way in LSB & MSB
-            ** architectures.
-            */
             d = ((double *)data)[j*width+i];
+            
+#if _LITTLE_ENDIAN
+            /* Convert LSB -> MSB */
+            iom_LSB4((char *)&d);
+#endif /* _LITTLE_ENDIAN */
+            
             fwrite(&d, 8, 1, fp);
         }
     }
+
+    if (ferror(fp)){ /* Catch all write errors here. */
+        fprintf(stderr, "Error writing file %s. Reason: %s.\n",
+                filename, strerror(errno));
+        fclose(fp);
+        unlink(filename);
+        
+        return 0;
+    }
+    
+    fclose(fp);
 
     return(1);
 }

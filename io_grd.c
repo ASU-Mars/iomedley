@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 #include "iomedley.h"
 
 /**
@@ -61,7 +66,7 @@ iom_GetGRDHeader(
 
     iom_init_iheader(h);
 
-    if (iom_isGRD(fp) == 0){
+    if (!iom_isGRD(fp)){
       return 0;
     }
     
@@ -86,8 +91,8 @@ iom_GetGRDHeader(
     iom_MSB4((char *)&grd->nz);
 #endif /* _LITTLE_ENDIAN */
     
-    fprintf(stderr, "GRD file -");
-    fprintf(stderr, "Title: %56.56s, program: %8.8s\n", grd->id, grd->pgm);
+    fprintf(stderr, "GRD file - ");
+    fprintf(stderr, "Title: %s, program: %s\n", grd->id, grd->pgm);
     fprintf(stderr, "Size: %dx%d [%d]\n", grd->ncol, grd->nrow, grd->nz);
     fprintf(stderr, "X,Y: %f,%f\tdx,dy: %f,%f\n", 
             grd->xo,grd->yo,grd->dx,grd->dy);
@@ -98,10 +103,12 @@ iom_GetGRDHeader(
     h->size[0] = grd->ncol;
     h->size[1] = grd->nrow;
     h->size[2] = grd->nz;
-    h->eformat = iom_IEEE_REAL_4;
+    h->eformat = iom_MSB_IEEE_REAL_4;
     h->format = iom_FLOAT;
     h->org = iom_BSQ;
-    h->title = strdup(grd->id);
+    
+    /* iom_iheader does not have h->title */
+    /* h->title = strdup(grd->id); */
 
 	return(1);
 }
@@ -115,40 +122,54 @@ iom_GetGRDHeader(
 
 int
 iom_WriteGRD(
-    FILE *fp,
     char *fname,
     void *data,
     struct iom_iheader *h,
+    int force_write,
     char *title,
     char *pgm
     )
 {
-    struct GRD *grd;
+    struct GRD *grd = NULL;
     char buf[256];
     int size;
     int x,y,z;
-    float *fptr;
-    int   *iptr;
-    short *sptr;
-    char  *bptr;
-    double *dptr;
+    float *fptr = (float *)data;
+    int   *iptr = (int *)data;
+    short *sptr = (short *)data;
+    char  *bptr = (char *)data;
+    double *dptr = (double *)data;
     int i, j;
     float f;
+    FILE *fp = NULL;
 
+    if (!force_write && access(fname, F_OK) == 0){
+        fprintf(stderr, "File %s already exists.\n", fname);
+        return 0;
+    }
+
+    if ((fp = fopen(fname, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                fname, strerror(errno));
+        return 0;
+    }
+    
     grd = (struct GRD *)buf;
 
-    strcpy(grd->id, title);
+    strcpy(grd->id, (title ? title : "default"));
     sprintf(grd->pgm, "%-8s", pgm);
     
-    x = grd->ncol = iom_GetSamples(h->dim, h->org);
-    y = grd->nrow = iom_GetLines(h->dim, h->org);
-    z = grd->nz = iom_GetBands(h->dim, h->org);
+    x = grd->ncol = iom_GetSamples(h->size, h->org);
+    y = grd->nrow = iom_GetLines(h->size, h->org);
+    z = grd->nz = iom_GetBands(h->size, h->org);
     
     grd->xo = grd->yo = 0.0;
     grd->dx = grd->dy = 1.0;
 
     if (z != 1) {
-        fprintf(stderr, "Cannot write GRD files with more than 1 band");
+        fprintf(stderr, "Cannot write GRD files with more than 1 band.\n");
+        fclose(fp);
+        unlink(fname);
         return 0;
     }
     
@@ -172,26 +193,39 @@ iom_WriteGRD(
 #endif /* _LITTLE_ENDIAN */
 
 
-    fptr = (float *)data;
     for (i = 0 ; i < y ; i++) {
         fwrite(&size, 1, sizeof(int), fp);
         fwrite("\0\0\0\0", 1, 4, fp);
         for (j = 0 ; j < x ; j++) {
             switch(h->format){
-            case iom_BYTE:   f = (float)bptr[i*x]; break;
-            case iom_SHORT:  f = (float)sptr[i*x]; break;
-            case iom_INT:    f = (float)iptr[i*x]; break;
-            case iom_FLOAT:  f =        fptr[i*x]; break;
-            case iom_DOUBLE: f = (float)dptr[i*x]; break;
+            case iom_BYTE:   f = (float)bptr[j+i*x]; break;
+            case iom_SHORT:  f = (float)sptr[j+i*x]; break;
+            case iom_INT:    f = (float)iptr[j+i*x]; break;
+            case iom_FLOAT:  f =        fptr[j+i*x]; break;
+            case iom_DOUBLE: f = (float)dptr[j+i*x]; break;
             default:
                 fprintf(stderr, "Unsupported internal file format for GRD file.\n");
                 fprintf(stderr, "See file: %s  line: %d.\n", __FILE__, __LINE__);
+				fclose(fp);
                 return 0;
             }
+#if _LITTLE_ENDIAN
+            /* LSB -> MSB */
+            iom_MSB4((char *)&f);
+#endif /* _LITTLE_ENDIAN */
             fwrite(&f, 1, sizeof(float), fp);
         }
         fwrite(&size, 1, sizeof(int), fp);
     }
-    
+
+	if (ferror(fp)){
+		fprintf(stderr, "Unable to write to %s. Reason: %s.\n",
+			fname, strerror(errno));
+		fclose(fp);
+		unlink(fname);
+		return 0;
+	}
+
+	fclose(fp);
     return 1;
 }

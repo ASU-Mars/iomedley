@@ -9,7 +9,7 @@
 ** iomedley.h should be removed from io_magic.c
 */
 
-#ifdef HAVE_LIBMAGIC
+#ifdef HAVE_LIBMAGICK
 #include "magick.h"
 #endif
 
@@ -24,15 +24,18 @@ typedef enum {
 	iom_MSB_INT_2   = 12,
 	iom_MSB_INT_4   = 14,
 
-	iom_IEEE_REAL_4 = 24,
-	iom_IEEE_REAL_8 = 28,
+	iom_MSB_IEEE_REAL_4 = 24, /* SUN REAL */
+	iom_MSB_IEEE_REAL_8 = 28, /* SUN DOUBLE */
 
-	iom_VAX_INT     = 32,
-	iom_VAX_REAL_4  = 34,
-	iom_VAX_REAL_8  = 38
+	iom_LSB_IEEE_REAL_4 = 34, /* PC REAL */
+	iom_LSB_IEEE_REAL_8 = 38, /* PC DOUBLE */
+    
+	iom_VAX_INT     = 42,
+	iom_VAX_REAL_4  = 44,
+	iom_VAX_REAL_8  = 48
 } iom_edf;             /* daVinci I/O external data formats */
 
-#define iom_NBYTES(ef) ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef))))
+#define iom_NBYTES(ef) ((ef) > 40 ? ((ef) - 40) : ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef)))))
 
 
 typedef enum {
@@ -76,45 +79,44 @@ extern char *iom_ORG2STR[];
 
 
 struct iom_iheader {
-    int dptr;			/* offset in bytes to first data value    */
-    int prefix[3];		/* size of prefix data (bytes)            */
-    int suffix[3];		/* size of suffix data (bytes)            */
-
-    int size[3];		/* size of data (pixels)                  */
-
-	/* Sub-select relavant.                                       */
-    int s_lo[3];        /* subset lower range (pixels)            */
-    int s_hi[3];		/* subset upper range (pixels)            */
-    int s_skip[3];		/* subset skip interval (pixels)          */
-
-	/* Set by read_qube_data() once the data read is successful.  */
-	/* It is derived from sub-selects.                            */
-    int dim[3];			/* final dimension size */
-
-    int corner;          /* size of 1 whole plane */
-
-    int byte_order;		/* byteorder of data                      */
-
-	iom_edf eformat;   /* extrnal format of data                 */
-						/*   -- comes from iom_edf enum above    */
-                        /* this is what the file says it has      */
-
-    int format;			/* data format (INT, FLOAT, etc)          */
-						/*   -- comes from iom_idf enum above    */
-                        /* this is what read_qube_data() will return */
+    int dptr;           /* offset in bytes to first data value     */
+    int prefix[3];      /* size of prefix data (bytes)             */
+    int suffix[3];      /* size of suffix data (bytes)             */
     
-	int transposed;     /* IMath data is transposed               */
+    int size[3];        /* size of data (pixels)                   */
+    
+	/* Sub-select relavant.                                        */
+    int s_lo[3];        /* subset lower range (pixels)             */
+    int s_hi[3];        /* subset upper range (pixels)             */
+    int s_skip[3];      /* subset skip interval (pixels)           */
+    
+	/* Set by read_qube_data() once the data read is successful.   */
+	/* It is derived from sub-selects.                             */
+    int dim[3];	        /* final dimension size                    */
+    
+    int corner;         /* size of 1 whole plane */
+    
+    int byte_order;	    /* byteorder of data                       */
+    
+    iom_edf eformat;    /* extrnal format of data                  */
+                        /*   -- comes from iom_edf enum above      */
+                        /* this is what the file says it has       */
+    
+    int format;         /* data format (INT, FLOAT, etc)           */
+    /*   -- comes from iom_idf enum above    */
+                        /* this is what read_qube_data() returns   */
+    
+	int transposed;     /* IMath data is transposed                */
 
-    int org;			/* data organization                      */
+    int org;            /* data organization                       */
 
-    float gain, offset;	/* data multiplier and additive offset    */
+    float gain, offset; /* data multiplier and additive offset     */
 
-	char *data;         /* non-NULL if all of the image is loaded */
+	char *data;         /* non-NULL if all of the image is loaded  */
 
-    char *ddfname;      /* detached data-file name (if any)       */
-                        /* see io_isis.c                          */
+    char *ddfname;      /* detached data-file name (if any)        */
+                        /* see io_isis.c                           */
 
-    char *title;        /* non-NULL if there is title             */
 };
 
 
@@ -158,7 +160,7 @@ typedef char *iom_cptr;
 
 #define iom_LSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
 
-#endif
+#endif /* _LITTLE_ENDIAN */
 
 
 
@@ -172,6 +174,11 @@ typedef char *iom_cptr;
 */
 int iom_iheaderDataSize(struct iom_iheader *h);
 
+/*
+** Returns the number of bytes per data item for the internal
+** data format stored in the iom_iheader "h".
+*/
+int iom_iheaderItemBytesI(struct iom_iheader *h);
 
 
 int iom_is_compressed(FILE * fp);
@@ -206,35 +213,29 @@ int iom_isENVI(FILE *fp);
 
 int iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetIMathHeader(FILE *fp, char *fname, struct iom_iheader *h);
-int iom_GetISISHeader(FILE *fp, char *fname, struct iom_iheader *h, OBJDESC **r_obj);
+int iom_GetISISHeader(FILE *fp, char *fname, struct iom_iheader *h, char *msg_file, OBJDESC **r_obj);
 int iom_GetGRDHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetGOESHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetAVIRISHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 int iom_GetENVIHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 
 /*
-** The following functions do not support data-retrievel
-** using read_qube_data(). LoadGFXHeader() doesn't even support
-** loading of the header by itself either.
-**
+** The following functions do not support reading data cubes
+** from them.
 ** Data for these files is loaded from the file while loading
 ** the header. It is available through the _iheader.data field.
 ** This data block is allocated using malloc(). It is the
 ** caller's responsiblity to free it when it is no longer in
-** use any more.
+** use any more by issuing cleanup_iheader().
+**
+** Data from these files can still be read by using
+** read_qube_data() which knows how to read from data attached
+** to _iheader.data.
 **
 */
 
 int iom_GetPNMHeader(FILE *fp, char *fname, struct iom_iheader *h);
-int iom_GetGFXHeader(char *fname, struct iom_iheader *h);
-
-/*
-** Some functions that higher level routines may use.
-*/
-#ifdef HAVE_LIBMAGIC
-Image *ToMiff(char *data, int x, int y, int z);
-int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_data);
-#endif
+int iom_GetGFXHeader(FILE *fp, char *fname, struct iom_iheader *h);
 
 /*
 ** WriteXXXX() take an already opened output file's pointer.
@@ -248,13 +249,14 @@ int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_da
 ** format and the current machine's endian-inclination.
 */
 
-int iom_WriteIMath(FILE *fp, char *fname, void *data, struct iom_iheader *h);
-int iom_WriteISIS(FILE *fp, char *fname, void *data, struct iom_iheader *h, char *title);
-int iom_WritePNM(FILE *fp, char *fname, void *data, struct iom_iheader *h);
-int iom_WriteGFXImage(void *data, int x, int y, int z, char *filename, char *GFX_type);
-int iom_WriteGRD(FILE *fp, char *fname, void *data, struct iom_iheader *h, char *title, char *pgm);
-int iom_WriteVicar(FILE *fp, char *filename, void *data, struct iom_iheader *h);
-
+int iom_WriteIMath(char *fname, void *data, struct iom_iheader *h, int force_write);
+int iom_WriteERS(char *fname, void *data, struct iom_iheader *h, int force_write);
+int iom_WriteVicar(char *filename, void *data, struct iom_iheader *h, int force_write);
+int iom_WritePNM(char *fname, void *data, struct iom_iheader *h, int force_write);
+int iom_WriteISIS(char *fname, void *data, struct iom_iheader *h, int force_write, char *title);
+int iom_WriteGRD(char *fname, void *data, struct iom_iheader *h, int force_write, char *title, char *pgm);
+int iom_WriteGFXImage(char *fname, void *data, struct iom_iheader *h, int force_write, char *GFX_type);
+int iom_WriteRaw(char *fname, void *data, struct iom_iheader *h, int force_write);
 
 
 /*
@@ -262,6 +264,8 @@ int iom_WriteVicar(FILE *fp, char *filename, void *data, struct iom_iheader *h);
 */
 
 void iom_init_iheader(struct iom_iheader *h);
+
+
 
 /*
 ** MergeHeaderAndSlice()
@@ -363,6 +367,20 @@ void iom_long_byte_swap(unsigned char from[4], unsigned char to[4]);
 
 
 int iom_Eformat2Iformat(iom_edf efmt);
+
+
+/*
+** THE FOLLOWING FUNCTIONS SHOULD BE MOVED TO THEIR OWN IO_XXXX.H
+** FILES ONCE THE MERGE WITH IOMEDLEY IS DONE.
+*/
+
+/*
+** Some functions that higher level routines may use.
+*/
+#ifdef HAVE_LIBMAGICK
+Image *iom_ToMiff(char *data, int x, int y, int z);
+int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_data);
+#endif /* HAVE_LIBMAGICK */
 
 
 
