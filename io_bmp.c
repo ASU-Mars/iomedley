@@ -780,6 +780,7 @@ int iom_WriteBMP(char *filename,
       /* iom__ConvertToBIP allocates memory, don't forget to free it! */
       if (!iom__ConvertToBIP(indata, h, &data)) 
 	{
+	  free(data);
 	  return 0;
 	}
     }
@@ -869,7 +870,8 @@ int iom_WriteBMP(char *filename,
   if (nbits ==  8) writeBMP8 (fp, data, x, y);
   else if (nbits == 24) writeBMP24(fp, data, x, y);
 
-
+  free(data);
+  fclose(fp);
 #ifndef VMS
   if (FERROR(fp)) return -1;
 #else
