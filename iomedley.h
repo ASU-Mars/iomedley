@@ -113,7 +113,7 @@ struct iom_iheader {
     int prefix[3];      /* size of prefix data (bytes)             */
     int suffix[3];      /* size of suffix data (bytes)             */
     
-    int size[3];        /* size of data (pixels)                   */
+    int size[3];        /* dimension of file data (pixels) (org-order)  */
     
 	/* Sub-select relavant.                                        */
     int s_lo[3];        /* subset lower range (pixels)             */
@@ -122,11 +122,11 @@ struct iom_iheader {
     
 	/* Set by read_qube_data() once the data read is successful.   */
 	/* It is derived from sub-selects.                             */
-    int dim[3];	        /* final dimension size                    */
+    int dim[3];	        /* sub-selected (or final dimension) (pixels) (org-order) */
     
     int corner;         /* size of 1 whole plane */
     
-    int byte_order;	    /* byteorder of data                       */
+    int byte_order;	    /* byteorder of data - don't use                 */
     
     iom_edf eformat;    /* extrnal format of data                  */
                         /*   -- comes from iom_edf enum above      */
@@ -272,6 +272,19 @@ int iom_GetGFXHeader(FILE *fp, char *fname, struct iom_iheader *h);
 */
 
 /*
+** Unified header loader.
+**
+** Loads iom_iheader by reading the file header. Data items loaded
+** include the size and external-format of data. A loaded iom_header can be
+** used to read data from the file. The actual read is done via
+** read_qube_data(). If a subsection of the raster qube is required
+** one must call iom_MergeHeaderAndSlice() before calling
+** read_qube_data().
+*/
+int iom_LoadHeader(FILE *fp, char *fname, struct iom_iheader *header);
+
+
+/*
 ** WriteXXXX() take an already opened output file's pointer.
 ** The file name is for informational purposes only.
 **
@@ -304,31 +317,49 @@ void iom_init_iheader(struct iom_iheader *h);
 
 
 /*
-** MergeHeaderAndSlice()
+** SetSliceInHeader() / MergeHeaderAndSlice()
 **
-** Merges the user specified data cube selections in "s" into
-** the header "h". The header "h" can be passed to functions
-** like read_qube_data() to read a data slice.
+** Merges sub-selection (subsetting/slicing) info
+** into the header. So that a succeeding read_qube_data()
+** returns the subset data only.
+**
+** The slice is passed in as an iom_iheader with the following
+** fields set appropriately: s_lo, s_hi, and s_skip .
+**
+** When the iom_iheader is initially loaded from a raster qube
+** file, a call to read_qube_data() would result in the entire
+** raster to be returned. This function is used to sub-select
+** and return a smaller block of data. The sub-selection
+** information is attached to the iom_iheader loaded from the
+** file (this is due to historic reasons). The slice dimension
+** indices are 1-based (i.e. first element is 1 as compared to
+** C-arrays which start at 0).
+**
+** The slice dimensions are specified in bsq. However, they get
+** stored in "h" in org-order.
 */
 void iom_MergeHeaderAndSlice(struct iom_iheader *h, struct iom_iheader *s);
+void iom_SetSliceInHeader(struct iom_iheader *h, struct iom_iheader *s);
+
+/*
+** ClearSliceInHeader()
+**
+** Clears the slice section of the header thus the next
+** read_qube_data() will return the entire image.
+*/
+void iom_ClearSliceInHeader(struct iom_iheader *h);
 
 
 /*
 ** detach_iheader_data()
 **
-** Remove the data associated with the iom_iheader structure (if any)
-** and return it.
+** Remove the data associated with the _iheader structure (if any)
+** and return it. Once the memory resident data is detached one
+** must not call read_qube_data(). One can still call
+** iom_cleanup_iheader() on the resulting iom_iheader.
 */
 void *iom_detach_iheader_data(struct iom_iheader *h);
 
-/*
-** supports_read_qube_data()
-**
-** Returns true if the header loaded suggests usage of
-** read_qube_data() to read the data from the actual
-** file.
-*/
-int iom_supports_read_qube_data(struct iom_iheader *h);
 
 
 /*
@@ -354,14 +385,27 @@ int iom_iheaderDataSize(struct iom_iheader *h);
 */
 void iom_PrintImageHeader(FILE *stream, char *fname, struct iom_iheader *header);
 
-/*
-** read_qube_data()
-**
-** Actually reads the data from the specified file for which
-** the header has already been loaded in "h". Use with only
-** those formats which support read_qube_data().
-**
-*/
+/**
+ ** read_qube_data() - generalized cube reader
+ **
+ ** In order to read data from a raster/qube, one must have the
+ ** data file's header loaded already. This is done using the
+ ** iom_LoadHeader(). Such a header will cause read_qube_data()
+ ** to read the entire raster/qube.
+ ** 
+ ** If one desires to read a portion/slice/sub-selection of the
+ ** data instead, one must call iom_SetSliceInHeader() before
+ ** calling read_qube_data().
+ **
+ ** Data is returned as a malloc'ed memory block which must be
+ ** freed by the caller. It is in the org-order and not in bsq order.
+ **
+ ** The iom_iheader can be reused by setting a different slice
+ ** or by clearing the slice altogether.
+ **
+ ** When the user is done with an iom_iheader, it must be disposed
+ ** off properly by calling iom_cleanup_iheader().
+ **/
 void *iom_read_qube_data(int fd, struct iom_iheader *h);
 
 void *iom_ReadImageSlice(FILE *fp, char *fname, struct iom_iheader *slice);

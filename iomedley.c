@@ -16,6 +16,10 @@
 #include "iomedley.h"
 
 
+/**
+ ** Indices at which X,Y & Z (or Samples, Lines & Bands)
+ ** dimensions end up at.
+ **/
 int iom_orders[3][3] = {
 	{ 0,1,2 },
 	{ 0,2,1 },
@@ -130,6 +134,8 @@ iom_init_iheader(struct iom_iheader *h)
 		h->prefix[i] = 0;
 		h->suffix[i] = 0;
 	}
+    
+    h->corner = 0;
 }
 
 
@@ -138,7 +144,9 @@ iom_init_iheader(struct iom_iheader *h)
 ** detach_iheader_data()
 **
 ** Remove the data associated with the _iheader structure (if any)
-** and return it.
+** and return it. Once the memory resident data is detached one
+** must not call read_qube_data(). One can still call
+** iom_cleanup_iheader() on the resulting iom_iheader.
 */
 
 void *
@@ -163,7 +171,7 @@ iom_detach_iheader_data(struct iom_iheader *h)
 ** read_qube_data() to read the data from the actual
 ** file.
 */
-int
+static int
 iom_supports_read_qube_data(struct iom_iheader *h)
 {
     return (h->data == NULL);
@@ -216,7 +224,16 @@ iom_iheaderItemBytesI(struct iom_iheader *h)
 }
 
 
-
+/*
+** Unified header loader.
+**
+** Loads iom_iheader by reading the file header. Data items loaded
+** include the size and external-format of data. A loaded iom_header can be
+** used to read data from the file. The actual read is done via
+** read_qube_data(). If a subsection of the raster qube is required
+** one must call iom_MergeHeaderAndSlice() before calling
+** read_qube_data().
+*/
 int
 iom_LoadHeader(
 	FILE *fp,     /* File Pointer to "fname" or uncompressed "fname" */
@@ -250,6 +267,10 @@ iom_LoadHeader(
 	** until it is explicitly freed.
 	*/
 	if (!success) success = iom_GetPNMHeader(fp, fname, header);
+    if (!success) success = iom_GetJPEGHeader(fp, fname, header);
+    if (!success) success = iom_GetGIFHeader(fp, fname, header);
+    if (!success) success = iom_GetPNGHeader(fp, fname, header);
+    if (!success) success = iom_GetTIFFHeader(fp, fname, header);
 
 	return success;
 }
@@ -265,7 +286,7 @@ iom_PrintImageHeader(
 	fprintf(stream, "Image %s is %s, %s %dx%dx%d\n", 
 			(fname == NULL ? "": fname),
 			iom_Org2Str(header->org),
-			iom_Format2Str(header->format),
+			iom_EFormat2Str(header->eformat),
 			iom_GetSamples(header->size,header->org),
 			iom_GetLines(header->size,header->org),
 			iom_GetBands(header->size,header->org));
@@ -274,18 +295,33 @@ iom_PrintImageHeader(
 
 
 /*
-** MergeHeaderAndSlice()
+** SetSliceInHeader() / MergeHeaderAndSlice()
 **
 ** Merges sub-selection (subsetting/slicing) info
 ** into the header. So that a succeeding read_qube_data()
 ** returns the subset data only.
+**
+** The slice is passed in as an iom_iheader with the following
+** fields set appropriately: s_lo, s_hi, and s_skip .
+**
+** When the iom_iheader is initially loaded from a raster qube
+** file, a call to read_qube_data() would result in the entire
+** raster to be returned. This function is used to sub-select
+** and return a smaller block of data. The sub-selection
+** information is attached to the iom_iheader loaded from the
+** file (this is due to historic reasons). The slice dimension
+** indices are 1-based (i.e. first element is 1 as compared to
+** C-arrays which start at 0).
+**
+** The slice dimensions are specified in bsq. However, they get
+** stored in "h" in org-order.
 */
 
 void
-iom_MergeHeaderAndSlice(
+iom_SetSliceInHeader(
 	struct iom_iheader *h, /* header from the image file (h <- s) */
 	struct iom_iheader *s  /* user specified slice */
-	)
+    )
 {
 	int i, j;
 	int org;
@@ -303,16 +339,59 @@ iom_MergeHeaderAndSlice(
             if (s->s_lo[i] > 0) h->s_lo[j] = s->s_lo[i];
             if (s->s_hi[i] > 0) h->s_hi[j] = s->s_hi[i];
             if (s->s_skip[i] > 0) h->s_skip[j] = s->s_skip[i];
-            if (s->prefix[i] > 0) h->prefix[j] = s->prefix[i];
-            if (s->suffix[i] > 0) h->suffix[j] = s->suffix[i];
         }
+    }
+}
+
+void
+iom_MergeHeaderAndSlice(
+	struct iom_iheader *h, /* header from the image file (h <- s) */
+	struct iom_iheader *s  /* user specified slice */
+	)
+{
+    iom_SetSliceInHeader(h, s);
+}
+
+
+/*
+** ClearSliceInHeader()
+**
+** Clears the slice section of the header thus the next
+** read_qube_data() will return the entire image.
+*/
+void
+iom_ClearSliceInHeader(
+    struct iom_iheader *h
+    )
+{
+    int i;
+    for(i = 0; i < 3; i++){
+        h->s_lo[i] = h->s_hi[i] = h->s_skip[i] = 0;
     }
 }
 
 
 
 /**
- ** read_qube_data() - generalized cube input routines
+ ** read_qube_data() - generalized cube reader
+ **
+ ** In order to read data from a raster/qube, one must have the
+ ** data file's header loaded already. This is done using the
+ ** iom_LoadHeader(). Such a header will cause read_qube_data()
+ ** to read the entire raster/qube.
+ ** 
+ ** If one desires to read a portion/slice/sub-selection of the
+ ** data instead, one must call iom_SetSliceInHeader() before
+ ** calling read_qube_data().
+ **
+ ** Data is returned as a malloc'ed memory block which must be
+ ** freed by the caller. It is in the org-order and not in bsq order.
+ **
+ ** The iom_iheader can be reused by setting a different slice
+ ** or by clearing the slice altogether.
+ **
+ ** When the user is done with an iom_iheader, it must be disposed
+ ** off properly by calling iom_cleanup_iheader().
  **/
 
 void *
@@ -351,43 +430,54 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     nbytes = iom_NBYTES(h->eformat);
 
     /**
-     ** Touch up some default values
+     ** Compute necessary sizes
      **/
     dsize = 1;
     for (i = 0; i < 3; i++) {
+        /**
+         ** If no slice is specified, make the entire raster/qube the
+         ** extent of the slice.
+         **/
         if (h->size[i] == 0) h->size[i] = 1;
         if (h->s_lo[i] == 0) h->s_lo[i] = 1;
         if (h->s_hi[i] == 0) h->s_hi[i] = h->size[i];
-	if (h->s_hi[i] > h->size[i]) h->s_hi[i]=h->size[i];
+        if (h->s_hi[i] > h->size[i]) h->s_hi[i]=h->size[i];
         if (h->s_skip[i] == 0) h->s_skip[i] = 1;  
 
         h->s_lo[i]--;           /* value is 1-N.  Switch to 0-(N-1) */
         h->s_hi[i]--;
+        /* NOTE: remember to increment the above two fields before returning */
 
+        /* compute dimensions (in pixels) of slice and hence of the output */
         dim[i] = h->s_hi[i] - h->s_lo[i] + 1;
         h->dim[i] = dim[i];
 
+        /* compute byte-sizes of planes including their prefixes and suffixes */
         d[i] = h->size[i] * nbytes + h->suffix[i] + h->prefix[i];
         if (i && (h->suffix[i] + h->prefix[i]) % nbytes != 0) {
 			if (iom_is_ok2print_warnings()){
 				fprintf(stderr, "Warning!  Prefix+suffix not divisible by pixel size\n");
 			}
         }
+
+        /* compute the size of the entire ouput block; s_skip contains stride value */
         dsize *= (dim[i] - 1) / h->s_skip[i] + 1; 
     }
     if (h->gain == 0.0)
         h->gain = 1.0;
 
     /**
-     ** compute output size, allocate memory.
+     ** alloc output data block
      **/
 
     if ((data = malloc(dsize * nbytes)) == NULL) {
 		if (iom_is_ok2print_errors()){
 			fprintf(stderr, "Unable to allocate %d bytes of memory.\n", dsize * nbytes);
 		}
+        for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
         return (NULL);
     }
+    
     /**
      ** Allocate some temporary storage space
      **/
@@ -396,6 +486,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 
     if ((p_data = malloc(plane)) == NULL) {
         free(data);
+        for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
         return (NULL);
     }
     /**
@@ -426,12 +517,16 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 				if (iom_is_ok2print_errors()){
 					fprintf(stderr, "Early EOF.\n");
 				}
-                break;
+                break; /* return partial data */
             }
         }
         else {
             /*
-            ** Otherwise, get the data from iom_iheader->data.
+            ** Otherwise, get the data from iom_iheader->data. This is the
+            ** case for a GIF/TIFF file, which has to be decoded to get access
+            ** to the data. The decoded file is attached to the "data" field
+            ** of the iom_iheader, so that it does not have to be decoded
+            ** again and again. This behaviour is historic in nature.
             */
             if (h->data == NULL){ return NULL; }
             memcpy(p_data, h->data + offset, plane);
@@ -478,6 +573,8 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         h->format = iom_byte_swap_data(data, dsize, h->eformat);
     }
 
+    for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
+    
     free(p_data);
     return (data);
 }
