@@ -23,6 +23,7 @@
 /* GIF magic number taken from Linux magic file. */
 
 #define GIF_MAGIC	"GIF8"
+#define GIF_MAGIC_LEN   4
 
 /* Prototypes. */
 
@@ -76,18 +77,18 @@ iom_isGIF(FILE *fp)
 
   /* Returns 1 if fp is a GIF file, 0 otherwise. */
 
-  unsigned char	magic[strlen(GIF_MAGIC)];
+  unsigned char	magic[GIF_MAGIC_LEN];
   int		i, c;
 
   rewind(fp);
 
-  for (i = 0; i < strlen(GIF_MAGIC); i++) {
+  for (i = 0; i < GIF_MAGIC_LEN; i++) {
     if ((c = fgetc(fp)) == EOF)
       return 0;
     magic[i] = (unsigned char) c;
   }
 
-  if (!strncmp(magic, GIF_MAGIC, strlen(GIF_MAGIC)))
+  if (!strncmp(magic, GIF_MAGIC, GIF_MAGIC_LEN))
     return 1;
   else
     return 0;
