@@ -272,6 +272,7 @@ int iom_ReadBMP (FILE *fp,
     {
       int i, cmaplen;
       
+      // printf("Loading a color map!\n");
       cmaplen = (biClrUsed) ? biClrUsed : 1 << biBitCount;
       for (i=0; i<cmaplen; i++) 
 	{
@@ -293,12 +294,18 @@ int iom_ReadBMP (FILE *fp,
       /* { bmpError(bname,"EOF reached in BMP colormap"); goto ERROR; } */
 
       // debug stuff to print out color map
-      // printf("LoadBMP:  BMP colormap:  (RGB order)\n");
+      //printf("LoadBMP:  BMP colormap:  (RGB order)\n");
       // for (i=0; i<cmaplen; i++) 
       //	{
       // 	  printf("%02x%02x%02x  ", red[i],green[i],blue[i]);
       //	}
       //       printf("\n\n");
+    }
+  
+  else 
+    {
+      *zout = 3; // rgb bands, not greyscale
+      //   printf("No Colormap needed!\n");
     }
   
   // printf("bpad %d: ", bPad);
@@ -319,6 +326,8 @@ int iom_ReadBMP (FILE *fp,
   /* width * height * # bands - rgb or grayscale? */
   *dout = (unsigned char *) calloc((size_t) *xout * *yout * *zout,
 				   (size_t) 1);
+
+  // printf("biBitCount: %d\n", biBitCount);
 
   /* load up the image, have to pass down the color map for 1, 4, and 8 bit */
   if      (biBitCount == 1) rv = loadBMP1(fp,*dout,*xout,*yout,*zout,red,blue,green);
@@ -664,32 +673,33 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int band, int comp, un
 /*******************************************/
 int loadBMP24(FILE *fp, unsigned char *data, int w, int h, int bits)
 {
-  int   i,j,padb,rv;
+  int   i,j,padb,rv, r, g, b;
   unsigned char *pp;
   
   rv = 0;
   
   padb = (4 - ((w*3) % 4)) & 0x03;  /* # of pad bytes to read at EOscanline */
-  if (bits==32) padb = 0;
-  for (i=h-1; i>=0; i--) 
-    {
-      pp = data + (i * w * 3);
-    
-      for (j=0; j<w; j++) 
-	{
-	  pp[2] = getc(fp);   /* blue */
-	  pp[1] = getc(fp);   /* green */
-	  pp[0] = getc(fp);   /* red */
-	  if(bits==32) getc(fp);
-	  pp += 3;
-	}
-
-      for (j=0; j<padb; j++) getc(fp);
-
-      rv = (FERROR(fp));
-      if (rv) break;
-    }
   
+  for (i=h-1; i>=0; i--) {
+    // printf("I: %d\n", i);
+    pp = data + (i * w * 3);
+    // printf("pp: %d\n", pp);
+    
+    for (j=0; j<w; j++) {
+      // printf("J: %d\n", j);
+      b = getc(fp);
+      g = getc(fp);
+      r = getc(fp);
+      *pp = r; pp++;
+      *pp = g; pp++;
+      *pp = b; pp++;
+    }
+
+    for (j=0; j<padb; j++) getc(fp);
+
+    rv = (FERROR(fp));
+    if (rv) break;
+  }
   return rv;
 }  
 
@@ -729,7 +739,7 @@ int iom_WriteBMP(char *filename,
     }
   
   /* Yank geometry and organization details out of iomedley header. */
-  
+  // printf("Setting up size: ");
   if (h->org == iom_BIP) 
     {
       z = h->size[0];
@@ -756,6 +766,8 @@ int iom_WriteBMP(char *filename,
 	}
       return 0;
     }
+  
+  //printf("x: %d, y: %d, z: %d\n", x, y, z);
   
   /* Convert data to BIP if not already BIP. */
   
@@ -786,39 +798,43 @@ int iom_WriteBMP(char *filename,
 	}
       return 0;
     }
-
+  
   nc = nbits = cmaplen = 0;
   if (z == 3) {  /* is F_FULLCOLOR */
     nbits = 24;
     // write out a 24-bit file
   }
-
+  
   else /* if z = 1 */
     { 
       /* figure out what to do for mono */
-      printf ("Band = 1.   Fill in Code Here\n");
-
+      // printf("Band = 1.   Fill in Code Here\n");
+      
       // Since it's grayscale, know you have 00 through ff -
       // 256 colors - write out an 8-bit file
       nbits = 8;
       cmaplen=256;
       nc = 256;
-      for (i = 0; i < 256; i++)
+      // printf("setting up graymap\n");
+      for(i = 0; i < 256; i++)
 	{
 	  graymap[i] = i;
 	}
-
+      // printf("Finished setting up graymap\n");
     }
 
   bperlin = ((x * nbits + 31) / 32) * 3;   /* # bytes written per line */
 
   putc('B', fp);  putc('M', fp);           /* BMP file magic number */
+  // printf ("Just set BM\n");
 
   /* compute filesize and write it */
   i = 14 +                /* size of bitmap file header */
       40 +                /* size of bitmap info header */
       (nc * 4) +          /* size of colormap */
       bperlin * y;        /* size of image data */
+
+  // printf("File Size: %d\n", i);
 
   putint(fp, i);
   putshort(fp, 0);        /* reserved1 */
@@ -860,7 +876,7 @@ int iom_WriteBMP(char *filename,
   if (!FERROR(fp)) return -1;
 #endif
   
-  return 0;
+  return 1;
 }
 
 
@@ -927,6 +943,10 @@ void writeBMP4(FILE *fp, unsigned char *data, int w, int h)
 /*******************************************/
 void writeBMP8(FILE *fp, unsigned char *data, int w, int h)
 {
+  // Since we are using 8 bit for greyscale, we can just assume that
+  // the value of the pixel pointer (pp) data is the grayscale value -
+  // and the grayscale value corresponds to the colormap value - 0 to 255.
+
   int   i,j,c,padw;
   unsigned char *pp;
 
@@ -934,8 +954,13 @@ void writeBMP8(FILE *fp, unsigned char *data, int w, int h)
 
   for (i=h-1; i>=0; i--) {
     pp = data + (i * w);
-
-    for (j=0; j<w; j++) putc(pc2nc[*pp++], fp);
+    for (j=0; j<w; j++) 
+      { 
+	// printf("%d\t", *pp);
+	putc(*pp, fp); 
+	pp++;
+      }
+    // printf("\n");
     for ( ; j<padw; j++) putc(0, fp);
   }
 }  
