@@ -5777,26 +5777,15 @@ char *OdlTempFname()
     char temp_str  [TB_MAXPATH + TB_MAXFNAME];
     char base_name [TB_MAXPATH + TB_MAXFNAME];
 
-    strcpy(base_name, "tmp.tmp");
-
-#ifdef SUN_UNIX
-    tmpnam(temp_str);
-    strcpy( base_name, temp_str);  /* Bug fix 11/2/94 SM                     */
-                                   /* Was:    sprintf(base_name, "~/%s.tmp", */
-                                   /*                 temp_str);             */
-#endif
-
 #if (defined( VAX) || defined( ALPHA_VMS))
     tmpnam(temp_str);
     sprintf(base_name, "sys$login:%s.tmp", temp_str);
-#endif
 
-#ifdef MAC_THINK
+#elseif defined(MAC_THINK)
+
     tmpnam(temp_str);
     sprintf(base_name, "%s.tmp", temp_str);
-#endif
-
-#ifdef MSDOS
+#elseif defined(MSDOS)
     {
         time_t t;
         t = (time_t) time(NULL);
@@ -5804,6 +5793,11 @@ char *OdlTempFname()
         base_name[8] = '\0';	/* EOS; */
         strcat(base_name, ".tmp");
     }
+#else
+    tmpnam(temp_str);
+    strcpy( base_name, temp_str);  /* Bug fix 11/2/94 SM                     */
+                                   /* Was:    sprintf(base_name, "~/%s.tmp", */
+                                   /*                 temp_str);             */
 #endif
 
     CopyString(fname, base_name)
