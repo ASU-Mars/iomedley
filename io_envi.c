@@ -1,629 +1,300 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <dirent.h>
-#endif /* _WIN32 */
+/*********************************** envi.c **********************************/
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <string.h>
-#include "io_envi.h"
-
-extern int iom_orders[3][3];
-
-void
-Load_Data_Name(struct iom_iheader *h, char *fname)
-{
-	char *p;
-#ifdef _WIN32
-	struct _finddata_t finfo;
-	long   fhand, rc;
-	struct _stat sbuf;
-#else  /* _WIN32 */
-	DIR *dirp;
-	struct dirent *dp;
-#endif /* _WIN32 */
-	char *name;
-
-	
-	p=strstr(fname,".");
-	if (p==NULL) /*problem...*/
-		return;
-
-	p++;
+#include <sys/types.h>
+#include "iomedley.h"
 
 #ifdef _WIN32
-	for(rc = fhand = _findfirst(".", &finfo); rc != -1; rc = _findnext(fhand, &finfo)){
-		name = finfo.name;
+#undef strncasecmp
+#define strncasecmp strnicmp
 #else
-	dirp = opendir(".");
-	while ((dp = readdir(dirp)) != NULL){
-		name = dp->d_name;
+#include <unistd.h>
+#include <pwd.h>
 #endif /* _WIN32 */
-		if (strncmp(name,fname,(strlen(fname)-4))==0){
-			if (strcmp(&name[strlen(name)-3],p)) {
-				h->ddfname=strdup(name);
-#ifdef _WIN32
-				_findclose(fhand);
-#else
-				closedir(dirp);
-#endif /* _WIN32 */
-				return;
-			}
-		}
-	}
-
-	fprintf(stderr,"%s the header file, couldn't find a data file with same name, different extension\n",
-				fname);
-
-#ifdef _WIN32
-	_findclose(fhand);
-#else
-	closedir(dirp);
-#endif /* _WIN32 */
-}	
 
 
+#define ENVI_MAGIC		"ENVI"
 
+/**
+ ** ENVI I/O routines
+ **
+ ** is_ENVI()  - detect ENVI magic cookie 
+ ** GetENVIHeader() - read and parse a ENVI header
+ ** LoadENVI() - Load ENVI data file
+ **/
+
+/**
+ ** This detects the magic cookie for envi files.
+ ** returns:
+ **             0: on failure
+ **             1: on success
+ **/
 int
 iom_isENVI(FILE *fp)
 {
-	char 	mcookie[256];
+    int len;
+    char buf[16];
 
-	rewind(fp);
-
-	fgets(mcookie,256,fp);
-
-	if (!(strncmp(mcookie,"ENVI",4)))
-		return(1);
-	else
-		return(0);
+    rewind(fp);
+    len = fread(buf, 1, strlen(ENVI_MAGIC), fp);
+    return (len == strlen(ENVI_MAGIC) && !strncmp(buf, ENVI_MAGIC, len));
 }
 
-int
-Envi2iheader(ENVI_Header *e, struct iom_iheader *h)
+
+/*
+** Retruns VALUE from a string of the form:
+**
+**       KEYWORD=VALUE
+**
+** where:
+**   s1 is of the form "KEYWORD="
+**   s2 is the string
+*/
+static char *
+envi_get_value(char *s1, char *s2)
 {
-	h->size[iom_orders[e->org][0]]=e->samples;
-	h->size[iom_orders[e->org][1]]=e->lines;
-	h->size[iom_orders[e->org][2]]=e->bands;
-	h->dptr=e->header_offset;
-	h->byte_order=1234;
-	h->org=e->org;
-	
-	switch(e->data_type) {
-		
-		case 1:
-			if (e->byte_order)
-				h->eformat=iom_MSB_INT_1;
-			else
-				h->eformat=iom_LSB_INT_1;
-			break;
+    char *p, *q;
+    int len;
 
-		case 2:
-		case 12:
-			if (e->byte_order)
-				h->eformat=iom_MSB_INT_2;
-			else
-				h->eformat=iom_LSB_INT_2;
-			break;
-
-		case 3:
-		case 13:
-			if (e->byte_order)
-				h->eformat=iom_MSB_INT_4;
-			else
-				h->eformat=iom_LSB_INT_4;
-			break;
-
-		case 4:
-			if (e->byte_order)
-				h->eformat=iom_MSB_IEEE_REAL_4;
-			else
-				h->eformat=iom_LSB_IEEE_REAL_4;
-			break;
-
-		case 5:
-			if (e->byte_order)
-				h->eformat=iom_MSB_IEEE_REAL_8;
-			else
-				h->eformat=iom_LSB_IEEE_REAL_8;
-			break;
-
-		default:
-			h->eformat=iom_EDF_INVALID;
-			break;
+	p = strstr(s1, s2);
+	if (p) {
+		q = p+strlen(s2);
+		while (*q == '=' || *q == ' ') q++;
+		return(q);
 	}
+
+    return(NULL);
 }
 
 
+/**
+ ** GetENVIHeader() - read and parse a envi header
+ **
+ ** This routine returns 
+ **         0 if the specified file is not a ENVI file.
+ **         1 on success
+ **/
+
 int
-iom_GetENVIHeader(FILE *fp, char *fname, 
-						struct iom_iheader *h )
-
+iom_GetENVIHeader(FILE *fp, char *fname, struct iom_iheader *h)
 {
-	
-	char label[256];
-	char dummy[10];
-	int	size;
-	int	which_label;
-	int	which_type;
-	ENVI_Header	Eh;
-	unsigned char *value_object=NULL;
+    char *p, *q;
+    int i;
+    
+    int org=-1;
+    int format=-1;
+	int offset = 0;
 
-	/* memset(h,0x0,sizeof(struct iom_iheader)); */
-	iom_init_iheader(h);
-	memset(&Eh,0x0,sizeof(ENVI_Header));
+    int size[3], suffix[3], prefix[3];
+	char buf[1024];
 
-	if (!(iom_isENVI(fp)))
-		return(0);
 
-/* As we move through the header, keywords which aren't recognized should be
-** skipped over.  Find_Label_and_Type will fail, and the flow will return to
-** Read_Label which also fail.  Read_Label will contine to read the header, line by
-** line until it encounters another label (as defined by <string> = ).  The process will
-** repeat until the header is finished
+    /**
+     **/
+
+    rewind(fp);
+
+    fread(buf, 1, 1024, fp);
+    buf[1023] = '\0';
+	if (strncmp(buf, "ENVI",4)) {
+        return(0);
+    }
+	p = buf;
+
+    size[0] =   atoi(envi_get_value(p, "samples")); /* width */
+    size[1] =   atoi(envi_get_value(p, "lines")); /* height */
+    size[2] =   atoi(envi_get_value(p, "bands")); /* depth */
+
+    suffix[0] = suffix[1] = suffix[2] = 0;
+    prefix[0] = prefix[1] = prefix[2] = 0;
+
+    if ((q = envi_get_value(p, "header offset")) != NULL) {
+		offset = atoi(q);
+	}
+
+    if ((q = envi_get_value(p, "interleave")) != NULL) {
+        if (!strncasecmp(q, "bil", 3)) org = iom_BIL;
+        if (!strncasecmp(q, "bsq", 3)) org = iom_BSQ;
+        if (!strncasecmp(q, "bip", 3)) org = iom_BIP;
+    }
+    if (org == -1) {
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has no org.", fname);
+		}
+        return(0);
+    }
+
+
+    if ((q = envi_get_value(p, "data type")) != NULL) {
+		switch(atoi(q)) {
+			case 1:	/* byte */	format = iom_MSB_INT_1; break;
+			case 2:	/* short */	format = iom_MSB_INT_2; break;
+			case 3: /* int */	format = iom_MSB_INT_4; break;
+			case 4:	/* float */ format = iom_MSB_IEEE_REAL_4; break;
+			case 5: /* double */ format = iom_MSB_IEEE_REAL_8; break;
+			case 6:	/* complex, 2x32 */
+			case 9: /* complex 2x64 */
+			case 12: /* 16-bit unsigned */
+			case 13: /* 32-bit unsigned */
+			case 14: /* 64-bit unsigned */
+			case 15: /* 64-bit unsigned long integer */
+				fprintf(stderr, "Envi format %d not supported\n", atoi(q));
+				return(0);
+		}
+	}
+
+    if ((q = envi_get_value(p, "byte order")) != NULL) {
+		if (atoi(q) == 0) {
+			/* format assumes MSB */
+			switch (format) {
+				case iom_MSB_INT_2:       format = iom_LSB_INT_2; break;
+				case iom_MSB_INT_4:       format = iom_LSB_INT_4; break;
+				case iom_MSB_IEEE_REAL_4: format = iom_LSB_IEEE_REAL_4; break;
+				case iom_MSB_IEEE_REAL_8: format = iom_LSB_IEEE_REAL_8; break;
+			}
+		} 
+	}
+
+    if (format == iom_EDF_INVALID) {
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/invalid format.", fname);
+		}
+        free(p);
+        return(0);
+    }
+
+    /**
+     ** Put together a proper structure from the read values.
+     **/
+
+    iom_init_iheader(h);
+
+    h->dptr = offset;
+    h->byte_order = 4321;       /* can this be reliably determined? */
+    h->eformat = format;
+    h->org = org;
+    h->gain = 1.0;
+    h->offset = 0.0;
+    for (i = 0 ; i < 3 ; i++) {
+        h->size[iom_orders[org][i]] = size[i];
+        h->suffix[iom_orders[org][i]] = suffix[i];
+        h->prefix[iom_orders[org][i]] = prefix[i];
+    }
+
+    return(1);
+}
+
+void
+stradd(char *ptr, char *fmt, ...) 
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void) vsprintf(ptr+strlen(ptr), fmt, ap);
+	va_end(ap);
+}
+
+
+/*
+** WriteENVI()
+**
+** Writes the given data into a envi file. The data should
+** be in the current machine's native-internal format.
+**
+** This operation is not desctructive on the input data.
 */
 
-	while(!(feof(fp))){
-		if (Read_Label(fp,label)){ /*Read in the label; if the return value is zero, EOF*/
+char envi_header_init[] =  "ENVI\n"
+                           "description = { davinci product }\n"
+						   "file type = ENVI standard\n"
+						   "header offset = 0     \n";
 
-			if(Find_Label_and_Type(label,&which_label,&which_type)) {
-
-				value_object=(unsigned char *)Read_Value[which_type](fp,&size);
-
-/*Added check for standard type*/
-
-				if (!(strcmp(label,"file type"))){
-					if (strcmp((char *)value_object,"ENVI Standard"))
-						return(0);
-				}
-			
-				else
-					Assign_Value(which_label,(void *) value_object,size,&Eh);
-
-				free(value_object);
-			}
-		}
-	}
-
-	/*Okay, so now we have the FullHeader loaded into Eh...now we
-	** need to figure out the data file's filename...say that 3 times fast!*/
+int
+iom_WriteENVI(
+    char *filename,        /* File name for reference purpose */
+    void *data,            /* The data to the written out - "native" format */
+    struct iom_iheader *h, /* A header describing the data */
+    int force_write        /* Overwrite existing file */
+    )
+{
+    char ptr[4096], tbuf[64];
+    FILE *fp = NULL;
+	int org;
 	
-	Envi2iheader(&Eh,h);
+	int x, y, z;
 
-	Load_Data_Name(h,fname);
+    if (!force_write && access(filename, F_OK) == 0) {
+        fprintf(stderr, "File %s already exits.\n", filename);
+        return 0;
+    }
 
-	return(1);
-}
+    if ((fp = fopen(filename, "wb")) == NULL){
+        fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                filename, strerror(errno));
+        return 0;
+    }
+    
+    memset(ptr, 0, sizeof(ptr));
+	stradd(ptr, envi_header_init);
 
+    org = h->org;
+	x = iom_GetSamples(h->size, org);
+	y = iom_GetLines(h->size, org);
+	z = iom_GetBands(h->size, org);
 
-int  	Read_Label(FILE *fp,char *label)
-{
-	int i=0;
-	while ((label[i]=(char)fgetc(fp))!='=' && i< 256 && !(feof(fp)) ){
-		if (label[i]=='\n' || label[i]=='\r') /*End of the line without an ='s means we're not at the start of a label*/
-			break;
-		i++;
+	stradd(ptr, "samples = %d\n", x);
+	stradd(ptr, "lines = %d\n", y);
+	stradd(ptr, "bands = %d\n", z);
+
+    switch(h->format) {
+		case iom_BYTE:  stradd(ptr,  "data type = 1\n"); break;
+		case iom_SHORT: stradd(ptr,  "data type = 2\n"); break;
+		case iom_INT:   stradd(ptr,  "data type = 3\n"); break;
+		case iom_FLOAT: stradd(ptr,  "data type = 4\n"); break;
+		case iom_DOUBLE: stradd(ptr,  "data type = 5\n"); break;
 	}
 
-	if (feof(fp))
-		return(0);
+#ifdef WORDS_BIGENDIAN
+	stradd(ptr, "byte order = 1\n");
+#else /* little endian */
+	stradd(ptr, "byte order = 0\n");
+#endif /* WORDS_BIGENDIAN */
 
-	if (label[i]=='\n' || label[i]=='\r')
-		return(0);
+    switch(h->org) {
+		case iom_BIL: stradd(ptr, "interleave = bil\n"); break;
+		case iom_BIP: stradd(ptr, "interleave = bip\n"); break;
+		case iom_BSQ: stradd(ptr, "interleave = bsq\n"); break;
+    }
 
-	if (i>=256) /*This would mean a label that is greater than 255 character...no such thing*/
-		return(0);
 
-	/*Okay, now i is sitting on the index holding the =
-		we want to back up to the nearest non-whitespace character*/
+	sprintf(tbuf, "%d", strlen(ptr));
+/*	                     01234567890123456 */
+	strncpy(strstr(ptr, "header offset = 0")+16, tbuf, strlen(tbuf));
+    fwrite(ptr, strlen(ptr), 1, fp);
 
-	i--; /*get off the = */
+    /*
+    ** Write Data
+    **
+    ** This works here because we never write non-native data.
+    ** i.e. we never write big-endian data on a little machine
+    ** and vice-versa.
+    **
+    */
+    fwrite(data, iom_iheaderItemBytesI(h), iom_iheaderDataSize(h), fp);
 
-	while (label[i]==' ' && i > 0)
-		i--;
-
-	if (i==0) { /*This would be VERY bad*/
-		fprintf(stderr,"I'm lost!!! Bailing!\n");
-		exit(0);
-	}
-
-	/*Now i is the index of the first non-white space
-		so we step ahead by one, and set it to NULL to
-		cap the string*/
-
-	i++;
-
-	label[i]='\0';
-
-	return(1);
-
-}
-
-int	Find_Label_and_Type(char *label,int *which_label, int *which_type)
-{
-	int i;
-
-	for (i=0;i<HEADER_ENTRIES;i++){
-		if (!(strcmp(label,Labels[i]))){
-			*which_label=i; /*We now exactly which header entry*/
-			*which_type=Types[i];/*And we know it's value type*/
-			return(1);
+    if (ferror(fp)){
+		if (iom_is_ok2print_sys_errors()){
+			fprintf(stderr, "Unable to write to file %s. Reason: %s.\n",
+					filename, strerror(errno));
 		}
-	}
-
-/*Hmmmm, cound't find the label...
-that's okay we'll just skip whatever it is we did find*/
-
-	return(0);
-}
-
-void	Assign_Value(int which_label,void *valueObj, int size,ENVI_Header *Eh)
-{
-	int i;
-	char *p;
-	int q;
-
-
-	switch(which_label) {
-
-	case 0:
-		Eh->samples=*((int *)valueObj);
-		break;
-
-	case 1:
-		Eh->lines=*((int *)valueObj);
-		break;
-
-	case 2:
-		Eh->bands=*((int *)valueObj);
-		break;
-
-	case 3:
-		Eh->header_offset=*((int *)valueObj);
-		break;
-
-	case 4:
-		Eh->data_type=*((int *)valueObj);
-		break;
-
-	case 5:
-		if(!(strcmp((char *)valueObj,"bsq")))
-			Eh->org=iom_BSQ;
-		else if(!(strcmp((char *)valueObj,"bil")))
-			Eh->org=iom_BIL;
-		else
-			Eh->org=iom_BIP;
-		break;
-
-	case 6:
-		Eh->byte_order=*((int *)valueObj);
-		break;
-
-	}
-}
-
-
-void * Read_Int(FILE *fp,int *size)
-{
-	/*this should be easy..*/
-
-	char in[256];
-	int	value;
-	char *valueobj;
-
-	fgets(in,256,fp);
-	value=atoi(in);
-
-	*size=1;
-
-	valueobj=malloc(sizeof(int));
-
-	memcpy(valueobj,&value,sizeof(int));
-
-	return (valueobj);
-}
-
-void * Read_Float(FILE *fp,int *size)
-{
-
-	/*this should be easy..*/
-
-	char in[256];
-	float	value;
-	char *valueobj;
-
-	fgets(in,256,fp);
-	value=atof(in);
-
-	*size=1;
-
-	valueobj=malloc(sizeof(float));
-
-	memcpy(valueobj,&value,sizeof(float));
-
-	return (valueobj);
-}
-
-void * Read_String(FILE *fp,int *size)
-{
-	/*A little trickier....*/
-
-	char input[257];
-	int  nochar=0;
-	char *valueobj;
-	int suffix;
-	char *prefix;
-	int first=1;
-	int ptr=0;
-	
-
-	*size=0;
-
-	valueobj=malloc(256);
-
-	while(!(nochar)){
-		fgets(input,256,fp);
-		suffix=0;
-		prefix=input;
-
-		/*Get rid of leading spaces in the first pass*/
-		
-		if (first) {
-			while (prefix[ptr]==' ' && ptr < 256)
-				ptr++;
-			prefix=(prefix+ptr);
-			first=0;
-		}
-
-/*Now we need to chop off the ending carridge return*/
-		suffix=strlen(prefix)-1;
-
-		while((prefix[suffix]=='\n' ||
-				prefix[suffix]=='\r') && suffix > 0)
-			suffix--;
-		
-		suffix++;
-		prefix[suffix]='\0';
-/*Done and Done*/
-
-		nochar=strlen(prefix);
-		memcpy((valueobj+(*size)),prefix,nochar);
-		(*size)+=nochar;
-		if (nochar >= 255) {/*Hmmm, could be more string*/
-			nochar=0;
-		}
-	}
-	(*size)++; /*one last space for the NULL char*/
-
-	valueobj=realloc(valueobj,(*size));
-
-	memset((valueobj+((*size)-1)),0x0,1); /*It doesn't get any nuller than this */
-
-	*size=1; /*It's really just one string*/
-
-	return(valueobj);
-}
-		
-void * Read_Many_Ints(FILE *fp,int *size)
-{
-	/*Okay, we need to parse a bunch of ints seperated by ','s
-	and stuff them in valueobj (as ints!)*/
-
-
-	int value;
-	char *valueobj;
-	char string[15];
-	int  current_size=256*sizeof(int);
-	int i=0;
-	char c;
-
-	*size=0;
-	valueobj=malloc(current_size);
-
-
-
-	/*Find the start: */
-	while (fgetc(fp)!='{')
-		;
-
-	/*Now keep reading until the end, marked by a '}' */
-	while ((c=fgetc(fp))!='}'){
-
-		/*The ',' is our delimiter */
-
-		if (c==','){
-
-			string[i]='\0';
-			i=0;
-			value=atoi(string);
-
-			/*check to make sure we still have enough room; other-wise...resize! */
-
-			if ((*size)+sizeof(int)>=current_size) { /*We're getting to big!!*/
-				current_size*=2;
-				valueobj=realloc(valueobj,current_size);
-			}
-
-			memcpy((valueobj+(*size)),&value,sizeof(int));
-			(*size)+=sizeof(int);
-
-		}
-
-		/*Keep packing the string since we're not a dilimiter*/
-		else {
-			string[i]=c;
-			i++;
-		}
-	}
-
-	/*Okay, we hit the end, now we just need to stuff in the last number,
-		resize the valueobj and return*/
-
-	string[i]='\0';
-	value=atoi(string);
-
-	if ((*size)+sizeof(int)>=current_size) { /*We're getting to big!!*/
-		current_size*=2;
-		valueobj=realloc(valueobj,current_size);
-	}
-
-	memcpy((valueobj+(*size)),&value,sizeof(int));
-	(*size)+=sizeof(int);
-
-	valueobj=realloc(valueobj,(*size));
-
-	while (fgetc(fp)!='\n') /*Chews up the rest of the line*/
-		;
-
-	(*size)/=sizeof(int); /*Now it's the number of int items*/
-
-	return (valueobj);
-}
-
-void * Read_Many_Floats(FILE *fp,int *size)
-{
-
-	/*Okay, we need to parse a bunch of floats seperated by ','s
-	and stuff them in valueobj (as floats!)*/
-
-
-	float value;
-	char *valueobj;
-	char string[35];
-	int  current_size=256*sizeof(float);
-	int i=0;
-	char c;
-
-	*size=0;
-	valueobj=malloc(current_size);
-
-
-
-	/*Find the start: */
-	while (fgetc(fp)!='{')
-		;
-
-	/*Now keep reading until the end, marked by a '}' */
-	while ((c=fgetc(fp))!='}'){
-		if (c==','){
-
-			string[i]='\0';
-			i=0;
-			value=atof(string);
-
-			if ((*size)+sizeof(float)>=current_size) { /*We're getting to big!!*/
-				current_size*=2;
-				valueobj=realloc(valueobj,current_size);
-			}
-
-			memcpy((valueobj+(*size)),&value,sizeof(float));
-			(*size)+=sizeof(float);
-
-		}
-
-		else {
-			string[i]=c;
-			i++;
-		}
-	}
-
-	/*Okay, we hit the end, now we just need to stuff in the last number,
-		resize the valueobj and return*/
-
-	string[i]='\0';
-	value=atof(string);
-
-	if ((*size)+sizeof(float)>=current_size) { /*We're getting to big!!*/
-		current_size*=2;
-		valueobj=realloc(valueobj,current_size);
-	}
-
-	memcpy((valueobj+(*size)),&value,sizeof(float));
-	(*size)+=sizeof(float);
-
-	valueobj=realloc(valueobj,(*size));
-
-	while (fgetc(fp)!='\n') /*Chews up the rest of the line*/
-		;
-
-	(*size)/=sizeof(float); 
-
-	return (valueobj);
-}
-
-void * Read_Many_Strings(FILE *fp,int *size)
-{
-
-	/*Okay, we need to parse a bunch of strings seperated by ','s
-	and stuff them in valueobj (as null-terminated strings!)*/
-
-
-	char string[1500];
-	char *valueobj;
-	int  current_size=1024; /*Eh, why not?*/
-	int i=0;
-	char c;
-	int cnt=0;
-
-	*size=0;
-	valueobj=malloc(current_size);
-
-
-
-	/*Find the start: */
-	while (fgetc(fp)!='{')
-		;
-
-
-	/*Now keep reading until the end, marked by a '}' */
-	while ((c=fgetc(fp))!='}'){
-		if (c==','){
-
-			string[i]='\0';
-			i=0;
-			cnt++;
-
-			if ((*size)+strlen(string)>=current_size) { /*We're getting to big!!*/
-				current_size*=2;
-				valueobj=realloc(valueobj,current_size);
-			}
-
-			memcpy((valueobj+(*size)),string,strlen(string)+1);
-			(*size)+=(strlen(string)+1);
-
-		}
-
-		else {
-			/* This will skip leading spaces and return 
-			**	chars which we don't want embedded in our strings!
-			*/
-			if ( !((i==0 && c==' ') || (c=='\n') || (c=='\r'))){ 
-				/* Okay, no junk...keep it.*/
-				string[i]=c;
-				i++;
-			}
-		}
-	}
-
-	/*Okay, we hit the end, now we just need to stuff in the last string,
-		resize the valueobj and return*/
-
-	string[i]='\0';
-	cnt++;
-	if ((*size)+strlen(string)>=current_size) { /*We're getting to big!!*/
-		current_size*=2;
-		valueobj=realloc(valueobj,current_size);
-	}
-
-	memcpy((valueobj+(*size)),string,strlen(string)+1);
-	(*size)+=(strlen(string)+1);
-
-	valueobj=realloc(valueobj,(*size));
-
-	while (fgetc(fp)!='\n') /*Chews up the rest of the line*/
-		;
-
-	*size=cnt; /*Set size to the number of NULL terminated strings in valueobj*/
-
-	return (valueobj);
+        fclose(fp);
+        unlink(filename);
+        return 0;
+    }
+
+    fclose(fp);
+    return(1);
 }
