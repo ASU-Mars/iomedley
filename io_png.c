@@ -501,10 +501,11 @@ iom_WritePNG(char *filename,
 
   png_write_info(png_ptr, info_ptr);
 
-#if 0
-  /* FIX: maybe? Swap bytes of 16-bit files to most significant byte first. */
-  png_set_swap(png_ptr);
-#endif  
+#ifndef WORDS_BIGENDIAN
+	if (bit_depth > 8) {
+		png_set_swap(png_ptr);
+	}
+#endif
 
   /* Setup row pointers and write image. */
 

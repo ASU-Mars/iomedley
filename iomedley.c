@@ -1070,10 +1070,10 @@ iom__ConvertToBIP(unsigned char *data,
    */
 
   unsigned char *bip_data;
-  size_t        offset;
-  unsigned char pixel;
+  size_t        offset, offset2;
   unsigned int  x, y, z;
   unsigned int  xsize, ysize, zsize;
+  unsigned int  nbytes;
 
   if (h->org == iom_BIP) {
     zsize = h->size[0];
@@ -1098,16 +1098,18 @@ iom__ConvertToBIP(unsigned char *data,
     return 0;
   }
 
-  bip_data = (unsigned char *) malloc(ysize * xsize * zsize);
+  nbytes = iom_NBYTESI(h->format);
+
+  bip_data = (unsigned char *) malloc(ysize * xsize * zsize * nbytes);
   if (bip_data == NULL) {
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %d bytes in by iom__ConvertToBIP()", xsize * ysize * zsize);
+      fprintf(stderr, "ERROR: unable to allocate %d bytes in by iom__ConvertToBIP()", xsize * ysize * zsize * nbytes);
     }
     return 0;
   }
 
   if (h->org == iom_BIP) {
-    memcpy(bip_data, data, xsize * ysize * zsize);
+    memcpy(bip_data, data, xsize * ysize * zsize * nbytes);
   } else {
     for (y = 0; y < ysize; y++) {
       for (x = 0; x < xsize; x++) {
@@ -1118,8 +1120,9 @@ iom__ConvertToBIP(unsigned char *data,
           case iom_BIL: offset = y * (xsize * zsize) + (z * xsize) + x; break;
             /* No default; other orgs already excluded above. */
           }
-          pixel = *(data + offset);
-          *(bip_data + y * (xsize * zsize) + (x * zsize) + z) = pixel;
+		  offset2 = y * (xsize * zsize) + (x * zsize) + z;
+		  memcpy((bip_data + (offset2*nbytes)), 
+		         (data + (offset*nbytes)), nbytes);
         }
       }
     }

@@ -390,6 +390,8 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   /* Set TIFF image parameters. */
 
+#define max(a,b) (a>b?a:b)
+
   x = iom_GetSamples(h->size, h->org);
   y = iom_GetLines(h->size, h->org);
 
@@ -400,6 +402,15 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp, TIFFTAG_FILLORDER, fillorder);
   TIFFSetField(tifffp, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
   TIFFSetField(tifffp, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+  TIFFSetField(tifffp,  TIFFTAG_ROWSPERSTRIP,
+              			max(1,(int)(8*1024 / TIFFScanlineSize(tifffp))));
+  TIFFSetField(tifffp,  TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+
+#ifdef WORDS_BIGENDIAN
+  TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
+#else
+  TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);
+#endif
 
   if (z == 1)
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
