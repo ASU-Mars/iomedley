@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <string.h>
 
-extern int orders[3][3];
+extern int iom_orders[3][3];
 
 void
 Load_Data_Name(struct iom_iheader *h, char *fname)
@@ -56,9 +56,9 @@ iom_isENVI(FILE *fp)
 int
 Envi2iheader(ENVI_Header *e, struct iom_iheader *h)
 {
-	h->size[orders[e->org][0]]=e->samples;
-	h->size[orders[e->org][1]]=e->lines;
-	h->size[orders[e->org][2]]=e->bands;
+	h->size[iom_orders[e->org][0]]=e->samples;
+	h->size[iom_orders[e->org][1]]=e->lines;
+	h->size[iom_orders[e->org][2]]=e->bands;
 	h->dptr=e->header_offset;
 	h->byte_order=1234;
 	h->org=e->org;

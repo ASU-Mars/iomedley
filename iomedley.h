@@ -4,13 +4,16 @@
 #include <stdio.h>
 #include "io_lablib3.h"
 
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
+
 /*
 ** Should be moved to io_magic.h and io_magic.h should be included here.
 ** iomedley.h should be removed from io_magic.c
 */
-
 #ifdef HAVE_LIBMAGICK
-#include "magick.h"
+#include <magick/magick.h>
 #endif
 
 typedef enum {

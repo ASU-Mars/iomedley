@@ -1,10 +1,11 @@
+#include "iomedley.h"
+
 #ifdef HAVE_LIBMAGICK
 #include <stdio.h>
 #include <string.h>
-#include <magick.h>
+#include <magick/magick.h>
 #include <magick/api.h>
 #include <magick/xwindows.h>
-#include "iomedley.h"
 
 
 Image *iom_ToMiff(
