@@ -296,15 +296,21 @@ iom_GetISISHeader(
 			** If the filename is different, then it's a detached label
 			*/
 			if ((p = strrchr(filename, '/')) != NULL) {
-                /*   */
-				ddfname = malloc(strlen(ddfname)+strlen(p)+2);
-				sprintf(ddfname, "%s/%s", p, ddfname);
+                char *q;
+                
+                q = calloc(strlen(ddfname)+(p-filename+1)+2, sizeof(char));
+                strncpy(q, filename, (p-filename+1));
+                strcat(q, "/"); strcat(q, ddfname);
+
+                ddfname = q;
 			} else {
 				/* no directory specified in filename, just use ddfname */
+                ddfname = strdup(ddfname);
 			}
 		  }
-          
-          if (ddfname) ddfname = strdup(ddfname);
+          else {
+              ddfname = strdup(ddfname);
+          }
           
           if (start_type == ODL_RECORD_LOCATION) {
             start = (start-1)*rlen;
