@@ -9,6 +9,10 @@
  *
  */
 
+#include "iom_config.h"
+
+#ifdef HAVE_LIBPNG
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -543,3 +547,5 @@ iom_WritePNG(char *filename,
   return 1;
 
 }
+
+#endif

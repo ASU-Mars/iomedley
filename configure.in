@@ -52,7 +52,23 @@ LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
 AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext, XShmPutImage)
-AC_CHECK_LIB(z, compress)
+AC_CHECK_LIB(z, compress, [found_libz=yes], [found_libz=no])
+
+dnl Warn the user if zlib not found
+if test "$found_libz" = "yes"; then
+	AC_DEFINE(HAVE_LIBZ)
+	AC_DEFINE(HAVE_LIBPNG)
+	libpng="libpng.a"
+	libpngdir="libpng-1.2.3"
+	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
+else
+	echo "**********************************************************************"
+	echo "*                                                                    *"
+	echo "*     Warning: zlib not found - PNG support will not be included     *"
+	echo "*                                                                    *"
+	echo "**********************************************************************"
+fi
 
 dnl Checks for library functions.
 AC_FUNC_MMAP
@@ -66,11 +82,13 @@ dnl Xsed="sed -e s/^X// "
 dnl LTLIBOBJS=`echo X"$LIBOBJS" | $Xsed -e "s,\.[^.]* ,.lo ,g;s,\.[^.]*\$,.lo,"`
 
 dnl Substitute the following additional variables
+AC_SUBST(libpng)
+AC_SUBST(libpngdir)
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
-AC_CONFIG_SUBDIRS(libjpeg libgif libtiff libpng-1.2.3)
+AC_CONFIG_SUBDIRS(libjpeg libgif libtiff $libpngdir)
 
 AC_OUTPUT(Makefile)
