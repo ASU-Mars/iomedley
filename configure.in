@@ -71,6 +71,6 @@ AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
-AC_CONFIG_SUBDIRS(libjpeg libgif libtiff)
+AC_CONFIG_SUBDIRS(libjpeg libgif libtiff libpng-1.2.3)
 
 AC_OUTPUT(Makefile)
