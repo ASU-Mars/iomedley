@@ -90,7 +90,7 @@ do
   -build=* | --build=* | --buil=* | --bui=* | --bu=*)
     build="$ac_optarg" ;;
 
-  -cache-file | --cache-file | --cache-fil | --cache-fi \
+  -C | -cache-file | --cache-file | --cache-fil | --cache-fi \
   | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
     ac_prev=cache_file ;;
   -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
