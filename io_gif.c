@@ -590,7 +590,7 @@ iom_WriteGIF(char *filename,
       fprintf(stderr, "ERROR: Unable to open file %s for write.\n", filename);
       PrintGifError();
     }
-    if (h->org != iom_BIP) {
+    if (h->org != iom_BIP && z != 1) {
       free(data);
     }
     if (z == 3 && qdata) {
@@ -601,6 +601,7 @@ iom_WriteGIF(char *filename,
         free(rgb[i]);
       }
     }
+    FreeMapObject(GIFcolormap);
     return 0;
   }
 
@@ -618,7 +619,7 @@ iom_WriteGIF(char *filename,
       fprintf(stderr, "ERROR: GIFLIB error in iom_WriteGIF()\n");
       PrintGifError();
     }
-    if (h->org != iom_BIP) {
+    if (h->org != iom_BIP && z != 1) {
       free(data);
     }
     if (z == 3 && qdata) {
@@ -629,6 +630,7 @@ iom_WriteGIF(char *filename,
         free(rgb[i]);
       }
     }
+    FreeMapObject(GIFcolormap);
     return 0;
   }
 
@@ -642,7 +644,7 @@ iom_WriteGIF(char *filename,
       fprintf(stderr, "ERROR: GIFLIB error in iom_WriteGIF()\n");
       PrintGifError();
     }
-    if (h->org != iom_BIP) {
+    if (h->org != iom_BIP && z != 1) {
       free(data);
     }
     if (z == 3 && qdata) {
@@ -653,6 +655,7 @@ iom_WriteGIF(char *filename,
         free(rgb[i]);
       }
     }
+    FreeMapObject(GIFcolormap);
     return 0;
   }
 
@@ -662,7 +665,7 @@ iom_WriteGIF(char *filename,
       fprintf(stderr, "ERROR: GIFLIB error in iom_WriteGIF()\n");
       PrintGifError();
     }
-    if (h->org != iom_BIP) {
+    if (h->org != iom_BIP && z != 1) {
       free(data);
     }
     if (z == 3 && qdata) {
@@ -680,7 +683,7 @@ iom_WriteGIF(char *filename,
 
   EGifCloseFile(gft);
 
-  if (h->org != iom_BIP) {
+  if (h->org != iom_BIP && z != 1) {
     free(data);
   }
 
