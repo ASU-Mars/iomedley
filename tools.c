@@ -75,7 +75,12 @@ list_add(LIST * list, void *ptr)
 void *
 list_copy(LIST * list, void *ptr, int size)
 {
-    return (list_add(list, (void *)memdup(ptr, size)));
+    void *p = NULL;
+
+    p = (void *)calloc(1, size);
+    if (p){ memcpy(p, ptr, size); }
+    
+    return (list_add(list, p));
 }
 
 int

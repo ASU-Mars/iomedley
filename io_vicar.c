@@ -227,3 +227,177 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     free(p);
     return(1);
 }
+
+
+/*
+** WriteVicar()
+**
+** Writes the given data into a vicar file. The data should
+** be in the current machine's native-internal format.
+**
+** The output file pointer must point to an open file. The
+** file name is used for reference purpose only.
+**
+** This operation is not desctructive on the input data.
+*/
+
+int
+iom_WriteVicar(
+    FILE *fp,              /* An already opened file pointer */
+    char *filename,        /* File name for reference purpose */
+    void *data,            /* The data to the written out - "native" format */
+    struct iom_iheader *h  /* A header describing the data */
+    )
+{
+    char ptr[4096];     
+    int rec;
+    int bands;
+    int org;
+    int dim;
+    int len;
+    time_t t = time(0);
+
+
+    memset(ptr, ' ', sizeof(ptr));
+
+    org = h->org;
+    bands = iom_GetBands(h->size, org);
+    dim = 3;
+
+    /**
+     ** If no depth, force BSQ org.
+     **/
+
+    if (bands == 1) {
+        org = iom_BSQ;
+        dim = 2;
+    }
+
+    rec = h->size[0] * iom_NBYTESI(h->format);
+
+#ifdef _LITTLE_ENDIAN
+    /*
+    ** Write low-endian output only.
+    ** This ensures no output endian-translation.
+    */
+    
+    sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  ");
+#else
+    /*
+    ** Write high-endian output.
+    ** This ensures no output endian-translation.
+    */
+    
+    sprintf(ptr+strlen(ptr), "HOST='SUN-SOLR'  INTFMT='HIGH' ");
+#endif /* _LITTLE_ENDIAN */
+
+    /*
+    ** Always write IEEE-floats.
+    */
+    sprintf(ptr+strlen(ptr), "REALFMT='IEEE'  ");
+    
+    switch(h->format) {
+    case iom_BYTE:  sprintf(ptr+strlen(ptr), "FORMAT='BYTE'  "); break;
+    case iom_SHORT: sprintf(ptr+strlen(ptr), "FORMAT='HALF'  "); break;
+    case iom_INT:   sprintf(ptr+strlen(ptr), "FORMAT='FULL'  "); break;
+    case iom_FLOAT: sprintf(ptr+strlen(ptr), "FORMAT='REAL'  "); break;
+    default:
+        fprintf(stderr, "VICAR files support bytes, shorts, ints, and floats only.");
+        return 0;
+        break;
+    }
+    
+    sprintf(ptr+strlen(ptr),
+            "TYPE='IMAGE'  BUFSIZ=%d  DIM=%d  EOL=0  RECSIZE=%d  ",
+            24576, dim, rec);
+
+
+    switch(h->org) {
+    case iom_BIL: sprintf(ptr+strlen(ptr), "ORG='BIL'  "); break;
+    case iom_BIP: sprintf(ptr+strlen(ptr), "ORG='BIP'  "); break;
+    case iom_BSQ: sprintf(ptr+strlen(ptr), "ORG='BSQ'  "); break;
+    default:
+        fprintf(stderr,"VICAR files support BIL, BIP, & BSQ organzations only.");
+        return 0;
+        break;
+    }
+
+    sprintf(ptr+strlen(ptr), "NL=%d  NS=%d  NB=%d  ",
+            iom_GetLines(h->size, h->org),
+            iom_GetSamples(h->size, h->org),
+            iom_GetBands(h->size, h->org));
+
+    if (org == iom_BSQ) {           /* done cause we may have forced bsq */
+        sprintf(ptr+strlen(ptr), "N1=%d  N2=%d  N3=%d  ",
+                iom_GetLines(h->size, h->org),
+                iom_GetSamples(h->size, h->org),
+                iom_GetBands(h->size, h->org));
+    } else {
+        sprintf(ptr+strlen(ptr), "N1=%d  N2=%d  N3=%d  ",
+                h->size[0],
+                h->size[1],
+                h->size[2]);
+    }
+
+    sprintf(ptr+strlen(ptr), "N4=0  NBB=0  NLB=0  ");
+
+    /*
+    ** BHOST, BINFMT, BREALFMT, BLTYPE and TASK are not used by
+    ** us but they are required by the standard.
+    */
+    
+#ifdef _LITTLE_ENDIAN
+    sprintf(ptr+strlen(ptr), "BHOST='PC'  BINFMT='LOW'  ");
+#else
+    sprintf(ptr+strlen(ptr), "BHOST='SUN-SOLR'  BINTFMT='HIGH'  ");
+#endif /* _LITTLE_ENDIAN */
+
+    sprintf(ptr+strlen(ptr), "BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  ");
+    
+#ifdef _WIN32
+    sprintf(ptr+strlen(ptr), "USER='%s'  ", "MSDOS");
+#else
+    sprintf(ptr+strlen(ptr), "USER='%s'  ", getpwuid(getuid())->pw_name);
+#endif
+
+    sprintf(ptr+strlen(ptr), "DAT_TIM='%24.24s'  ", ctime(&t));
+    
+    /**
+     ** compute final label size and stuff it in at the front.
+     **/
+    len = (((strlen(ptr) + 24) / rec)+1) * rec;
+
+#if 0
+    if (VERBOSE > 1) {
+        fprintf(stderr, "Writing %s: VICAR %s %dx%dx%d %d bit IMAGE\n",
+                filename,
+                iom_Org2Str(org), 
+                iom_GetSamples(h->size, h->org),
+                iom_GetLines(h->size, h->org),
+                iom_GetBands(h->size, h->org),
+                iom_NBYTESI(h->format) * 8);
+        fflush(stderr);
+    }
+#endif 
+
+    fprintf(fp, "LBLSIZE=%-5d           ",len);
+    fwrite(ptr, strlen(ptr), 1, fp);
+    fprintf(fp, "%*s", len-strlen(ptr)-24-2, " ");
+	{
+        /* zero does not change form in any-endian machine */
+		int i = 0;
+		fwrite(&i, 1, sizeof(int), fp);
+	}
+    
+    /*
+    ** Write Data
+    **
+    ** This works here because we never write non-native data.
+    ** i.e. we never write big-endian data on a little machine
+    ** and vice-versa.
+    **
+    */
+    fwrite(data, iom_NBYTESI(h->format), h->size[0]*h->size[1]*h->size[2], fp);
+
+    return(1);
+}

@@ -224,6 +224,13 @@ int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_da
 /*
 ** WriteXXXX() take an already opened output file's pointer.
 ** The file name is for informational purposes only.
+**
+** These routines take their image dimensions from iom_iheader.size[3].
+** User iom_var2iheader() to construct a proper iom_iheader for the
+** specified variable.
+**
+** These routines byte-swap the data as per the specified external
+** format and the current machine's endian-inclination.
 */
 
 int iom_WriteIMath(FILE *fp, char *fname, void *data, struct iom_iheader *h);
@@ -231,6 +238,7 @@ int iom_WriteISIS(FILE *fp, char *fname, void *data, struct iom_iheader *h, char
 int iom_WritePNM(FILE *fp, char *fname, void *data, struct iom_iheader *h);
 int iom_WriteGFXImage(void *data, int x, int y, int z, char *filename, char *GFX_type);
 int iom_WriteGRD(FILE *fp, char *fname, void *data, struct iom_iheader *h, char *title, char *pgm);
+int iom_WriteVicar(FILE *fp, char *filename, void *data, struct iom_iheader *h);
 
 
 

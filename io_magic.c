@@ -47,6 +47,12 @@ iom_GetGFXHeader(
         return 0;
     }
 
+#ifdef _LITTLE_ENDIAN
+    h->eformat = iom_LSB_BYTE;
+#else
+    h->eformat = iom_MSB_BYTE;
+#endif /* _LITTLE_ENDIAN */
+    
     h->format = iom_BYTE;
     h->org = iom_BSQ;
 
@@ -252,7 +258,7 @@ ToMiff(
 	  	image=AllocateImage(&image_info);
 
 		if (image == (Image *) NULL){
-			parse_error("Can't allocate memory for image write");
+			fprintf(stderr, "Can't allocate memory for image write");
 			return(NULL);
 		}
 
@@ -265,8 +271,8 @@ ToMiff(
  		image->packets=image->columns*image->rows;
 		image->pixels=(RunlengthPacket *) malloc(image->packets*sizeof(RunlengthPacket));
   		if (image->pixels == (RunlengthPacket *) NULL) {
-			parse_error("Can't allocate memory for image write");
-      			DestroyImage(image);
+			fprintf(stderr, "Can't allocate memory for image write");
+            DestroyImage(image);
 			return (NULL);
 		}
 	

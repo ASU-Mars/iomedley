@@ -133,6 +133,8 @@ iom_detach_iheader_data(struct iom_iheader *h)
 
 
 /*
+** >> CAUTION << This will go away.
+**
 ** supports_read_qube_data()
 **
 ** Returns true if the header loaded suggests usage of
@@ -162,7 +164,7 @@ iom_cleanup_iheader(struct iom_iheader *h)
 ** iheaderDataSize()
 **
 ** Calculates the size (in bytes) of data as the product
-** of non-zero dimension-lengths in the _iheader structure
+** of dimension-lengths in the _iheader structure
 ** and the size of each element.
 */
 int
@@ -172,7 +174,7 @@ iom_iheaderDataSize(struct iom_iheader *h)
     int dsize = 1;
     
     for(i = 0; i < 3; i++){
-	    dsize *= h->dim[i];
+	    dsize *= h->size[i];
     }
 
     return (dsize * iom_NBYTESI(h->format));
@@ -292,6 +294,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     int plane;
     int count;
     int err;
+    off_t offset; /* offset into the data to start reading from */
 
     /**
      ** data name definitions:
@@ -344,7 +347,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
      **/
 
     if ((data = malloc(dsize * nbytes)) == NULL) {
-        fprintf(stderr, "Unable to allocate memory.\n");
+        fprintf(stderr, "Unable to allocate %d bytes of memory.\n", dsize * nbytes);
         return (NULL);
     }
     /**
@@ -369,17 +372,32 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
          **/
 
         /*........label.....plane.....offset............. */
+        offset = h->dptr + (z + h->s_lo[2]) * 
+			(d[0] * h->size[1] + h->size[0] * (h->prefix[1]+h->suffix[1]) + h->corner) +
+            d[0] * h->s_lo[1];
 
-        lseek(fd, h->dptr + (z + h->s_lo[2]) * 
-			(d[0] * h->size[1] + h->size[0] * 
-			(h->prefix[1]+h->suffix[1]) + h->corner) + 
-			d[0] * h->s_lo[1], 0);
-
-
-        if ((err = read(fd, p_data, plane)) != plane) {
-            fprintf(stderr, "Early EOF");
-            break;
+        if (!h->data){
+            /*
+            ** If this file supports read_qube_data() then the image
+            ** directly from the file.
+            */
+            
+            lseek(fd, offset, 0);
+            
+            if ((err = read(fd, p_data, plane)) != plane) {
+                fprintf(stderr, "Early EOF");
+                break;
+            }
         }
+        else {
+            /*
+            ** Otherwise, get the data from iom_iheader->data.
+            */
+            if (h->data == NULL){ return NULL; }
+            memcpy(p_data, (char *)((long)h->data + offset), plane);
+        }
+
+
         for (y = 0; y < dim[1]; y += h->s_skip[1]) {
 
             /**
@@ -409,7 +427,15 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
      ** find data limits, 
      ** apply multiplier.
      **/
-	h->format = iom_byte_swap_data(data, dsize, h->eformat);
+    if (!h->data){
+        /*
+        ** If we were reading the data from the file then it may
+        ** not be byte-swapped already. However, if we were
+        ** reading it from the "data" portion of iheader then
+        ** it is already byte-swapped.
+        */
+        h->format = iom_byte_swap_data(data, dsize, h->eformat);
+    }
 
     free(p_data);
     return (data);
