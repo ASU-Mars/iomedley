@@ -96,9 +96,6 @@
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the Magick library (-lMagick).  */
-#undef HAVE_LIBMAGICK
-
 /* Define if you have the X11 library (-lX11).  */
 #undef HAVE_LIBX11
 

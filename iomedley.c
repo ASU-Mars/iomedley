@@ -250,9 +250,6 @@ iom_LoadHeader(
 	** until it is explicitly freed.
 	*/
 	if (!success) success = iom_GetPNMHeader(fp, fname, header);
-#ifdef HAVE_LIBMAGICK
-	if (!success) success = iom_GetGFXHeader(fp, fname, header);
-#endif /* HAVE_LIBMAGICK */
 
 	return success;
 }
