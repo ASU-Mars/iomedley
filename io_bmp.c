@@ -41,17 +41,13 @@
 
 /* values 'picType' can take */
 #define F_FULLCOLOR 0
-#define F_GREYSCALE 1
+#define F_GRAYSCALE 1
 #define F_BWDITHER  2
 #define F_REDUCED   3
 #define F_MAXCOLORS 4
 #define FERROR(fp) (ferror(fp) || feof(fp))
 /* MONO returns total intensity of r,g,b triple (i = .33R + .5G + .17B) */
 #define MONO(rd,gn,bl) ( ((int)(rd)*11 + (int)(gn)*16 + (int)(bl)*5) >> 5)
-
-/* Want to have 24bit output formats to match the rest of the code.
- * Easier to have defines for 24 vs 32 bit so you just have to update
- *  on place later.  32 bit values in order: 32, 8, 4, 4 */
 
 
 #define DEBUG 0
@@ -79,9 +75,9 @@ int iom_WriteBMP(char *,                    /* Filename */
 		 );
 
 /* Different read/write routines based on bits */
-int loadBMP1(FILE *, unsigned char *, int, int, unsigned char*, unsigned char*, unsigned char*);
-int loadBMP4(FILE *, unsigned char *, int, int, int, unsigned char*, unsigned char*, unsigned char*);
-int loadBMP8(FILE *, unsigned char *, int, int, int, unsigned char*, unsigned char*, unsigned char*);
+int loadBMP1(FILE *, unsigned char *, int, int, int, unsigned char*, unsigned char*, unsigned char*);
+int loadBMP4(FILE *, unsigned char *, int, int, int, int, unsigned char*, unsigned char*, unsigned char*);
+int loadBMP8(FILE *, unsigned char *, int, int, int, int, unsigned char*, unsigned char*, unsigned char*);
 int loadBMP24(FILE *, unsigned char *, int, int, int);
 void writeBMP1(FILE *, unsigned char *, int, int);
 void writeBMP4(FILE *, unsigned char *, int, int);
@@ -93,7 +89,7 @@ unsigned int getint(FILE *);
 void  putshort(FILE *, int);
 void  putint(FILE *, int);
 
-static unsigned char pc2nc[256],r1[256],g1[256],b1[256];
+static unsigned char pc2nc[256];
 
 /* Functions */
 
@@ -268,6 +264,9 @@ int iom_ReadBMP (FILE *fp,
       // printf("bpad set! %d\n");
     }
   
+  *zout = 1; // number of color bands used - 1 for grayscale, 3 for rgb
+  // assume grayscale until told otherwise
+
   /* load up colormap, if any */
   if (biBitCount!=24 && biBitCount !=32) 
     {
@@ -283,6 +282,10 @@ int iom_ReadBMP (FILE *fp,
 	    {
 	      getc(fp);
 	      bPad -= 4;
+	    }
+	  if ((*zout == 1) && ((red[i] != blue[i]) || (red[i] != green[i])))
+	    {
+	      *zout = 3; // color, not grayscale
 	    }
 	}
 
@@ -313,16 +316,15 @@ int iom_ReadBMP (FILE *fp,
     }
   /* end of color map stuff */
   
-  /* width * height * 3 bytes/pixel for color - is monochrome truly B/W or is
-   * it 2 colors? */
-  *dout = (unsigned char *) calloc((size_t) *xout * *yout * 3, 
+  /* width * height * # bands - rgb or grayscale? */
+  *dout = (unsigned char *) calloc((size_t) *xout * *yout * *zout,
 				   (size_t) 1);
 
   /* load up the image, have to pass down the color map for 1, 4, and 8 bit */
-  if      (biBitCount == 1) rv = loadBMP1(fp,*dout,*xout,*yout,red,blue,green);
-  else if (biBitCount == 4) rv = loadBMP4(fp,*dout,*xout,*yout,
+  if      (biBitCount == 1) rv = loadBMP1(fp,*dout,*xout,*yout,*zout,red,blue,green);
+  else if (biBitCount == 4) rv = loadBMP4(fp,*dout,*xout,*yout,*zout,
 					  biCompression,red, blue, green);
-  else if (biBitCount == 8) rv = loadBMP8(fp,*dout,*xout,*yout,
+  else if (biBitCount == 8) rv = loadBMP8(fp,*dout,*xout,*yout,*zout,
 					  biCompression,red, blue, green);
   else                      rv = loadBMP24(fp,*dout,*xout,*yout,
 					   biBitCount);
@@ -341,12 +343,11 @@ int iom_ReadBMP (FILE *fp,
   
   //  printf("%dx%d BMP.\n", *xout, *yout);
 
-  *zout = 3; // number of color bands used - 1 for greyscale, 3 for rgb
   return 1;
 } /* End iom_ReadBMP */
 
 /*******************************************/
-int loadBMP1(FILE *fp, unsigned char *data, int w, int h, unsigned char *red, unsigned char *blue, unsigned char *green)
+int loadBMP1(FILE *fp, unsigned char *data, int w, int h, int band, unsigned char *red, unsigned char *blue, unsigned char *green)
 {
   int   i, j, c, bitnum, padw;
   unsigned char *pp;
@@ -357,7 +358,7 @@ int loadBMP1(FILE *fp, unsigned char *data, int w, int h, unsigned char *red, un
   // printf("Width: %d, Height: %d, padded Width: %d\n", w, h, padw);
   for (i=h-1; i>=0; i--)
     {
-      pp = data + (i * w *3);
+      pp = data + (i * w * band);
       for (j=bitnum=0; j<padw; j++,bitnum++) 
 	{
 	  if ((bitnum&7) == 0) 
@@ -371,17 +372,20 @@ int loadBMP1(FILE *fp, unsigned char *data, int w, int h, unsigned char *red, un
 	      int s = (c & 0x80) ? 1 : 0;
 	      *pp = red[s];
 	      pp++;
-	      *pp = green[s];
-	      pp++;
-	      *pp = blue[s];
-	      pp++;
-	      // pp-=3;
-	      //printf("blue: %02x ", (*pp));
-	      // pp++;
-	      // printf("green: %02x ", (*pp));
-	      // pp++;
-	      // printf("red: %02x ", (*pp));
-	      // pp++;
+	      if (band == 3)
+		{
+		  *pp = green[s];
+		  pp++;
+		  *pp = blue[s];
+		  pp++;
+		  // pp-=3;
+		  //printf("blue: %02x ", (*pp));
+		  // pp++;
+		  // printf("green: %02x ", (*pp));
+		  // pp++;
+		}
+		  // printf("red: %02x ", (*pp));
+		  // pp++;
 	      
 	      c <<= 1;
 	    }
@@ -394,7 +398,7 @@ int loadBMP1(FILE *fp, unsigned char *data, int w, int h, unsigned char *red, un
 
 
 /*******************************************/
-int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned char *red, unsigned char *blue, unsigned char *green)
+int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int band, int comp, unsigned char *red, unsigned char *blue, unsigned char *green)
 {
   int   i,j,c,c1,x,y,nybnum,rv, padw;
   unsigned char *pp;
@@ -411,7 +415,7 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
     
       for (i=h-1; i>=0; i--) 
 	{
-	  pp = data + (i * w * 3);
+	  pp = data + (i * w * band);
 	  
 	  for (j=nybnum=0; j<padw; j++,nybnum++) 
 	    {
@@ -427,11 +431,16 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		  int s = (c & 0xf0) >> 4;
 		  *pp = red[s];
 		  pp++;
-		  *pp = green[s];
-		  pp++;
-		  *pp = blue[s];
-		  pp++;
+		  if (band == 3)
+		    {
+		      
+		      *pp = green[s];
+		      pp++;
+		      *pp = blue[s];
+		      pp++;
+		    }
 		  c <<= 4;
+
 		}
 	    }
 	  if (FERROR(fp)) break;
@@ -442,7 +451,7 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
   else if (comp == BI_RLE4) 
     {  
       x = y = 0;  
-      pp = data + x + (h-y-1)*w*3; /* 3 bands */
+      pp = data + x + (h-y-1)*w*band; /* 3 bands */
       
       while (y<h) 
 	{
@@ -458,10 +467,13 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		  int s = (i&1) ? (c1 & 0x0f) : ((c1>>4)&0x0f);
 		  *pp = red[s];
 		  pp++;
-		  *pp = green[s];
-		  pp++;
-		  *pp = blue[s];
-		  pp++;
+		  if (band == 3)
+		    {
+		      *pp = green[s];
+		      pp++;
+		      *pp = blue[s];
+		      pp++;
+		    }
  		}
 	    }
       
@@ -476,7 +488,7 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		{
 		  x=0;  
 		  y++;  
-		  pp = data + x + (h-y-1)*w*3;
+		  pp = data + x + (h-y-1)*w*band;
 		} 
 	
 	      else if (c == 0x01) break;               /* end of data */
@@ -486,7 +498,7 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		{
 		  c = getc(fp);  x += c;
 		  c = getc(fp);  y += c;
-		  pp = data + x + (h-y-1)*w*3;
+		  pp = data + x + (h-y-1)*w*band;
 		}
 	      
 	      /* absolute mode */
@@ -499,10 +511,13 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		      s = (i&1) ? (c1 & 0x0f) : ((c1>>4)&0x0f);
 		      *pp = red[s];
 		      pp++;
-		      *pp = green[s];
-		      pp++;
-		      *pp = blue[s];
-		      pp++;
+		      if (band == 3)
+			{
+			  *pp = green[s];
+			  pp++;
+			  *pp = blue[s];
+			  pp++;
+			}
 		    }
 	  
 		  if (((c&3)==1) || ((c&3)==2)) getc(fp);  /* read pad unsigned char */
@@ -523,14 +538,14 @@ int loadBMP4(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 
 
 /*******************************************/
-int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned char *red, unsigned char *blue, unsigned char *green)
+int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int band, int comp, unsigned char *red, unsigned char *blue, unsigned char *green)
 {
   int   i,j,c,c1,x,y,rv, padw;
   unsigned char *pp, *pend;
   
   rv = 0;
 
-  pend = data + w * h * 3;
+  pend = data + w * h * band;
 
   /* read uncompressed data */
   if (comp == BI_RGB) 
@@ -540,7 +555,7 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
       
       for (i=h-1; i>=0; i--) 
 	{
-	  pp = data + (i * w * 3);
+	  pp = data + (i * w * band);
 	  
 	  for (j=0; j<padw; j++) 
 	    {
@@ -548,10 +563,13 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 	      if (j<w){
 		*pp = red[c];
 		pp++;
-		*pp = green[c];
-		pp++;
-		*pp = blue[c];
-		pp++;
+		if (band == 3)
+		  {
+		    *pp = green[c];
+		    pp++;
+		    *pp = blue[c];
+		    pp++;
+		  }
 	      }
 	    }
 	  if (FERROR(fp)) break;
@@ -562,7 +580,7 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
   else if (comp == BI_RLE8) 
     {
       x = y = 0;  
-      pp = data + x + (h-y-1)*w;
+      pp = data + x + (h-y-1)* w * band;
 
       while (y<h && *pp<=*pend) 
 	{
@@ -576,10 +594,13 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		{
 		  *pp = red[c1];
 		  pp++;
-		  *pp = green[c1];
-		  pp++;
-		  *pp = blue[c1];
-		  pp++;
+		  if (band == 3)
+		    {
+		      *pp = green[c1];
+		      pp++;
+		      *pp = blue[c1];
+		      pp++;
+		    }
 		}
 	    }
 
@@ -592,7 +613,7 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 	      if (c == 0x00) 
 		{
 		  x=0;  y++;  
-		  pp = data + x + (h-y-1)*w*3;
+		  pp = data + x + (h-y-1)*w*band;
 		} 
 
 	      else if (c == 0x01) break;               /* end of data */
@@ -602,7 +623,7 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		{
 		  c = getc(fp);  x += c;
 		  c = getc(fp);  y += c;
-		  pp = data + x + (h-y-1)*w*3;
+		  pp = data + x + (h-y-1)*w*band;
 		}
 
 	      /* absolute mode */	      
@@ -612,10 +633,14 @@ int loadBMP8(FILE *fp, unsigned char *data, int w, int h, int comp, unsigned cha
 		    c1 = getc(fp);
 		    *pp = red[c1];
 		    pp++;
-		    *pp = green[c1];
-		    pp++;
-		    *pp = blue[c1];
-		    pp++;
+		    if (band == 3)
+		      {
+			
+			*pp = green[c1];
+			pp++;
+			*pp = blue[c1];
+			pp++;
+		      }
 		  }
 		  
 		  if (c & 1) getc(fp);  /* odd length run: read an extra pad unsigned char */
@@ -688,27 +713,11 @@ int iom_WriteBMP(char *filename,
 		 int force
 		 )
 {
-  
   int x, y, z;
   unsigned char *data;
   FILE *fp = NULL;
   int i, j, nc, nbits, bperlin, cmaplen;
-  unsigned char *graypic, *sp, *dp, graymap[256];
-  
-  /*
-   * if DATA, and colorstyle == F_FULLCOLOR, F_GREYSCALE, or F_REDUCED,
-   * the program writes an uncomprEssed 4- or 8-bit image (depending on
-   * the value of numcols)
-   *
-   * if DATA, and colorstyle == F_FULLCOLOR, program writes an uncompressed
-   *    24-bit image
-   * if DATA and colorstyle = F_GREYSCALE, program writes an uncompressed
-   *    8-bit image
-   * note that DATA and F_BWDITHER/F_REDUCED won't happen
-   *
-   * if colorstyle == F_BWDITHER, it writes a 1-bit image 
-   *
-   */
+  unsigned char *sp, *dp, graymap[256];
   
   if (!force && access(filename, F_OK) == 0)
     {
@@ -779,16 +788,26 @@ int iom_WriteBMP(char *filename,
     }
 
   nc = nbits = cmaplen = 0;
-  if (z = 3) {  /* is F_FULLCOLOR */
+  if (z == 3) {  /* is F_FULLCOLOR */
     nbits = 24;
-    cmaplen = 0;
-    nc = 0;
+    // write out a 24-bit file
   }
 
   else /* if z = 1 */
     { 
       /* figure out what to do for mono */
       printf ("Band = 1.   Fill in Code Here\n");
+
+      // Since it's grayscale, know you have 00 through ff -
+      // 256 colors - write out an 8-bit file
+      nbits = 8;
+      cmaplen=256;
+      nc = 256;
+      for (i = 0; i < 256; i++)
+	{
+	  graymap[i] = i;
+	}
+
     }
 
   bperlin = ((x * nbits + 31) / 32) * 3;   /* # bytes written per line */
@@ -819,21 +838,21 @@ int iom_WriteBMP(char *filename,
   putint(fp, nc);         /* biClrImportant: same as above */
 
 
-  /* write out the colormap */
+  /* write out the colormap - only colormap we have is grayscale colormap*/
   for (i=0; i<nc; i++) {
-    putc(b1[i],fp);
-    putc(g1[i],fp);
-    putc(r1[i],fp);
+    putc(graymap[i],fp);
+    putc(graymap[i],fp);
+    putc(graymap[i],fp);
     putc(0,fp);
   }
 
   /* write out the image */
-  if      (nbits ==  1) writeBMP1 (fp, data, x, y);
-  else if (nbits ==  4) writeBMP4 (fp, data, x, y);
-  else if (nbits ==  8) writeBMP8 (fp, data, x, y);
+  // if      (nbits ==  1) writeBMP1 (fp, data, x, y);
+  // else if (nbits ==  4) writeBMP4 (fp, data, x, y);
+  // else if (nbits ==  8) writeBMP8 (fp, data, x, y);
+  if (nbits ==  8) writeBMP8 (fp, data, x, y);
   else if (nbits == 24) writeBMP24(fp, data, x, y);
 
-  if (graypic) free(graypic);
 
 #ifndef VMS
   if (FERROR(fp)) return -1;
