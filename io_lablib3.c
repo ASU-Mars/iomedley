@@ -579,7 +579,7 @@ OBJDESC *OdlFindObjDesc( OBJDESC *start_object, char *object_class,
         if (object_class == NULL)
              found = TRUE;
         else
-             found = OdlWildCardCompare(object_class, obj->class);
+             found = OdlWildCardCompare(object_class, obj->obj_class);
 
         if ((found) && (keyword_name != NULL))
         {
@@ -986,7 +986,7 @@ OBJDESC *OdlCopyObjDesc (OBJDESC *object)
 
     if (object != NULL)
     {
-        new_object = OdlNewObjDesc(object->class, 
+        new_object = OdlNewObjDesc(object->obj_class, 
                                object->pre_comment, object->line_comment,
                                object->post_comment, object->end_comment,
                                object->file_name, object->is_a_group, 
@@ -1054,7 +1054,7 @@ OBJDESC *OdlNewObjDesc (char *object_class, char *pre_comment,
         SayGoodbye()
     else
     {
-        CopyString(new_object->class, object_class)
+        CopyString(new_object->obj_class, object_class)
         CopyString(new_object->pre_comment, pre_comment)
         CopyString(new_object->line_comment, line_comment)
         CopyString(new_object->post_comment, post_comment)
@@ -1196,7 +1196,7 @@ char *OdlGetObjDescClassName (OBJDESC *object)
     char *class_name = {NULL};
 
     if (object != NULL)
-        class_name = object->class;
+        class_name = object->obj_class;
 
     return(class_name);
 
@@ -2525,7 +2525,7 @@ OBJDESC *OdlFreeTree (OBJDESC *object)
         OdlFreeTree(object->first_child);
         OdlFreeTree(object->right_sibling);
         OdlFreeAllKwds(object);
-        LemmeGo(object->class)      
+        LemmeGo(object->obj_class)      
         LemmeGo(object->pre_comment)
         LemmeGo(object->line_comment)
         LemmeGo(object->post_comment)
@@ -3475,10 +3475,10 @@ void OdlPrintHierarchy (OBJDESC *object, char *message_fname,
             OdlPrintLine(message_fname, m_ptr, msgtext);
         }
 
-        if (obj->class == NULL)
+        if (obj->obj_class == NULL)
             OdlPrintLine(message_fname, m_ptr, "  --  <no class>\n");
         else {
-            sprintf(msgtext, "  --  %s\n", obj->class);
+            sprintf(msgtext, "  --  %s\n", obj->obj_class);
             OdlPrintLine(message_fname, m_ptr, msgtext);
         }
 
@@ -3559,12 +3559,12 @@ void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
     
             if (object->parent != NULL)
             {
-                if (object->class == NULL) {
+                if (object->obj_class == NULL) {
                     sprintf(msgtext, "%sOBJECT", blanks);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
                 else {
-                    sprintf(msgtext, "%sOBJECT = %s", blanks, object->class);
+                    sprintf(msgtext, "%sOBJECT = %s", blanks, object->obj_class);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
     
@@ -3585,12 +3585,12 @@ void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
     
             if (object->parent != NULL)
             {
-                if (object->class == NULL) {
+                if (object->obj_class == NULL) {
                     sprintf(msgtext, "%sEND_OBJECT", blanks);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
                 else {
-                    sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->class);
+                    sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->obj_class);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
     
@@ -4509,7 +4509,7 @@ static short OdlValidEndObjDesc (OBJDESC *curr_object, char *equals,
     {
         if (*right_part != '\0')
         {
-            if (strcmp(curr_object->class, right_part) != 0)
+            if (strcmp(curr_object->obj_class, right_part) != 0)
             {
                 status = OdlPrintMessage(message_fname, message_fptr, line_number,
                             "OBJECT and END_OBJECT class identifiers do not match");

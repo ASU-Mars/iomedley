@@ -61,7 +61,7 @@
 
 typedef struct Object_Structure
 {
-    char *class;
+    char *obj_class;
     char *pre_comment;  /* Comments before the OBJECT = line     */
     char *line_comment; /* Comments on the OBJECT = line         */
     char *post_comment; /* Comments before the END_OBJECT = line */
