@@ -478,6 +478,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         }
     }
     else if (!strcmp(q, "SUN_INTEGER") ||
+		(!strcmp(q,"SUN_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"MSB_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"MSB_INTEGER"))) {
         switch(item_bytes){
@@ -494,6 +495,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         }
     }
     else if (!strcmp(q, "PC_INTEGER") ||
+		(!strcmp(q,"PC_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"LSB_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"LSB_INTEGER"))) {
         switch(item_bytes){
