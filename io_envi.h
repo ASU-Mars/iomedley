@@ -17,7 +17,7 @@ char *Labels[]={"samples","lines","bands","header offset",
 					 "data type","interleave","byte order","file type",NULL};
 int Types[]={0,0,0,0,0,2,0,2};
 
-#define HEADER_ENTRIES	7
+#define HEADER_ENTRIES	8
 
 typedef struct 
 {

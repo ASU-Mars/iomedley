@@ -24,6 +24,7 @@ Load_Data_Name(struct iom_iheader *h, char *fname)
 		if (strncmp(dp->d_name,fname,(strlen(fname)-4))==0){
 			if (strcmp(&dp->d_name[strlen(dp->d_name)-3],p)) {
 				h->ddfname=strdup(dp->d_name);
+				closedir(dirp);
 				return;
 			}
 		}
@@ -31,6 +32,8 @@ Load_Data_Name(struct iom_iheader *h, char *fname)
 
 	fprintf(stderr,"%s the header file, couldn't find a data file with same name, different extension\n",
 				fname);
+
+	closedir(dirp);
 }	
 
 
@@ -163,7 +166,7 @@ iom_GetENVIHeader(FILE *fp, char *fname,
 int  	Read_Label(FILE *fp,char *label)
 {
 	int i=0;
-	while ((label[i]=(char)fgetc(fp))!='=' && i< 256){
+	while ((label[i]=(char)fgetc(fp))!='=' && i< 256 && !(feof(fp)) ){
 		if (label[i]=='\n' || label[i]=='\r') /*End of the line without an ='s means we're not at the start of a label*/
 			break;
 		i++;
