@@ -244,8 +244,8 @@ iom_GetISISHeader(
           size[0] = atoi(key->value);
         }
         
-        key1 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
-        key2 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
+        key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
+        key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
         
         format = iom_ConvertISISType( key1 ? key1->value : NULL,
                                       key2 ? key2->value : NULL, 
@@ -447,7 +447,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     
     q = type;
     
-    if (!strcmp(q, "INT")){
+    if ((!strcmp(q, "INT")) || (!strcmp(q,"UNSIGNED_INTEGER")) || (!strcmp(q,"INTEGER"))){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
         case 1: format = iom_MSB_INT_1; break;
