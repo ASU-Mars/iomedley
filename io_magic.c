@@ -48,9 +48,9 @@ iom_GetGFXHeader(
     }
 
 #ifdef _LITTLE_ENDIAN
-    h->eformat = iom_LSB_BYTE;
+    h->eformat = iom_LSB_INT_1;
 #else
-    h->eformat = iom_MSB_BYTE;
+    h->eformat = iom_MSB_INT_1;
 #endif /* _LITTLE_ENDIAN */
     
     h->format = iom_BYTE;
