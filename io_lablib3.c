@@ -4269,9 +4269,9 @@ static short OdlValidBraces (char *text, long brace_nesting,
 
 #ifdef _NO_PROTO
 
-static short OdlValidElement (text, message_fname, message_fptr, line_number, 
+static short OdlValidElement (_text, message_fname, message_fptr, line_number, 
                            element_number)
-char *text;
+char *_text;
 char *message_fname;
 FILE *message_fptr;
 long line_number;
@@ -4279,7 +4279,7 @@ long element_number;
 
 #else
 
-static short OdlValidElement (char *text, char *message_fname, 
+static short OdlValidElement (char *_text, char *message_fname, 
                               FILE *message_fptr, long line_number, 
                               long element_number)
 
@@ -4298,11 +4298,15 @@ static short OdlValidElement (char *text, char *message_fname,
     char *c = {NULL};
     int i;
     short status = {TRUE};
+	char *text = {NULL};
 
     if (element_number <= 0)
        strcpy(element_prompt, "");
     else
        sprintf(element_prompt, " LIST element %d", element_number);
+
+	NewString(text, strlen(_text)+5);
+	strcpy(text, _text);
 
     single_quote = (char *) strchr(text+1, (int) '\'');
     double_quote = (char *) strchr(text+1, (int) '"');
@@ -4463,6 +4467,7 @@ static short OdlValidElement (char *text, char *message_fname,
     }  /*  End:  "if ((double_quote > ... else ... else ..."  */
     
     LemmeGo(message)
+	LemmeGo(text);
 
     return(status);
 
