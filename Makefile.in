@@ -70,7 +70,11 @@ $(LIBJPEG):
 	cd $(LIBJPEGDIR) && $(MAKE) $(LIBJPEG)
 
 clean:
-	rm -f *.o libiomedley.a 
+	rm -f *.o libiomedley.a
+	cd $(LIBGIFDIR) && make clean && cd ..
+	cd $(LIBTIFFDIR) && make clean && cd ..
+	cd $(LIBPNGDIR) && make clean && cd ..
+	cd $(LIBJPEGDIR) && make clean && cd ..
 
 io_aviris.o: io_aviris.c iomedley.h io_lablib3.h toolbox.h
 io_envi.o: io_envi.c io_envi.h iomedley.h io_lablib3.h toolbox.h
