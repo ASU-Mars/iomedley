@@ -357,8 +357,6 @@ int iom_byte_swap_data(
     );
 
 
-char *iom_get_env_var(char *name);
-
 
 /**
  ** Try to expand environment variables and ~

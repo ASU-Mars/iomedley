@@ -684,22 +684,6 @@ iom_uncompress(FILE * fp, char *fname)
     return (fp);
 }
 
-char *
-iom_get_env_var(char *name)
-{
-    char *value = NULL;
-
-    /**
-     ** Shell command line variables still have the '$' in front of them.
-     ** Environment variables shouldn't.
-     **/
-    if ((value = getenv(name)) == NULL) {
-        fprintf(stderr, "Environment variable not found: %s", name);
-        return (NULL);
-    }
-    return (value);
-}
-
 /**
  ** Try to expand environment variables and ~
  ** puts answer back into argument.  Make sure its big enough...
@@ -723,7 +707,7 @@ iom_expand_filename(char *s)
                 q++;
             }
             strncpy(ebuf, p + 1, q - p - 1);
-            if ((e = iom_get_env_var(ebuf)) == NULL) {
+            if ((e = getenv(ebuf)) == NULL) {
                 fprintf(stderr, "error: unknown environment variable: %s\n",
                         ebuf);
                 return (NULL);

@@ -42,8 +42,17 @@ iom_isVicar(FILE *fp)
 }
 
 
+/*
+** Retruns VALUE from a string of the form:
+**
+**       KEYWORD=VALUE
+**
+** where:
+**   s1 is of the form "KEYWORD="
+**   s2 is the string
+*/
 static char *
-get_value(char *s1, char *s2)
+vicar_get_value(char *s1, char *s2)
 {
     char *p;
     int len;
@@ -121,19 +130,19 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     fread(p+64, 1, s-64, fp);
     p[s] = '\0';
     
-    r = atoi(get_value(p, "RECSIZE="));
+    r = atoi(vicar_get_value(p, "RECSIZE="));
 
-    size[0] =   atoi(get_value(p, "NS=")); /* width */
-    size[1] =   atoi(get_value(p, "NL=")); /* height */
-    size[2] =   atoi(get_value(p, "NB=")); /* depth */
+    size[0] =   atoi(vicar_get_value(p, "NS=")); /* width */
+    size[1] =   atoi(vicar_get_value(p, "NL=")); /* height */
+    size[2] =   atoi(vicar_get_value(p, "NB=")); /* depth */
 
     suffix[0] = suffix[1] = suffix[2] = 0;
     prefix[0] = prefix[1] = prefix[2] = 0;
 
-    s += atoi(get_value(p, "NLB="))*r;
-    prefix[0] = atoi(get_value(p, "NBB="));
+    s += atoi(vicar_get_value(p, "NLB="))*r;
+    prefix[0] = atoi(vicar_get_value(p, "NBB="));
 
-    if ((q = get_value(p, "ORG=")) != NULL) {
+    if ((q = vicar_get_value(p, "ORG=")) != NULL) {
         if (!strncmp(q, "'BIL'", 5)) org = iom_BIL;
         if (!strncmp(q, "'BSQ'", 5)) org = iom_BSQ;
         if (!strncmp(q, "'BIP'", 5)) org = iom_BIP;
@@ -145,7 +154,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     }
 
     intfmt = VICAR_INTFMT_INVALID;
-    if ((q = get_value(p, "INTFMT=")) != NULL){
+    if ((q = vicar_get_value(p, "INTFMT=")) != NULL){
         if (strncmp(q, "'LOW'", 5) == 0) intfmt = VICAR_INTFMT_LOW;
         else if (strncmp(q, "'HIGH'", 6) == 0) intfmt = VICAR_INTFMT_HIGH;
     }
@@ -160,7 +169,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     }
     
     realfmt = VICAR_REALFMT_INVALID;
-    if ((q = get_value(p, "REALFMT=")) != NULL){
+    if ((q = vicar_get_value(p, "REALFMT=")) != NULL){
         if (strncmp(q, "'VAX'", 5) == 0) realfmt = VICAR_REALFMT_VAX;
         else if (strncmp(q, "'IEEE'", 6) == 0) realfmt = VICAR_REALFMT_IEEE;
         else if (strncmp(q, "'RIEEE'", 4) == 0) realfmt = VICAR_REALFMT_RIEEE;
@@ -176,7 +185,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     }
     
     format = iom_EDF_INVALID;
-    if ((q = get_value(p, "FORMAT=")) != NULL) {
+    if ((q = vicar_get_value(p, "FORMAT=")) != NULL) {
         if (!strncmp(q, "'BYTE'", 6)){
             switch(intfmt){
             case VICAR_INTFMT_LOW: format = iom_LSB_INT_1; break;
