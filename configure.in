@@ -13,6 +13,7 @@ dnl VERSION(1.0)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_CPP
 AC_PROG_MAKE_SET
@@ -54,20 +55,46 @@ AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext, XShmPutImage)
 
 
-dnl Checks for libraries.
-if test "$prefix" != "NONE" 
+dnl Check if ImageMagick is available.
+
+AC_PATH_PROG(MAGICK_CONFIG,Magick-config)
+if test -n "$MAGICK_CONFIG"
 then
-	CPPFLAGS="$CPPFLAGS -I${prefix:-.}/include "
-	LDFLAGS="$LDFLAGS -L${prefix:-.}/lib"
+	MAGICK_VERSION=`$MAGICK_CONFIG --version`
+	MAGICK_CPPFLAGS=`$MAGICK_CONFIG --cppflags`
+	MAGICK_CFLAGS=`$MAGICK_CONFIG --cflags`
+	MAGICK_LIBS=`$MAGICK_CONFIG --libs`
+	MAGICK_LDFLAGS=`$MAGICK_CONFIG --ldflags`
 fi
 
-AC_CHECK_LIB(m, sin)
-AC_CHECK_LIB(z, compress)
-AC_CHECK_LIB(bz2, bzopen)
-AC_CHECK_LIB(png, png_info_init)
-AC_CHECK_LIB(jpeg, jpeg_read_header)
-AC_CHECK_LIB(tiff, TIFFOpen)
-AC_CHECK_LIB(Magick, GetMagickInfo)
+dnl Check if ImageMagick is of correct version
+if test "$MAGICK_VERSION" = "4.2.9"
+then
+	save_CPPFLAGS="$CPPFLAGS"
+	save_CFLAGS="$CFLAGS"
+	save_LIBS="$LIBS"
+	save_LDFLAGS="$LDFLAGS"
+
+	CPPFLAGS="$CPPFLAGS $MAGICK_CPPFLAGS"
+	CFLAGS="$CFLAGS $MAGICK_CFLAGS"
+	LIBS="$LIBS $MAGICK_LIBS"
+	LDFLAGS="$LDFLAGS $MAGICK_LDFLAGS"
+
+	dnl AC_CHECK_LIB(m, sin)
+	dnl AC_CHECK_LIB(z, compress)
+	dnl AC_CHECK_LIB(bz2, bzopen)
+	dnl AC_CHECK_LIB(png, png_info_init)
+	dnl AC_CHECK_LIB(jpeg, jpeg_read_header)
+	dnl AC_CHECK_LIB(tiff, TIFFOpen)
+
+	dnl Make sure we can use libMagick to compile.
+	AC_CHECK_LIB(Magick, GetMagickInfo,,[
+		CPPFLAGS="$save_CPPFLAGS"
+		CFLAGS="$save_CFLAGS"
+		LIBS="$save_LIBS"
+		LDFLAGS="$save_LDFLAGS"
+	])
+fi
 
 dnl Checks for library functions.
 AC_FUNC_MMAP

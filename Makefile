@@ -3,14 +3,14 @@ prefix=/usr/local
 
 CC=gcc
 DEFS=-DHAVE_CONFIG_H
-CPPFLAGS=-I.   -I/usr/X11R6/include/X11
-# X_CFLAGS= -I/usr/X11R6/include/X11
+CPPFLAGS=-I.   -I/usr/openwin/include -I/usr/local/include -I/usr/openwin/include -I/usr/openwin/include/X11
+# X_CFLAGS= -I/usr/openwin/include
 # X_PRE_LIBS= -lSM -lICE
-# X_LIBS= -L/usr/X11R6/lib
-# X_EXTRA_LIBS=
-CFLAGS=-g -O2 $(X_CFLAGS)
-# LDLIBS= -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib  $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
-LDLIBS= -lMagick -ltiff -ljpeg -lpng -lbz2 -lz -lm -lXext -lXt -lX11   -lSM -lICE  -L/usr/X11R6/lib 
+# X_LIBS= -L/usr/openwin/lib -R/usr/openwin/lib
+# X_EXTRA_LIBS=-lsocket  -lnsl
+CFLAGS=-g -O2 -O $(X_CFLAGS)
+# LDLIBS= -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib -lMagick -lXext -lXt -lX11   -lSM -lICE  -L/usr/openwin/lib -R/usr/openwin/lib -lsocket  -lnsl -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS)
+LDLIBS= -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib -lMagick -lXext -lXt -lX11   -lSM -lICE  -L/usr/openwin/lib -R/usr/openwin/lib -lsocket  -lnsl -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm
 RANLIB=ranlib
 
 OBJS= \
