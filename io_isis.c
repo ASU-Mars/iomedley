@@ -321,7 +321,7 @@ iom_WriteISIS(
 
     if (!force_write && access(fname, F_OK) == 0){
 		if (iom_is_ok2print_errors()){
-			fprintf(stderr, "File %s exists already.\n");
+			fprintf(stderr, "File %s exists already.\n", fname);
 		}
         return 0;
     }
@@ -341,17 +341,8 @@ iom_WriteISIS(
     ** FOLLOWING CODE NEEDS TO BE AUGMENTED TO INCLUDE FLOATING POINT
     ** DATA FILE I/O.
     */
-    if (h->format > iom_INT) {
-		if (iom_is_ok2print_unsupp_errors()){
-			fprintf(stderr, "Unable to write ISIS files with %s format.\n",
-					iom_Format2Str(h->format));
-		}
-        fclose(fp);
-        unlink(fname);
-        return(0);
-    }
 
-    sprintf(buf, "CCSD3ZF0000100000001NJPL3IF0PDS200000001 = SFDU_LABEL\r\n");
+    sprintf(buf, "PDS_VERSION = 3.0\r\n");
     sprintf(buf+strlen(buf), "RECORD_TYPE = FIXED_LENGTH\r\n");
     sprintf(buf+strlen(buf), "RECORD_BYTES = 512\r\n");
     sprintf(buf+strlen(buf), "FILE_RECORDS = %d\r\n",fsize+2);
@@ -373,10 +364,34 @@ iom_WriteISIS(
             iom_NBYTESI(h->format));
 
     /* Always output native-endian data. */
+
 #ifdef WORDS_BIGENDIAN
-    sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
+	switch (h->format) {
+		case iom_BYTE:
+		case iom_SHORT:
+		case iom_INT:
+			sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
+			break;
+		case iom_FLOAT:
+		case iom_DOUBLE:
+			sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_REAL\r\n");
+			break;
+	}
+
 #else
-    sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
+
+	switch (h->format) {
+		case iom_BYTE:
+		case iom_SHORT:
+		case iom_INT:
+    		sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
+			break;
+
+		case iom_FLOAT:
+		case iom_DOUBLE:
+    		sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_REAL\r\n");
+			break;
+	}
 #endif /* WORDS_BIGENDIAN */
     
     sprintf(buf+strlen(buf), "    CORE_BASE = 0.0\r\n");
