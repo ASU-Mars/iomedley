@@ -4,6 +4,9 @@
 #include <string.h>
 #include "iomedley.h"
 
+#include <pwd.h>
+#include <sys/types.h>
+
 #define VICAR_MAGIC		"LBLSIZE="
 
 /**

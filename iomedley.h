@@ -8,7 +8,10 @@
 ** Should be moved to io_magic.h and io_magic.h should be included here.
 ** iomedley.h should be removed from io_magic.c
 */
+
+#ifdef HAVE_LIBMAGIC
 #include "magick.h"
+#endif
 
 typedef enum {
 	iom_EDF_INVALID = 0, /* Invalid external-format. */
@@ -226,8 +229,10 @@ int iom_GetGFXHeader(char *fname, struct iom_iheader *h);
 /*
 ** Some functions that higher level routines may use.
 */
+#ifdef HAVE_LIBMAGIC
 Image *ToMiff(char *data, int x, int y, int z);
 int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_data);
+#endif
 
 /*
 ** WriteXXXX() take an already opened output file's pointer.
