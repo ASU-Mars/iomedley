@@ -9,14 +9,6 @@
 #endif /* HAVE_CONFIG_H */
 
 /*
-** Should be moved to io_magic.h and io_magic.h should be included here.
-** iomedley.h should be removed from io_magic.c
-*/
-#ifdef HAVE_LIBMAGICK
-#include <magick/magick.h>
-#endif
-
-/*
 ** CAUTION:
 ** iom_EFORMAT2STR[] in iomedley.c depends upon these values
 */
@@ -269,8 +261,12 @@ int iom_GetENVIHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 **
 */
 
+/* FIX: get rid of these, insert the ones referenced in dvio_iomedley.c
+
 int iom_GetPNMHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetGFXHeader(FILE *fp, char *fname, struct iom_iheader *h);
+
+*/
 
 /*
 ** WriteXXXX() take an already opened output file's pointer.
@@ -287,12 +283,14 @@ int iom_GetGFXHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_WriteIMath(char *fname, void *data, struct iom_iheader *h, int force_write);
 int iom_WriteERS(char *fname, void *data, struct iom_iheader *h, int force_write);
 int iom_WriteVicar(char *filename, void *data, struct iom_iheader *h, int force_write);
-int iom_WritePNM(char *fname, void *data, struct iom_iheader *h, int force_write);
+int iom_WritePNM(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
 int iom_WriteISIS(char *fname, void *data, struct iom_iheader *h, int force_write, char *title);
 int iom_WriteGRD(char *fname, void *data, struct iom_iheader *h, int force_write, char *title, char *pgm);
 int iom_WriteGFXImage(char *fname, void *data, struct iom_iheader *h, int force_write, char *GFX_type);
 int iom_WriteRaw(char *fname, void *data, struct iom_iheader *h, int force_write);
-
+int iom_WriteJPEG(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
+int iom_WriteGIF(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
+int iom_WriteTIFF(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
 
 /*
 ** Support Functions
@@ -408,15 +406,6 @@ int iom_Eformat2Iformat(iom_edf efmt);
 */
 
 /*
-** Some functions that higher level routines may use.
-*/
-#ifdef HAVE_LIBMAGICK
-Image *iom_ToMiff(char *data, int x, int y, int z);
-int iom_ExtractMiffData(Image *image, int *ox, int *oy, int *oz, void **image_data);
-#endif /* HAVE_LIBMAGICK */
-
-
-/*
 ** Message verbosity control in iomedley.
 */
 extern int iom_VERBOSITY;             /* default = 5 i.e. errors/warnings & progress only */
@@ -428,5 +417,12 @@ int iom_is_ok2print_warnings();       /* verbosity > 3 */
 int iom_is_ok2print_progress();       /* verbosity > 4 */
 int iom_is_ok2print_details();        /* verbosity > 9 */
 
+/* Organizational conversion function, defined in iomedley.c.
+   Jim Stewart - 26 Jun 2002 */
+
+int iom__ConvertToBIP(unsigned char *,       /* Image data */
+		      struct iom_iheader *,  /* Image geometry */
+		      unsigned char **       /* BIP image data output */
+		      );
 
 #endif /* _IOMEDLEY_H_ */

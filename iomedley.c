@@ -914,3 +914,92 @@ iom_is_ok2print_progress()
 {
 	return (iom_VERBOSITY > 4);
 }
+
+int
+iom__ConvertToBIP(unsigned char *data,
+		  struct iom_iheader *h,
+		  unsigned char **bipout)
+{
+
+  /*
+   * Converts from any recognized iomedley data organization (BSQ, BIL) to BIP.
+   * If the data is already in BIP, a COPY is returned.  This is to maintain
+   * usage consistency, since the converted data should be freed after
+   * processing.  Callers likely will not want to use this if the data is
+   * already in BIP, however.
+   *
+   * !!! NOTE that this function allocates memory equal to the size of the image
+   *     passed in.  This memory should be freed by the caller.
+   *
+   * Returns: 1 on success, 0 on failure.
+   *
+   * Args:
+   *
+   * data	Image data in existing format.
+   * h		Image geometry and organization details.
+   * bipout	Passback variable for reorganized data.
+   *
+   */
+
+  unsigned char *bip_data;
+  size_t        offset;
+  unsigned char pixel;
+  unsigned int  x, y, z;
+  unsigned int  xsize, ysize, zsize;
+
+  if (h->org == iom_BIP) {
+    zsize = h->size[0];
+    xsize = h->size[1];
+    ysize = h->size[2];
+    /* If function is called with existing BIP, going to clone it and send the
+       copy back since expected usage involves freeing bipout when done, and
+       I don't want this corrupting the iom_iheader.  FIX: is this dumb? */
+  } else if (h->org == iom_BSQ) {
+    xsize = h->size[0];
+    ysize = h->size[1];
+    zsize = h->size[2];
+  } else if (h->org == iom_BIL) {
+    xsize = h->size[0];
+    zsize = h->size[1];
+    ysize = h->size[2];
+  } else {    
+    if (iom_is_ok2print_unsupp_errors()) {
+      /* FIX: report file and line? */
+      fprintf(stderr, "ERROR: org %d not supported by iom__ConvertToBIP()", h->org);
+    }
+    return 0;
+  }
+
+  bip_data = (unsigned char *) malloc(ysize * xsize * zsize);
+  if (bip_data == NULL) {
+    if (iom_is_ok2print_unsupp_errors()) {
+      fprintf(stderr, "ERROR: unable to allocate %d bytes in by iom__ConvertToBIP()", xsize * ysize * zsize);
+    }
+    return 0;
+  }
+
+  if (h->org == iom_BIP) {
+    memcpy(bip_data, data, xsize * ysize * zsize);
+  } else {
+    for (y = 0; y < ysize; y++) {
+      for (x = 0; x < xsize; x++) {
+        for (z = 0; z < zsize; z++) {
+          switch (h->org) { 
+          case iom_BIP: offset = y * (xsize * zsize) + (x * zsize) + z; break;
+          case iom_BSQ: offset = z * (ysize * xsize) + (y * xsize) + x; break; 
+          case iom_BIL: offset = y * (xsize * zsize) + (z * xsize) + x; break;
+            /* No default; other orgs already excluded above. */
+          }
+          pixel = *(data + offset);
+          *(bip_data + y * (xsize * zsize) + (x * zsize) + z) = pixel;
+        }
+      }
+    }
+  }
+
+  *bipout = bip_data;
+
+  return 1;
+
+}
+
