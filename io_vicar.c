@@ -161,8 +161,13 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         else if (strncmp(q, "'HIGH'", 6) == 0) intfmt = VICAR_INTFMT_HIGH;
     }
     else {
-        /* Default INTFMT=LOW */
+#ifdef WORDS_BIGENDIAN
+        /* Assume INTFMT=HIGH */
+        intfmt = VICAR_INTFMT_HIGH;
+#else   /* little endian */
+        /* Assume INTFMT=LOW */
         intfmt = VICAR_INTFMT_LOW;
+#endif /* WORDS_BIGENDIAN */
     }
     if (intfmt == VICAR_INTFMT_INVALID){
 		if (iom_is_ok2print_unsupp_errors()){
@@ -179,8 +184,13 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         else if (strncmp(q, "'RIEEE'", 4) == 0) realfmt = VICAR_REALFMT_RIEEE;
     }
     else {
-        /* Default REALFMT=VAX */
+#ifdef WORDS_BIGENDIAN
+        /* Assume REALFMT=IEEE */
+        realfmt = VICAR_REALFMT_IEEE;
+#else   /* little endian */
+        /* Assume REALFMT=VAX */
         realfmt = VICAR_REALFMT_VAX;
+#endif /* WORDS_BIGENDIAN */
     }
     if (realfmt == VICAR_REALFMT_INVALID){
 		if (iom_is_ok2print_unsupp_errors()){
