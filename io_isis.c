@@ -86,7 +86,7 @@ iom_GetISISHeader(
 #endif /* _WIN32 */
     }
 
-    ob = (OBJDESC *)OdlParseLabelFptr(fp, err_file,
+    ob = (OBJDESC *)OdlParseLabelFile(filename, err_file,
                                       ODL_EXPAND_STRUCTURE, 0);
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
