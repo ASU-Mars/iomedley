@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 # Makefile.in
 
 # Jim Stewart
@@ -39,11 +38,11 @@
 
 AR=ar
 
-CC=gcc
-CPPFLAGS=-I. 
-CFLAGS=-g -O2
-LDFLAGS= 
-RANLIB=ranlib
+CC=@CC@
+CPPFLAGS=-I. @CPPFLAGS@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@ @LIBS@
+RANLIB=@RANLIB@
 
 INCS=	tiff.h tiffio.h
 
