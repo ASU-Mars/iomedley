@@ -11,7 +11,7 @@
 
 #include "iom_config.h"
 
-#ifdef HAVE_LIBPNG
+#ifdef HAVE_LIBZ
 
 #include <stdio.h>
 #include <stdlib.h>
