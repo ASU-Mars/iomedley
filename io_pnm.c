@@ -13,6 +13,8 @@
 static int ReadPNMHeader(FILE *fp, int *xout, int *yout, int *zout, int *bits, int *data_offset);
 static int get_int(FILE *fp);
 static int getbit(FILE *fp);
+int iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout, 
+            int *zout, int *bits, void **dout, off_t *data_offset);
 
 int
 iom_isPNM(FILE *fp)
@@ -271,6 +273,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
     int bitshift;
     int maxval;
     unsigned char *data;
+	int xxx;
 
     /**
     *** Get format
