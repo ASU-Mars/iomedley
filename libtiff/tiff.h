@@ -50,13 +50,19 @@
  * 32-bit quantities	int32/uint32
  * strings		unsigned char*
  */
+#ifndef _AIX
+/* AIX defines this in inttypes.h */
 typedef	short int16;
+#endif
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
 #if defined(__alpha) || _MIPS_SZLONG == 64
 typedef	int int32;
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
 #else
+#ifndef _AIX
+/* AIX defines this in inttypes.h */
 typedef	long int32;
+#endif
 typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
 #endif
 
