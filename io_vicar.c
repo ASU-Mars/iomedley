@@ -377,8 +377,8 @@ iom_WriteVicar(
 
     if (org == iom_BSQ) {           /* done cause we may have forced bsq */
         sprintf(ptr+strlen(ptr), "N1=%d  N2=%d  N3=%d  ",
-                iom_GetLines(h->size, h->org),
                 iom_GetSamples(h->size, h->org),
+                iom_GetLines(h->size, h->org),
                 iom_GetBands(h->size, h->org));
     } else {
         sprintf(ptr+strlen(ptr), "N1=%d  N2=%d  N3=%d  ",
