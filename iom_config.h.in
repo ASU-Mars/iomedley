@@ -51,9 +51,6 @@
 /* Define if the X Window System is missing or not being used.  */
 #undef X_DISPLAY_MISSING
 
-#undef _LITTLE_ENDIAN
-#undef _BIG_ENDIAN
-
 /* Define if you have the getpagesize function.  */
 #undef HAVE_GETPAGESIZE
 

@@ -62,12 +62,12 @@ iom_GetAVIRISHeader(
     ** the buffer.
     **/
     
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     /* it is convenient to byte-swap the data before it is assigned */
     for (i = 0; i < 6; i++){
         iom_MSB4((char *)&((int *)buf)[i]);
     }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     
     label = ((int *)buf)[0];
     format = ((int *)buf)[1];

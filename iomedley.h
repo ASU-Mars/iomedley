@@ -143,23 +143,7 @@ static char iom_ctmp;
 typedef char *iom_cptr;
 #define iom_swp(c1, c2)	(iom_ctmp = (c1) , (c1) = (c2) , (c2) = iom_ctmp)
 
-#ifdef _LITTLE_ENDIAN
-
-#define iom_MSB8(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[7]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[6]), \
-                         iom_swp(((iom_cptr)(s))[2], ((iom_cptr)(s))[5]), \
-                         iom_swp(((iom_cptr)(s))[3], ((iom_cptr)(s))[4]),(s))
-
-#define iom_MSB4(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[3]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[2]),(s))
-
-#define iom_MSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
-
-#define iom_LSB8(s) 	(s)
-#define iom_LSB4(s) 	(s)
-#define iom_LSB2(s) 	(s)
-
-#else /* _BIG_ENDIAN */
+#ifdef WORDS_BIGENDIAN
 
 #define iom_MSB8(s) 	(s)
 #define iom_MSB4(s) 	(s)
@@ -175,7 +159,23 @@ typedef char *iom_cptr;
 
 #define iom_LSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
 
-#endif /* _LITTLE_ENDIAN */
+#else /* little endian */
+
+#define iom_MSB8(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[7]), \
+                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[6]), \
+                         iom_swp(((iom_cptr)(s))[2], ((iom_cptr)(s))[5]), \
+                         iom_swp(((iom_cptr)(s))[3], ((iom_cptr)(s))[4]),(s))
+
+#define iom_MSB4(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[3]), \
+                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[2]),(s))
+
+#define iom_MSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
+
+#define iom_LSB8(s) 	(s)
+#define iom_LSB4(s) 	(s)
+#define iom_LSB2(s) 	(s)
+
+#endif /* WORDS_BIGENDIAN */
 
 
 

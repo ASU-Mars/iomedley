@@ -500,16 +500,16 @@ iom_byte_swap_data(
 		break;
 	
 	case iom_MSB_INT_2:        /* MSB-Shorts to Shorts */
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB2(&((short *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_SHORT;
 		break;
 	
 	case iom_MSB_INT_4:        /* MSB-Ints to Ints */
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((int *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_INT;
 		break;
 
@@ -519,44 +519,44 @@ iom_byte_swap_data(
 	
 	case iom_VAX_INT:          /* Vax Integers to Integers */
 	case iom_LSB_INT_2:        /* LSB-Shorts to Shorts */
-#ifndef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB2(&((short *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_SHORT;
 		break;
 	
 	case iom_LSB_INT_4:        /* LSB-Ints to Ints */
-#ifndef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB4(&((int *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_INT;
 		break;
 
 	case iom_MSB_IEEE_REAL_4:  /* MSB-IEEE-Floats to Floats */
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB4(&((float *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_FLOAT;
 		break;
 
 	case iom_LSB_IEEE_REAL_4:  /* LSB-IEEE-Floats to Floats */
-#ifndef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB4(&((float *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_FLOAT;
 		break;
 
 	case iom_MSB_IEEE_REAL_8:  /* MSB-IEEE-Doubles to Doubles */
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((float *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_DOUBLE;
 		break;
 	
 	case iom_LSB_IEEE_REAL_8:  /* LSB-IEEE-Doubles to Doubles */
-#ifndef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
 		for (i = 0 ; i < dsize ; i++) { iom_LSB8(&((float *)data)[i]); }
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 		format = iom_DOUBLE;
 		break;
 	

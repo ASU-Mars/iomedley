@@ -52,11 +52,11 @@ iom_GetGFXHeader(
         return 0;
     }
 
-#ifdef _LITTLE_ENDIAN
-    h->eformat = iom_LSB_INT_1;
-#else
+#ifdef WORDS_BIGENDIAN
     h->eformat = iom_MSB_INT_1;
-#endif /* _LITTLE_ENDIAN */
+#else /* little endian */
+    h->eformat = iom_LSB_INT_1;
+#endif /* WORDS_BIGENDIAN */
     
     h->format = iom_BYTE;
     h->org = iom_BSQ;

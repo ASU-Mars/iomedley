@@ -31,11 +31,11 @@ AC_STRUCT_TM
 
 dnl Check for endian
 AC_C_BIGENDIAN
-if test $ac_cv_c_bigendian = yes; then
-	AC_DEFINE(_BIG_ENDIAN)
-else
-	AC_DEFINE(_LITTLE_ENDIAN)
-fi
+dnl if test $ac_cv_c_bigendian = yes; then
+dnl 	AC_DEFINE(_BIG_ENDIAN)
+dnl else
+dnl 	AC_DEFINE(_LITTLE_ENDIAN)
+dnl fi
 
 dnl Checks for header files.
 AC_HEADER_DIRENT

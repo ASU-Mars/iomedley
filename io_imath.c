@@ -57,7 +57,7 @@ iom_GetIMathHeader(
     fread(&wt, sizeof(int), 1, fp);
     fread(&ht, sizeof(int), 1, fp);
 
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     /* convert MSB -> LSB */
 
     iom_MSB4((char *)&wt);
@@ -117,7 +117,7 @@ iom_WriteIMath(
     height = iom_GetLines(h->size, h->org);
     width = iom_GetSamples(h->size, h->org);
 
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     /* Convert LSB -> MSB */
     iom_LSB4((char *)&width);
     iom_LSB4((char *)&height);
@@ -131,10 +131,10 @@ iom_WriteIMath(
         for (j = 0 ; j < height ; j++) {
             d = ((double *)data)[j*width+i];
             
-#if _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
             /* Convert LSB -> MSB */
             iom_LSB4((char *)&d);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
             
             fwrite(&d, 8, 1, fp);
         }

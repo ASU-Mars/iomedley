@@ -361,11 +361,11 @@ iom_WriteISIS(
             iom_NBYTESI(h->format));
 
     /* Always output native-endian data. */
-#ifdef _LITTLE_ENDIAN
-    sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
-#else
+#ifdef WORDS_BIGENDIAN
     sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
-#endif /* _LITTLE_ENDIAN */
+#else
+    sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
+#endif /* WORDS_BIGENDIAN */
     
     sprintf(buf+strlen(buf), "    CORE_BASE = 0.0\r\n");
     sprintf(buf+strlen(buf), "    CORE_MULTIPLIER = 1.0\r\n");
@@ -435,15 +435,15 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     
     if (!strcmp(q, "INT")){
         switch(item_bytes){
-#ifdef _LITTLE_ENDIAN
-        case 1: format = iom_LSB_INT_1; break;
-        case 2: format = iom_LSB_INT_2; break;
-        case 4: format = iom_LSB_INT_4; break;
-#else /* _BIG_ENDIAN */
+#ifdef WORDS_BIGENDIAN
         case 1: format = iom_MSB_INT_1; break;
         case 2: format = iom_MSB_INT_2; break;
         case 4: format = iom_MSB_INT_4; break;
-#endif /* _LITTLE_ENDIAN */
+#else /* little endian */
+        case 1: format = iom_LSB_INT_1; break;
+        case 2: format = iom_LSB_INT_2; break;
+        case 4: format = iom_LSB_INT_4; break;
+#endif /* WORDS_BIGENDIAN */
         }
     }
     else if (!strcmp(q, "SUN_INTEGER")){
@@ -469,11 +469,11 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     }
     else if (!strcmp(q, "REAL")){
         switch(item_bytes){
-#ifdef _LITTLE_ENDIAN
-        case 4: format = iom_LSB_IEEE_REAL_4; break;
-#else /* _BIG_ENDIAN */
+#ifdef WORDS_BIGENDIAN
         case 4: format = iom_MSB_IEEE_REAL_4; break;
-#endif /* _LITTLE_ENDIAN */
+#else /* little endian */
+        case 4: format = iom_LSB_IEEE_REAL_4; break;
+#endif /* WORDS_BIGENDIAN */
         }
     }
     else if (!strcmp(q, "SUN_REAL")) {

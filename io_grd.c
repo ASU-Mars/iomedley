@@ -31,9 +31,9 @@ iom_isGRD(FILE *fp)
 
     rewind(fp);
     fread(&size, sizeof(int), 1, fp);
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     iom_MSB4((char *)&size);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     
     if (size == 104 || size == 92) {
         /**
@@ -41,9 +41,9 @@ iom_isGRD(FILE *fp)
          **/
         fread(buf, size, 1, fp);
         fread(&size2, sizeof(int), 1, fp);
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
         iom_MSB4((char *)&size2);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
         
         if (size == size2) {
             return 1;
@@ -74,14 +74,14 @@ iom_GetGRDHeader(
     
     /* Get record size */
     fread(&size, sizeof(int), 1, fp);
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     iom_MSB4((char *)&size);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     
     fread(buf, size, 1, fp);
     
     grd = (struct GRD *)buf;
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     /*
     ** byte-swap the integers in the header
     ** ieee floats have the same format though
@@ -89,7 +89,7 @@ iom_GetGRDHeader(
     iom_MSB4((char *)&grd->ncol);
     iom_MSB4((char *)&grd->nrow);
     iom_MSB4((char *)&grd->nz);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     
     fprintf(stderr, "GRD file - ");
     fprintf(stderr, "Title: %s, program: %s\n", grd->id, grd->pgm);
@@ -175,12 +175,12 @@ iom_WriteGRD(
     
     size = sizeof(struct GRD);
     
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     iom_LSB4((char *)&size);
     iom_LSB4((char *)&grd->ncol);
     iom_LSB4((char *)&grd->nrow);
     iom_LSB4((char *)&grd->nz);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     
     fwrite(&size, 1, sizeof(int), fp);
     fwrite(grd, 1, size, fp);
@@ -188,9 +188,9 @@ iom_WriteGRD(
 
     size = (x+1)*4;
     
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
     iom_LSB4((char *)&size);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 
 
     for (i = 0 ; i < y ; i++) {
@@ -209,10 +209,10 @@ iom_WriteGRD(
 				fclose(fp);
                 return 0;
             }
-#if _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
             /* LSB -> MSB */
             iom_MSB4((char *)&f);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
             fwrite(&f, 1, sizeof(float), fp);
         }
         fwrite(&size, 1, sizeof(int), fp);

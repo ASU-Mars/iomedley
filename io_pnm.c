@@ -357,9 +357,9 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
             /*
             ** I am guessing byte-swapping may be required here.
             */
-#ifdef _LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
             swab(data, data, 2*x*y);
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
             
         } else {
             fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",

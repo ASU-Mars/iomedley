@@ -76,8 +76,9 @@ iom_GetGOESHeader(
 	rewind(fp);
 	fread(&g, sizeof(g), 1, fp);
     
-#ifdef _LITTLE_ENDIAN
-    /* swap integer fields within the header */
+#ifndef WORDS_BIGENDIAN
+    /* swap integer fields within the header for little-endian machines */
+    
     iom_MSB4((char *)&g.cookie);
     iom_MSB4((char *)&g.format);
     iom_MSB4((char *)&g.sss);
@@ -122,7 +123,7 @@ iom_GetGOESHeader(
     iom_MSB4((char *)&g.cal_offset);
     iom_MSB4((char *)&g.n_comment);
     
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 
 	/* memset(h, 0, sizeof(*h)); */
     iom_init_iheader(h);

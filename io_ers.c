@@ -8,11 +8,11 @@
  ** Write data as ER Mapper ERS data set
  **/
 
-#ifdef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
 static char byte_order[] = "MSBFirst";
-#else
+#else /* little endian */
 static char byte_order[] = "LSBFirst";
-#endif /* _LITTLE_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
 
 static char ers_header[] =
 "DatasetHeader Begin\n\

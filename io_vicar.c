@@ -291,29 +291,22 @@ iom_WriteVicar(
 
     rec = h->size[0] * iom_NBYTESI(h->format);
 
-#ifdef _LITTLE_ENDIAN
-    /*
-    ** Write low-endian output only.
-    ** This ensures no output endian-translation.
-    */
-    
-    sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  ");
-#else
+#ifdef WORDS_BIGENDIAN
     /*
     ** Write high-endian output.
     ** This ensures no output endian-translation.
     */
     
     sprintf(ptr+strlen(ptr), "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  ");
-#endif /* _LITTLE_ENDIAN */
-
-#if 0
+#else /* little endian */
     /*
-    ** Always write IEEE-floats.
+    ** Write low-endian output only.
+    ** This ensures no output endian-translation.
     */
-    sprintf(ptr+strlen(ptr), "REALFMT='IEEE'  ");
-#endif 
     
+    sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  ");
+#endif /* WORDS_BIGENDIAN */
+
     switch(h->format) {
     case iom_BYTE:  sprintf(ptr+strlen(ptr), "FORMAT='BYTE'  "); break;
     case iom_SHORT: sprintf(ptr+strlen(ptr), "FORMAT='HALF'  "); break;
@@ -365,11 +358,11 @@ iom_WriteVicar(
     ** us but they are required by the standard.
     */
     
-#ifdef _LITTLE_ENDIAN
-    sprintf(ptr+strlen(ptr), "BHOST='PC'  BINFMT='LOW'  ");
-#else
+#ifdef WORDS_BIGENDIAN
     sprintf(ptr+strlen(ptr), "BHOST='SUN-SOLR'  BINTFMT='HIGH'  ");
-#endif /* _LITTLE_ENDIAN */
+#else /* little endian */
+    sprintf(ptr+strlen(ptr), "BHOST='PC'  BINFMT='LOW'  ");
+#endif /* WORDS_BIGENDIAN */
 
     sprintf(ptr+strlen(ptr), "BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  ");
     
