@@ -1,7 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#ifdef _WIN32
+#include <io.h>
+
+#undef popen
+#define popen _popen
+#undef pclose
+#define pclose _pclose
+
+#else
 #include <pwd.h>
+#endif /* _WIN32 */
 #include "iomedley.h"
 
 
@@ -726,8 +737,21 @@ iom_expand_filename(char *s)
                 q++;
             }
             if (q == p + 1) {   /* no username specified, use $HOME */
+#ifdef _WIN32
+				e = getenv("HOMEDRIVE");
+				if (e == NULL){ fprintf(stderr, "error: \"~\" expansion failed.\n"); return NULL; }
+				strcat(buf, e);
+				strcat(buf, "\\");
+				e = getenv("HOMEPATH");
+				if (e == NULL){ fprintf(stderr, "error: \"~\" expansion failed.\n"); return NULL; }
+				strcat(buf, e);
+#else
                 strcat(buf, getenv("HOME"));
+#endif /* _WIN32 */
             } else {
+#ifdef _WIN32
+				fprintf(stderr, "error: \"~user\" expansion not supported.\n"); return NULL;
+#else
                 strncpy(ebuf, p + 1, q - p - 1);
                 if ((pwent = getpwnam(ebuf)) == NULL) {
                     fprintf(stderr, "error: unknown user: %s\n", ebuf);
@@ -735,6 +759,7 @@ iom_expand_filename(char *s)
                 } else {
                     strcat(buf, pwent->pw_dir);
                 }
+#endif /* _WIN32 */
             }
             p = q;
         } else {

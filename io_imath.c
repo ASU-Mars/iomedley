@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#ifdef _WIN32
+#undef strncasecmp
+#define strncasecmp strnicmp
+#else
 #include <unistd.h>
+#endif /* _WIN32 */
 #include "iomedley.h"
 
 

@@ -1,7 +1,12 @@
-#include "io_envi.h"
 #include <sys/types.h>
+#include <sys/stat.h>
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <dirent.h>
+#endif /* _WIN32 */
 #include <string.h>
+#include "io_envi.h"
 
 extern int iom_orders[3][3];
 
@@ -9,8 +14,15 @@ void
 Load_Data_Name(struct iom_iheader *h, char *fname)
 {
 	char *p;
+#ifdef _WIN32
+	struct _finddata_t finfo;
+	long   fhand, rc;
+	struct _stat sbuf;
+#else  /* _WIN32 */
 	DIR *dirp;
 	struct dirent *dp;
+#endif /* _WIN32 */
+	char *name;
 
 	
 	p=strstr(fname,".");
@@ -19,12 +31,22 @@ Load_Data_Name(struct iom_iheader *h, char *fname)
 
 	p++;
 
+#ifdef _WIN32
+	for(rc = fhand = _findfirst(".", &finfo); rc != -1; rc = _findnext(fhand, &finfo)){
+		name = finfo.name;
+#else
 	dirp = opendir(".");
 	while ((dp = readdir(dirp)) != NULL){
-		if (strncmp(dp->d_name,fname,(strlen(fname)-4))==0){
-			if (strcmp(&dp->d_name[strlen(dp->d_name)-3],p)) {
-				h->ddfname=strdup(dp->d_name);
+		name = dp->d_name;
+#endif /* _WIN32 */
+		if (strncmp(name,fname,(strlen(fname)-4))==0){
+			if (strcmp(&name[strlen(name)-3],p)) {
+				h->ddfname=strdup(name);
+#ifdef _WIN32
+				_findclose(fhand);
+#else
 				closedir(dirp);
+#endif /* _WIN32 */
 				return;
 			}
 		}
@@ -33,7 +55,11 @@ Load_Data_Name(struct iom_iheader *h, char *fname)
 	fprintf(stderr,"%s the header file, couldn't find a data file with same name, different extension\n",
 				fname);
 
+#ifdef _WIN32
+	_findclose(fhand);
+#else
 	closedir(dirp);
+#endif /* _WIN32 */
 }	
 
 
@@ -283,7 +309,7 @@ void * Read_Int(FILE *fp,int *size)
 
 	char in[256];
 	int	value;
-	void *valueobj;
+	char *valueobj;
 
 	fgets(in,256,fp);
 	value=atoi(in);
@@ -304,7 +330,7 @@ void * Read_Float(FILE *fp,int *size)
 
 	char in[256];
 	float	value;
-	void *valueobj;
+	char *valueobj;
 
 	fgets(in,256,fp);
 	value=atof(in);
@@ -324,7 +350,7 @@ void * Read_String(FILE *fp,int *size)
 
 	char input[257];
 	int  nochar=0;
-	void *valueobj;
+	char *valueobj;
 	int suffix;
 	char *prefix;
 	int first=1;
@@ -385,7 +411,7 @@ void * Read_Many_Ints(FILE *fp,int *size)
 
 
 	int value;
-	void *valueobj;
+	char *valueobj;
 	char string[15];
 	int  current_size=256*sizeof(int);
 	int i=0;
@@ -462,7 +488,7 @@ void * Read_Many_Floats(FILE *fp,int *size)
 
 
 	float value;
-	void *valueobj;
+	char *valueobj;
 	char string[35];
 	int  current_size=256*sizeof(float);
 	int i=0;
@@ -533,7 +559,7 @@ void * Read_Many_Strings(FILE *fp,int *size)
 
 
 	char string[1500];
-	void *valueobj;
+	char *valueobj;
 	int  current_size=1024; /*Eh, why not?*/
 	int i=0;
 	char c;

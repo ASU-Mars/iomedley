@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif /* _WIN32 */
+#include <sys/types.h>
 #include <string.h>
-#include <unistd.h>
 #include "iomedley.h"
 
 
@@ -104,7 +106,7 @@ ReadPNMHeader(FILE *fp, int *xout, int *yout,
     int x,y,z,count;
     int bitshift;
     int maxval;
-    u_char *data;
+    unsigned char *data;
 
     /**
     *** Get format
@@ -300,7 +302,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
             for (i = 0 ; i < k ; i++) {
                 sdata[count++] = get_int(fp);
             }
-            data = (u_char *)sdata;
+            data = (unsigned char *)sdata;
             *bits = 16;
         } else {
             fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",

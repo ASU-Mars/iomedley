@@ -2,12 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifdef _WIN32
+#undef strncasecmp
+#define strncasecmp strnicmp
+#else
 #include <unistd.h>
+#include <pwd.h>
+#endif /* _WIN32 */
 #include <string.h>
+#include <sys/types.h>
 #include "iomedley.h"
 
-#include <pwd.h>
-#include <sys/types.h>
 
 #define VICAR_MAGIC		"LBLSIZE="
 

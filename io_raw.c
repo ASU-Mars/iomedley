@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif /* _WIN32 */
 #include <string.h>
 #include "iomedley.h"
 

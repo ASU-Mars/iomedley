@@ -220,7 +220,6 @@ typedef struct {
 	char **name;
 } SEQ;
 
-#include "proto.h"
 
 #ifdef WORDS_BIGENDIAN
 
