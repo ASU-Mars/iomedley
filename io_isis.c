@@ -288,8 +288,21 @@ iom_GetISISHeader(
           ** the header for future retrieval of data.
           */
           
+		  
           ddfname = OdlGetFileName(key, &start, &start_type);
-          ddfname = OdlGetFileSpec(ddfname, filename);
+		  if (strcmp(ddfname, filename)) {
+		  	char *p;
+		  	/*
+			** If the filename is different, then it's a detached label
+			*/
+			if ((p = strrchr(filename, '/')) != NULL) {
+                /*   */
+				ddfname = malloc(strlen(ddfname)+strlen(p)+2);
+				sprintf(ddfname, "%s/%s", p, ddfname);
+			} else {
+				/* no directory specified in filename, just use ddfname */
+			}
+		  }
           
           if (ddfname) ddfname = strdup(ddfname);
           
