@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 # Makefile.in
 
 # Jim Stewart
@@ -32,10 +31,10 @@
 #ZLIBLIB=../zlib
 #ZLIBINC=../zlib
 
-CC=gcc
-CFLAGS=-g -O2
-LDFLAGS= -lm  # -L. -L$(ZLIBLIB) -lpng -lz -lm
-RANLIB=ranlib
+CC=@CC@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@ @LIBS@ # -L. -L$(ZLIBLIB) -lpng -lz -lm
+RANLIB=@RANLIB@
 
 OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
 	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \

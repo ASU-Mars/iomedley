@@ -1,21 +1,27 @@
-#
+# Generated automatically from Makefile.in by configure.
+# Makefile
+
+# Jim Stewart
+# 17 Oct 2002
+
+# Default libgif-3.0 Makefile hacked up for use with autoconf.
+
 # This is the make file for the lib subdirectory of the GIF library
 # You'll need GNU gcc or some other ANSI-complient compiler.
 #
 #				Gershon Elber, Jun 1989
 #  * version number in ./lib/Makefile
 #
-V = 3.0
+#V = 3.0
 
 #SHLIB = libgif.so.$(V)
 
 #
 # Where all the include files are:
-INCS = -I.
 
-LIBDIR = /usr/lib
+#INCS = -I.
+#LIBDIR = /usr/lib
 
-#
 # What devices we should be able to grab into gif images. Note that if
 # you enable them the associated library must be available at link time.
 # Avaiable devices:
@@ -24,7 +30,6 @@ LIBDIR = /usr/lib
 # 3. X11 using libX.a (Add -D__X11__)
 DEVS = -D__X11__
 
-#
 # These are the flags for gcc, in BSD4.3 or Sun O.S. 4.0.3
 #
 # If your system has all function prototypes for gcc, replace all
@@ -60,27 +65,37 @@ DEVS = -D__X11__
 #
 # GNU CC over Linux and XFree86
 #
-CC = gcc
+# CC = gcc
 #
 #CFLAGS = -fno-builtin -O -c -W -Wreturn-type -Wcomment
-CFLAGS = -fno-builtin -g -c -W -Wreturn-type -Wcomment
+#CFLAGS = -fno-builtin -g -c -W -Wreturn-type -Wcomment
 
+CC=gcc
+#DEFS= -DSTDC_HEADERS=1 -DHAVE_FCNTL_H=1 -DHAVE_VPRINTF=1 
+CPPFLAGS=-I. 
+CFLAGS=-g -O2
+LDFLAGS= 
+RANLIB=ranlib
+
+LIBGIF=libgif.a
 
 OBJS = dev2gif.o egif_lib.o dgif_lib.o gifalloc.o gif_font.o gif_hash.o \
 	gif_err.o quantize.o qprintf.o getarg.o
 
 .c.o:
-	$(CC) $(INCS) $(DEVS) $(CFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEVS) $<
+#	$(CC) -c $(DEFS) $(CPPFLAGS) $(CFLAGS) $(DEVS) $<
 
 #all: static shared
+all: static
 
 static: libgif.a
 #shared: $(SHLIB)
 
-libgif.a: $(OBJS)
-	rm -f libgif.a
-	ar rcv libgif.a $(OBJS)
-	-ranlib libgif.a
+$(LIBGIF): $(OBJS)
+	rm -f $@
+	ar rcv $@ $(OBJS)
+	-$(RANLIB) $@
 
 #$(SHLIB): $(OBJS)
 #	rm -f libgif.so.$(V)
@@ -97,10 +112,5 @@ quantize.o: gif_lib.h
 qprintf.o: gif_lib.h
 getarg.o: getarg.h
 
-install-lib: libgif.a
-	cp libgif.a libgif.so.$(V) $(LIBDIR)
-
-uninstall-lib: shared static
-	rm -f $(LIBDIR)/libgif.a $(LIBDIR)/$(SHLIB)
 clean:
-	rm -f *.[oa] *~ libgif.so.$(V)
+	rm -f *.[oa] *~
