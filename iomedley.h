@@ -37,6 +37,26 @@ typedef enum {
 	iom_LSB_IEEE_REAL_4 = 34, /* PC REAL */
 	iom_LSB_IEEE_REAL_8 = 38, /* PC DOUBLE */
     
+#ifdef WORDS_BIGENDIAN
+
+	iom_NATIVE_INT_1 = iom_MSB_INT_1,
+	iom_NATIVE_INT_2 = iom_MSB_INT_2,
+	iom_NATIVE_INT_4 = iom_MSB_INT_4,
+
+	iom_NATIVE_IEEE_REAL_4 = iom_MSB_IEEE_REAL_4,
+	iom_NATIVE_IEEE_REAL_8 = iom_MSB_IEEE_REAL_8,
+
+#else /* little-endian */
+
+	iom_NATIVE_INT_1 = iom_LSB_INT_1,
+	iom_NATIVE_INT_2 = iom_LSB_INT_2,
+	iom_NATIVE_INT_4 = iom_LSB_INT_4,
+
+	iom_NATIVE_IEEE_REAL_4 = iom_LSB_IEEE_REAL_4,
+	iom_NATIVE_IEEE_REAL_8 = iom_LSB_IEEE_REAL_8,
+
+#endif /* WORDS_BIGENDIAN */
+
 	iom_VAX_INT     = 42,
 	iom_VAX_REAL_4  = 44,
 	iom_VAX_REAL_8  = 48
