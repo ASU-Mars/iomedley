@@ -63,4 +63,6 @@
 /* The following macro is defined if we have libMagick */
 #undef HAVE_LIBMAGICK
 
+/* #define HAVE_LIBHDF5 1 */
+
 #endif /* _CONFIGWIN_H_ */

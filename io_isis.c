@@ -534,7 +534,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         case 4: format = iom_LSB_INT_4; break;
         }
     }
-    else if (!strcmp(q, "REAL") || !strcmp(q, "IEEE_REAL")){
+    else if (!strcmp(q, "REAL")){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
         case 4: format = iom_MSB_IEEE_REAL_4; break;
@@ -543,12 +543,12 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
 #endif /* WORDS_BIGENDIAN */
         }
     }
-    else if (!strcmp(q, "SUN_REAL")) {
+    else if (!strcmp(q, "SUN_REAL") || !strcmp(q, "IEEE_REAL")){
         switch(item_bytes){
         case 4: format = iom_MSB_IEEE_REAL_4; break;
         }
     }
-    else if (!strcmp(q, "PC_REAL")){
+    else if (!strcmp(q, "PC_REAL") || !strcmp(q, "RIEEE_REAL")){
         switch(item_bytes){
         case 4: format = iom_LSB_IEEE_REAL_4; break;
         }
