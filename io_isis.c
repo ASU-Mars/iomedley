@@ -447,7 +447,9 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     
     q = type;
     
-    if ((!strcmp(q, "INT")) || (!strcmp(q,"UNSIGNED_INTEGER")) || (!strcmp(q,"INTEGER"))){
+    if ((!strcmp(q, "INT")) || 
+		(!strcmp(q,"UNSIGNED_INTEGER")) || 
+		(!strcmp(q,"INTEGER"))){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
         case 1: format = iom_MSB_INT_1; break;
@@ -460,7 +462,9 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
 #endif /* WORDS_BIGENDIAN */
         }
     }
-    else if (!strcmp(q, "SUN_INTEGER")){
+    else if (!strcmp(q, "SUN_INTEGER") ||
+		(!strcmp(q,"MSB_UNSIGNED_INTEGER")) || 
+		(!strcmp(q,"MSB_INTEGER"))) {
         switch(item_bytes){
         case 1: format = iom_MSB_INT_1; break;
         case 2: format = iom_MSB_INT_2; break;
@@ -474,14 +478,16 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
         case 4: format = iom_MSB_INT_4; break;
         }
     }
-    else if (!strcmp(q, "PC_INTEGER")){
+    else if (!strcmp(q, "PC_INTEGER") ||
+		(!strcmp(q,"LSB_UNSIGNED_INTEGER")) || 
+		(!strcmp(q,"LSB_INTEGER"))) {
         switch(item_bytes){
         case 1: format = iom_LSB_INT_1; break;
         case 2: format = iom_LSB_INT_2; break;
         case 4: format = iom_LSB_INT_4; break;
         }
     }
-    else if (!strcmp(q, "REAL")){
+    else if (!strcmp(q, "REAL") || !strcmp(q, "IEEE_REAL")){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
         case 4: format = iom_MSB_IEEE_REAL_4; break;
