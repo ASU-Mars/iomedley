@@ -111,7 +111,7 @@ iom_WriteGFXImage(
         return 0;
     }
 
-    newfn=(char *)calloc(strlen(fname)+strlen(GFX_type)+1,sizeof(char));
+    newfn=(char *)calloc(strlen(fname)+strlen(GFX_type)+2,sizeof(char));
     if (newfn == NULL){
         fprintf(stderr, "Mem allocation error.\n");
         return 0;
