@@ -10,7 +10,7 @@
 
 
 
-static int ReadPNMHeader(FILE *fp, int *xout, int *yout, int *zout, int *bits, off_t *data_offset);
+static int ReadPNMHeader(FILE *fp, int *xout, int *yout, int *zout, int *bits, int *data_offset);
 static int get_int(FILE *fp);
 static int getbit(FILE *fp);
 
@@ -100,7 +100,7 @@ iom_GetPNMHeader(
 
 static int
 ReadPNMHeader(FILE *fp, int *xout, int *yout, 
-              int *zout, int *bits, off_t *data_offset)
+              int *zout, int *bits, int *data_offset)
 {
     char id,format;
     int x,y,z,count;
@@ -263,7 +263,7 @@ iom_WritePNM(
 
 int
 iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout, 
-            int *zout, int *bits, void **dout, off_t *data_offset)
+            int *zout, int *bits, void **dout, int *data_offset)
 {
     char id,format;
     int x,y,z,count;
@@ -433,7 +433,7 @@ iom_LoadPNM(
 {
     int   x, y, z, bits;
     void *data;
-	off_t offset;
+	int offset;
 
     iom_init_iheader(h);
     

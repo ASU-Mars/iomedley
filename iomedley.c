@@ -331,7 +331,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     int plane;
     int count;
     int err;
-    off_t offset; /* offset into the data to start reading from */
+    int offset; /* offset into the data to start reading from */
 
     /**
      ** data name definitions:
