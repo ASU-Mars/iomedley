@@ -390,14 +390,14 @@ iom_WriteVicar(
     sprintf(ptr+strlen(ptr), "N4=0  NBB=0  NLB=0  ");
 
     /*
-    ** BHOST, BINFMT, BREALFMT, BLTYPE and TASK are not used by
+    ** BHOST, BINTFMT, BREALFMT, BLTYPE and TASK are not used by
     ** us but they are required by the standard.
     */
     
 #ifdef WORDS_BIGENDIAN
     sprintf(ptr+strlen(ptr), "BHOST='SUN-SOLR'  BINTFMT='HIGH'  ");
 #else /* little endian */
-    sprintf(ptr+strlen(ptr), "BHOST='PC'  BINFMT='LOW'  ");
+    sprintf(ptr+strlen(ptr), "BHOST='PC'  BINTFMT='LOW'  ");
 #endif /* WORDS_BIGENDIAN */
 
     sprintf(ptr+strlen(ptr), "BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  ");
