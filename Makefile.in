@@ -76,6 +76,9 @@ clean:
 	cd $(LIBPNGDIR) && make clean && cd ..
 	cd $(LIBJPEGDIR) && make clean && cd ..
 
+install: all
+	install -m 644 $(LIBIOMEDLEY) $(prefix)/lib
+
 io_aviris.o: io_aviris.c iomedley.h io_lablib3.h toolbox.h
 io_envi.o: io_envi.c io_envi.h iomedley.h io_lablib3.h toolbox.h
 io_ers.o: io_ers.c iomedley.h io_lablib3.h toolbox.h
