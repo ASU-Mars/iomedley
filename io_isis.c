@@ -87,7 +87,7 @@ iom_GetISISHeader(
     }
 
     ob = (OBJDESC *)OdlParseLabelFile(filename, err_file,
-                                      ODL_EXPAND_STRUCTURE, 0);
+                                      ODL_EXPAND_STRUCTURE, iom_VERBOSITY <= 3);
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
         OdlFreeTree(ob);
