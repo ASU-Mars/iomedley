@@ -32,40 +32,41 @@ iom_GetGFXHeader(
     struct iom_iheader *h
 )
 {
-    int x, y, z;
-	Image *image;
-	ImageInfo image_info;
-
+  ExceptionInfo exc;
+  int x, y, z;
+  Image *image;
+  ImageInfo image_info;
+  
+  GetExceptionInfo(&exc);
+  GetImageInfo(&image_info);
+  strcpy(image_info.filename,fname);
+  
+  image=ReadImage(&image_info, &exc);
+  if (image == (Image *) NULL) return 0;
+  
+  iom_init_iheader(h);
+  if (!iom_ExtractMiffData(image,
+			   &h->size[0], &h->size[1], &h->size[2],
+			   (void *)&h->data)){
     
-	GetImageInfo(&image_info);
-	strcpy(image_info.filename,fname);
-    
-	image=ReadImage(&image_info);
-    if (image == (Image *) NULL) return 0;
-    
-    iom_init_iheader(h);
-    if (!iom_ExtractMiffData(image,
-                         &h->size[0], &h->size[1], &h->size[2],
-                         (void *)&h->data)){
-
-        DestroyImage(image); 
-        return 0;
-    }
-
+    DestroyImage(image); 
+    return 0;
+  }
+  
 #ifdef WORDS_BIGENDIAN
-    h->eformat = iom_MSB_INT_1;
+  h->eformat = iom_MSB_INT_1;
 #else /* little endian */
-    h->eformat = iom_LSB_INT_1;
+  h->eformat = iom_LSB_INT_1;
 #endif /* WORDS_BIGENDIAN */
-    
-    h->format = iom_BYTE;
-    h->org = iom_BSQ;
-
-    /****************************************************************
-    ** At this point h->data contains the data stored in the file. **
-    *****************************************************************/
-    
-    return 1;
+  
+  h->format = iom_BYTE;
+  h->org = iom_BSQ;
+  
+  /****************************************************************
+   ** At this point h->data contains the data stored in the file. **
+   *****************************************************************/
+  
+  return 1;
 }
 
 
@@ -201,6 +202,7 @@ iom_ExtractMiffData(
 	Image *tmp_image;
 	ImageInfo image_info;
 	ImageType it;
+	ExceptionInfo exc;
 	int Gray=0;
 
 
@@ -213,11 +215,11 @@ iom_ExtractMiffData(
 
 	char *data;
 
-    
+	GetExceptionInfo(&exc);
 	GetImageInfo(&image_info);
     if (image == (Image *) NULL) return 0;
 
-	it=GetImageType(image);
+	it=GetImageType(image, &exc);
 	x=image->columns;
 	y=image->rows;
 	if (it==GrayscaleType){
@@ -233,33 +235,33 @@ iom_ExtractMiffData(
 	if (Gray){
 		data=(char *)calloc(Frames*x*y,sizeof(char));
 		tmp_image=image;
-		while (tmp_image!=NULL) {
-			UncondenseImage(tmp_image);
-			for (i=0;i<(x*y);i++){
-				data[i+Frame_Size]=tmp_image->pixels[i].red;
-			}
-			Frame_Size+=(x*y);
-			tmp_image=tmp_image->next;
-		}
+		//while (tmp_image!=NULL) {
+		  //	UncondenseImage(tmp_image);
+		  //	for (i=0;i<(x*y);i++){
+		  //		data[i+Frame_Size]=tmp_image->pixels[i].red;
+		  //	}
+		  //	Frame_Size+=(x*y);
+		  //    tmp_image=tmp_image->next;
+		//}
 	}
 
 	else{
-		int total=x*y;
+	        int total=x*y;
 		int count=0;
 		layer2=total;
 		layer3=2*total;
 		data=(char *)calloc(Frames*total*3,sizeof(char));
 		tmp_image=image;
-		while(tmp_image!=NULL){
-			UncondenseImage(tmp_image);
-			for (i=0;i<total;i++){
-				data[i+Frame_Size]=tmp_image->pixels[i].red;
-				data[i+layer2+Frame_Size]=tmp_image->pixels[i].green;
-				data[i+layer3+Frame_Size]=tmp_image->pixels[i].blue;
-			}
-			Frame_Size+=(x*y*3);
-			tmp_image=tmp_image->next;
-		}
+		//	while(tmp_image!=NULL){
+		//UncondenseImage(tmp_image);
+		//for (i=0;i<total;i++){
+		//	data[i+Frame_Size]=tmp_image->pixels[i].red;
+		//	data[i+layer2+Frame_Size]=tmp_image->pixels[i].green;
+		//	data[i+layer3+Frame_Size]=tmp_image->pixels[i].blue;
+		//}
+		//Frame_Size+=(x*y*3);
+		//tmp_image=tmp_image->next;
+		//}
 	}
 
     *ox = x;
@@ -328,15 +330,15 @@ iom_ToMiff(
 
 		image->columns=x;
   		image->rows=y;
- 		image->packets=image->columns*image->rows;
-		image->pixels=(RunlengthPacket *) malloc(image->packets*sizeof(RunlengthPacket));
-  		if (image->pixels == (RunlengthPacket *) NULL) {
-			if (iom_is_ok2print_errors()){
-				fprintf(stderr, "Can't allocate memory for image write");
-			}
-            DestroyImage(image);
-			return (NULL);
-		}
+ 		//image->packets=image->columns*image->rows;
+		//image->pixels=(RunlengthPacket *) malloc(image->packets*sizeof(RunlengthPacket));
+  		//if (image->pixels == (RunlengthPacket *) NULL) {
+		//	if (iom_is_ok2print_errors()){
+		//		fprintf(stderr, "Can't allocate memory for image write");
+		//	}
+		//DestroyImage(image);
+		//	return (NULL);
+		//}
 	
 		layer2=x*y;
 		layer3=2*x*y;
@@ -350,11 +352,11 @@ iom_ToMiff(
 					g=data[i*x+j+layer2+Frame_Size];
 					b=data[i*x+j+layer3+Frame_Size];
 				}
-		    		image->pixels[i*x+j].red=r;
-    				image->pixels[i*x+j].green=g;
-   			 	image->pixels[i*x+j].blue=b;
-  			  	image->pixels[i*x+j].index=0;
- 			   	image->pixels[i*x+j].length=0;
+				//  		image->pixels[i*x+j].red=r;
+    				//image->pixels[i*x+j].green=g;
+   			 	//image->pixels[i*x+j].blue=b;
+  			  	//image->pixels[i*x+j].index=0;
+ 			   	//image->pixels[i*x+j].length=0;
 			}
   		}
 		Frame_Size+=((Gray) ? (x*y) : (3*x*y));
