@@ -127,15 +127,33 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
     h->size[2] = y;
   }
 
+  h->data = data;
+
   if (bits == 8) {
     h->format = iom_BYTE;
     h->eformat = iom_NATIVE_INT_1; /* libtiff always reads in native format */
   } else { /* 16 */
     h->format = iom_SHORT;
     h->eformat = iom_NATIVE_INT_2;
-  }
+	/*
+	** TIFF 16-bit is unsigned.  We need to deal with that here.
+	**
+	** Our two options are to shift down to signed 15-bits, or
+	** promote all the way up to int.
+	*/
+	{
+		ushort *us;
+		short *s;
+		int i;
 
-  h->data = data;
+		us = (ushort *)data;
+		s = (short *)data;
+		for (i = 0 ; i < x*y*z ; i++) {
+			s[i] = ((int)(us[i]))-32768;
+		}
+		h->data = data;
+	}
+  }
 
   return 1;
 

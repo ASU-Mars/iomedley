@@ -58,6 +58,7 @@ iom_GetISISHeader(
     int suffix_bytes = 0;
     char *err_file = NULL;
     char *ddfname = NULL; /* Detached Data-File Name */
+	int line_prefix = 0;
 
     suffix[0] = suffix[1] = suffix[2] = 0;
     suffix_size[0] = suffix_size[1] = suffix_size[2] = 0;
@@ -276,6 +277,11 @@ iom_GetISISHeader(
 			}
           return 0;
 	    }
+
+
+		if ((key = OdlFindKwd(image, "LINE_PREFIX_BYTES", NULL, 0, scope))) {
+			line_prefix = atoi(key->value);
+		}
         
         /**
          ** Load important IMAGE values
@@ -331,7 +337,8 @@ iom_GetISISHeader(
         h->format = iom_Eformat2Iformat(h->eformat);
         h->offset = 0;
         h->gain = 0;
-        h->prefix[0] = h->prefix[1] = h->prefix[2] = 0;
+		h->prefix[0] = line_prefix;
+        h->prefix[1] = h->prefix[2] = 0;
         h->suffix[0] = h->suffix[1] = h->suffix[2] = 0;
         h->ddfname = ddfname;
         return(1);
