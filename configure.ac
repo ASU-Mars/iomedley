@@ -55,8 +55,8 @@ AC_CHECK_LIB(z, compress, [found_libz=yes], [found_libz=no])
 
 dnl Warn the user if zlib not found
 if test "$found_libz" = "yes"; then
-	AC_DEFINE(HAVE_LIBZ)
-	AC_DEFINE(HAVE_LIBPNG)
+	AC_DEFINE(HAVE_LIBZ, 1, [ define to 1 if you have libz ] )
+	AC_DEFINE(HAVE_LIBPNG, 1, [ define to 1 if you have libpng ] )
 	libpng="libpng.a"
 	libpngdir="libpng-1.2.3"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"

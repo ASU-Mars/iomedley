@@ -4180,11 +4180,13 @@ fi
 
 
 if test "$found_libz" = "yes"; then
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBZ 1
 _ACEOF
 
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBPNG 1
 _ACEOF
 
