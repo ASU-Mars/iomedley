@@ -27,7 +27,7 @@
 # 1. EGA, VGA, SVGA (800x600), Hercules - all on IBM PC only.
 # 2. SGI 4D Irix using gl library (Add -D__SGI_GL__).
 # 3. X11 using libX.a (Add -D__X11__)
-DEVS = -D__X11__
+# DEVS = -D__X11__
 
 # These are the flags for gcc, in BSD4.3 or Sun O.S. 4.0.3
 #
