@@ -60,6 +60,7 @@ iom_GetISISHeader(
     char *ddfname = NULL; /* Detached Data-File Name */
 	int line_prefix = 0;
 
+    size[0] = size[1] = size[2] = 0;
     suffix[0] = suffix[1] = suffix[2] = 0;
     suffix_size[0] = suffix_size[1] = suffix_size[2] = 0;
 
@@ -255,11 +256,14 @@ iom_GetISISHeader(
     } else {
       if ((image = OdlFindObjDesc(ob, "IMAGE", NULL, 0, 0, 0)) != NULL) {
         
+        if ((key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))) {
+          size[0] = atoi(key->value);
+        }
         if ((key = OdlFindKwd(image, "LINES", NULL, 0, scope))) {
           size[1] = atoi(key->value);
         }
-        if ((key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))) {
-          size[0] = atoi(key->value);
+        if ((key = OdlFindKwd(image, "BANDS", NULL, 0, scope))) {
+          size[2] = atoi(key->value);
         }
         
         key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
@@ -332,7 +336,7 @@ iom_GetISISHeader(
         h->org = iom_BSQ;           /* data organization */
         h->size[0] = size[0];
         h->size[1] = size[1];
-        h->size[2] = 0;
+        h->size[2] = size[2];
         h->eformat = (iom_edf)format;
         h->format = iom_Eformat2Iformat(h->eformat);
         h->offset = 0;
