@@ -59,6 +59,7 @@ iom_GetISISHeader(
     char *err_file = NULL;
     char *ddfname = NULL; /* Detached Data-File Name */
 	int line_prefix = 0;
+	int t;
 
     size[0] = size[1] = size[2] = 0;
     suffix[0] = suffix[1] = suffix[2] = 0;
@@ -265,6 +266,35 @@ iom_GetISISHeader(
         if ((key = OdlFindKwd(image, "BANDS", NULL, 0, scope))) {
           size[2] = atoi(key->value);
         }
+		/*
+		** Thu Dec  1 14:43:00 MST 2005 - NsG
+		** 
+		** This is all new code because we finally encountered images with
+		** multiple bands.
+		**
+		** In the case of non-BSQ images, we need to manually reorganize the
+		** indices to match the organization.
+		**/
+		if ((key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope))) {
+			if (!strcasecmp(key->value, "BAND_SEQUENTIAL")) {
+				org = iom_BSQ;
+				/* 0 = x, 1 = y, 2 = z */
+				/* No switching */
+			} else if (!strcasecmp(key->value, "LINE_INTERLEAVED")) {
+				org = iom_BIL;
+				/* 0 = x, 1 = z, 2 = y */
+				t = size[1];
+				size[1] = size[2];
+				size[2] = t;
+			} else if (!strcasecmp(key->value, "SAMPLE_INTERLEAVED")) {
+				org = iom_BIP;
+				/* 0 = z, 1 = x, 2 = y */
+				t = size[0];
+				size[0] = size[2];
+				size[2] = size[1];
+				size[1] = t;
+			}
+		}
         
         key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
         key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
@@ -333,7 +363,7 @@ iom_GetISISHeader(
           OdlFreeTree(ob);
         }
         
-        h->org = iom_BSQ;           /* data organization */
+        h->org = org;
         h->size[0] = size[0];
         h->size[1] = size[1];
         h->size[2] = size[2];
