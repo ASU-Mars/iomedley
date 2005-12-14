@@ -294,6 +294,9 @@ iom_GetISISHeader(
 				size[2] = size[1];
 				size[1] = t;
 			}
+		} else {
+			/* probable fix here.  Org wasn't getting set at all */
+			org = iom_BSQ;
 		}
         
         key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
