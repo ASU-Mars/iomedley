@@ -7,7 +7,7 @@ LIBJPEG = libjpeg.a
 LIBJPEGDIR = libjpeg
 
 LIBGIF = libgif.a
-LIBGIFDIR = libgif
+LIBGIFDIR = giflib-4.1.4
 
 LIBPNG = libpng.a
 LIBPNGOBJ = @libpng@
@@ -15,7 +15,7 @@ LIBPNGDIR = @libpngdir@
 
 CC=@CC@
 DEFS=@DEFS@
-CPPFLAGS=-I. -I$(LIBTIFFDIR) -I$(LIBJPEGDIR) -I$(LIBGIFDIR) @CPPFLAGS@
+CPPFLAGS=-I. -I$(LIBTIFFDIR) -I$(LIBJPEGDIR) -I$(LIBGIFDIR)/lib @CPPFLAGS@
 # X_CFLAGS=@X_CFLAGS@
 # X_PRE_LIBS=@X_PRE_LIBS@
 # X_LIBS=@X_LIBS@
@@ -61,7 +61,7 @@ $(LIBIOMEDLEY):	$(OBJS) $(LIBTIFF) $(LIBJPEG) $(LIBGIF) $(LIBPNGOBJ)
 	$(CC) -c $(DEFS) $(CPPFLAGS) $(CFLAGS) $<
 
 $(LIBGIF):
-	cd $(LIBGIFDIR) && $(MAKE) $(LIBGIF)
+	cd $(LIBGIFDIR) && $(MAKE)
 
 $(LIBTIFF):
 	cd $(LIBTIFFDIR) && $(MAKE) $(LIBTIFF)
@@ -74,10 +74,10 @@ $(LIBJPEG):
 
 clean:
 	rm -f *.o libiomedley.a
-	cd $(LIBGIFDIR) && make clean && cd ..
 	cd $(LIBTIFFDIR) && make clean && cd ..
 	cd $(LIBPNGDIR) && make clean && cd ..
 	cd $(LIBJPEGDIR) && make clean && cd ..
+#	cd $(LIBGIFDIR) && make clean && cd ..
 
 install: all
 	install -m 644 $(LIBIOMEDLEY) $(prefix)/lib
