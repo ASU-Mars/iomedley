@@ -268,9 +268,9 @@ iom_LoadHeader(
 	*/
 	if (!success) success = iom_GetPNMHeader(fp, fname, header);
     if (!success) success = iom_GetJPEGHeader(fp, fname, header);
-    if (!success) success = iom_GetGIFHeader(fp, fname, header);
     if (!success) success = iom_GetPNGHeader(fp, fname, header);
     if (!success) success = iom_GetTIFFHeader(fp, fname, header);
+    if (!success) success = iom_GetGIFHeader(fp, fname, header);
 
 	return success;
 }
