@@ -1,5 +1,7 @@
 #include "iomedley.h"
 
+#define BUF_SIZE 256
+#define LABEL_SIZE_STRING "Label Size:"
 
 /**
  ** This (hopefully) detects AVIRIS files.
@@ -10,14 +12,18 @@
 int
 iom_isAVIRIS(FILE *fp)
 {
-    char buf[256];
+    char buf[BUF_SIZE];
 
     rewind(fp);
-    fgets(buf, 256, fp);
-    if (buf[24] != '\n') return(0);
+    memset(buf, 0, sizeof(char) * BUF_SIZE);
+    fgets(buf, BUF_SIZE, fp);
+    if (buf[24] != '\n') {
+        return(0);
+    }
 
-    fgets(buf, 256, fp);
-    if (strcmp(buf, "Label Size:")) {
+    memset(buf, 0, sizeof(char) * BUF_SIZE);
+    fgets(buf, BUF_SIZE, fp);
+    if (strncmp(buf, LABEL_SIZE_STRING, strlen(LABEL_SIZE_STRING))) {
         return(0);
     }
     return(1);
@@ -31,7 +37,6 @@ iom_isAVIRIS(FILE *fp)
  **         0 if the specified file is not an AVIRIS file.
  **         1 on success
  **/
-
 int
 iom_GetAVIRISHeader(
     FILE *fp,
@@ -43,7 +48,7 @@ iom_GetAVIRISHeader(
 
     int org=-1, format=-1, label=0;
     int size[3], suffix[3];
-    char buf[256];
+    char buf[BUF_SIZE];
 
     /**
     ** Read enough to get identifying label and total label size.
@@ -52,7 +57,8 @@ iom_GetAVIRISHeader(
 
     rewind(fp);
 
-    fgets(buf, 256, fp);
+    memset(buf, 0, sizeof(char) * BUF_SIZE);
+    fgets(buf, BUF_SIZE, fp);
     if (buf[24] != '\n'){
         return(0);
     }
@@ -77,8 +83,9 @@ iom_GetAVIRISHeader(
     org = ((int *)buf)[5];
     suffix[0]  = suffix[1] = suffix[2] = 0;
 
-    fgets(buf, 256, fp);
-    if (strncmp(buf, "Label Size:",11)) {
+    memset(buf, 0, sizeof(char) * BUF_SIZE);
+    fgets(buf, BUF_SIZE, fp);
+    if (strncmp(buf, LABEL_SIZE_STRING, strlen(LABEL_SIZE_STRING))) {
         return(0);
     }
 
