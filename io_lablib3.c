@@ -4794,6 +4794,8 @@ static short OdlValidValueList (char *text, char *message_fname,
         last_char = OdlValueEnd(first_char);
 
         /*  save the next character and terminate the string  */
+		if (!last_char) return(FALSE);
+
         save_c = *(++last_char);
         *last_char = '\0';
 
@@ -5231,9 +5233,12 @@ char *OdlValueEnd( char *text)
 	} else {
 		/*  find a character that is a brace, paren, or comma  */
 		c = strpbrk(text, "{}(),");
-
-		/*  backup over any trailing blanks  */
-		for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
+		if (c) {
+			/*  backup over any trailing blanks  */
+			for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
+		} else {
+			c = text+strlen(text)-1;
+		}
 	}
     return(c);
 
