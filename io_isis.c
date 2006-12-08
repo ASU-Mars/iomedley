@@ -560,14 +560,8 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     else if (!strcmp(q, "SUN_INTEGER") ||
 		(!strcmp(q,"SUN_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"MSB_UNSIGNED_INTEGER")) || 
+		(!strcmp(q,"MSB_SIGNED_INTEGER")) ||
 		(!strcmp(q,"MSB_INTEGER"))) {
-        switch(item_bytes){
-        case 1: format = iom_MSB_INT_1; break;
-        case 2: format = iom_MSB_INT_2; break;
-        case 4: format = iom_MSB_INT_4; break;
-        }
-    }
-    else if (!strcmp(q, "VAX_INT")){
         switch(item_bytes){
         case 1: format = iom_MSB_INT_1; break;
         case 2: format = iom_MSB_INT_2; break;
@@ -577,7 +571,10 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     else if (!strcmp(q, "PC_INTEGER") ||
 		(!strcmp(q,"PC_UNSIGNED_INTEGER")) || 
 		(!strcmp(q,"LSB_UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"LSB_INTEGER"))) {
+		(!strcmp(q,"LSB_SIGNED_INTEGER")) ||
+		(!strcmp(q,"LSB_INTEGER")) ||
+    	(!strcmp(q, "VAX_INT")) ||
+		(!strcmp(q,"VAX_INTEGER"))) {
         switch(item_bytes){
         case 1: format = iom_LSB_INT_1; break;
         case 2: format = iom_LSB_INT_2; break;
