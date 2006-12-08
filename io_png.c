@@ -259,7 +259,7 @@ iom_ReadPNG(FILE *fp,
    * to each row.
    */
 
-  data = (unsigned char *) malloc(y * row_stride);
+  data = (unsigned char *) malloc(y * row_stride * z);
   if (!data) {
     if (iom_is_ok2print_unsupp_errors()) {
       fprintf(stderr, "ERROR: unable to allocate %d bytes in iom_ReadPNG()\n",
