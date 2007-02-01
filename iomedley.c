@@ -186,6 +186,7 @@ iom_supports_read_qube_data(struct iom_iheader *h)
 void
 iom_cleanup_iheader(struct iom_iheader *h)
 {
+    if (h->ddfname) { free(h->ddfname); h->ddfname = NULL; }
     if (h->data){ free(h->data); h->data = NULL; }
 }
 

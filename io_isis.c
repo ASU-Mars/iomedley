@@ -44,7 +44,9 @@ iom_GetISISHeader(
     OBJDESC **r_obj     /* NULL allowed */
     )
 {
-    OBJDESC * ob, *qube, *image;
+    OBJDESC *ob = NULL;
+    OBJDESC *qube = NULL;
+    OBJDESC *image = NULL;
     KEYWORD * key, *key1, *key2;
     int rlen;
     int scope = ODL_THIS_OBJECT;
@@ -60,6 +62,7 @@ iom_GetISISHeader(
     char *ddfname = NULL; /* Detached Data-File Name */
     int line_prefix = 0;
     int t;
+    char *tempString = NULL;
 
     size[0] = size[1] = size[2] = 0;
     suffix[0] = suffix[1] = suffix[2] = 0;
@@ -94,6 +97,7 @@ iom_GetISISHeader(
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
         OdlFreeTree(ob);
+        ob = NULL;
         if (iom_is_ok2print_errors()){
             fprintf(stderr, "%s is not a PDS file.", filename);
         }
@@ -167,6 +171,8 @@ iom_GetISISHeader(
                         "%s has unsupported/illegal SIZE+TYPE combination.\n",
                         filename);
             }
+            OdlFreeTree(ob);
+            ob = NULL;
             return 0;
         }
         
@@ -243,16 +249,21 @@ iom_GetISISHeader(
 
         
         if (key != NULL) {
-            OdlGetFileName(key, &start, &start_type);
+            tempString = OdlGetFileName(key, &start, &start_type);
+            if(NULL != tempString) {
+                free(tempString);
+            }
             if (start_type == ODL_RECORD_LOCATION) {
                 start = (start-1)*rlen;
             }
             h->dptr = start;
         }
-        if (r_obj != NULL) 
+        if (r_obj != NULL) {
             *r_obj = ob;
-        else 
+        } else {
             OdlFreeTree(ob);
+            ob = NULL;
+        }
         return(1);
     } else {
         if ((image = OdlFindObjDesc(ob, "IMAGE", NULL, 0, 0, 0)) != NULL) {
@@ -312,6 +323,9 @@ iom_GetISISHeader(
                             "%s has unsupported/illegal SIZE+TYPE combination.\n",
                             filename);
                 }
+                OdlFreeTree(ob);
+                ob = NULL;
+
                 return 0;
 	    }
 
@@ -344,15 +358,15 @@ iom_GetISISHeader(
                         q = calloc(strlen(ddfname)+(p-filename+1)+2, sizeof(char));
                         strncpy(q, filename, (p-filename+1));
                         strcat(q, "/"); strcat(q, ddfname);
-
+                
+                        if(NULL != ddfname) {
+                            free(ddfname);
+                            ddfname = NULL;
+                        }
                         ddfname = q;
                     } else {
                             /* no directory specified in filename, just use ddfname */
-                        ddfname = strdup(ddfname);
                     }
-                }
-                else {
-                    ddfname = strdup(ddfname);
                 }
           
                 if (start_type == ODL_RECORD_LOCATION) {
@@ -364,6 +378,7 @@ iom_GetISISHeader(
                 *r_obj = ob;
             } else {
                 OdlFreeTree(ob);
+                ob = NULL;
             }
         
             h->org = org;
@@ -380,6 +395,10 @@ iom_GetISISHeader(
             h->ddfname = ddfname;
             return(1);
         }
+    }
+    if((NULL != ob) && (r_obj != ob)) {
+        OdlFreeTree(ob);
+        ob = NULL;
     }
     return(0);
 }

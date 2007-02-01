@@ -136,13 +136,13 @@ struct iom_iheader {
     /*   -- comes from iom_idf enum above    */
                         /* this is what read_qube_data() returns   */
     
-	int transposed;     /* IMath data is transposed                */
+    int transposed;     /* IMath data is transposed                */
 
     int org;            /* data organization                       */
 
     float gain, offset; /* data multiplier and additive offset     */
 
-	char *data;         /* non-NULL if all of the image is loaded  */
+    char *data;         /* non-NULL if all of the image is loaded  */
 
     char *ddfname;      /* detached data-file name (if any)        */
                         /* see io_isis.c                           */
