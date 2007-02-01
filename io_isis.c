@@ -27,9 +27,9 @@ iom_isISIS(FILE *fp)
         return(0);
     }
 
-    /**
-     ** Best guess is yes, it is.
-     **/
+        /**
+         ** Best guess is yes, it is.
+         **/
     return(1);
 }
 
@@ -58,8 +58,8 @@ iom_GetISISHeader(
     int suffix_bytes = 0;
     char *err_file = NULL;
     char *ddfname = NULL; /* Detached Data-File Name */
-	int line_prefix = 0;
-	int t;
+    int line_prefix = 0;
+    int t;
 
     size[0] = size[1] = size[2] = 0;
     suffix[0] = suffix[1] = suffix[2] = 0;
@@ -69,23 +69,23 @@ iom_GetISISHeader(
         return 0;
     }
     
-    /**
-     ** Parse the label
-     **/
+        /**
+         ** Parse the label
+         **/
 
     rewind(fp);
-    /* memset(h, '\0', sizeof(struct _iheader)); */
+        /* memset(h, '\0', sizeof(struct _iheader)); */
     iom_init_iheader(h);
 
-    /* err_file = msg_file; */
-	if (iom_is_ok2print_details()){
-		err_file = msg_file;
-	}
-	else {
+        /* err_file = msg_file; */
+    if (iom_is_ok2print_details()){
+        err_file = msg_file;
+    }
+    else {
 #ifdef _WIN32
-		err_file = "nul:";
+        err_file = "nul:";
 #else
-		err_file = "/dev/null";
+        err_file = "/dev/null";
 #endif /* _WIN32 */
     }
 
@@ -94,29 +94,29 @@ iom_GetISISHeader(
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
         OdlFreeTree(ob);
-		if (iom_is_ok2print_errors()){
-			fprintf(stderr, "%s is not a PDS file.", filename);
-		}
+        if (iom_is_ok2print_errors()){
+            fprintf(stderr, "%s is not a PDS file.", filename);
+        }
         return(0);
     } else {
         rlen = atoi(key->value);
     }
 
-    /**
-     ** Check if this is an ISIS QUBE first.  If not, check for an IMAGE
-	  ** Fri Mar 29 15:28:44 MST 2002: We're now dealing with SPECTAL_QUBE
-	  **		in addition.
-     **/
-	 qube = NULL;
-	 qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
-	 if (qube == NULL)
-		qube = OdlFindObjDesc(ob, "SPECTRAL_QUBE", NULL, 0, 0, 0);
+        /**
+         ** Check if this is an ISIS QUBE first.  If not, check for an IMAGE
+         ** Fri Mar 29 15:28:44 MST 2002: We're now dealing with SPECTAL_QUBE
+         **		in addition.
+         **/
+    qube = NULL;
+    qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
+    if (qube == NULL)
+        qube = OdlFindObjDesc(ob, "SPECTRAL_QUBE", NULL, 0, 0, 0);
     
     if (qube != NULL) {
         
-        /**
-         ** Get data organization
-         **/
+            /**
+             ** Get data organization
+             **/
         
         org = -1;
         if ((key = OdlFindKwd(qube, "AXES_NAME", NULL, 0, scope)) ||
@@ -130,30 +130,30 @@ iom_GetISISHeader(
             else if (!strcmp(p1,"BAND") && !strcmp(p2,"SAMPLE") && !strcmp(p3,"LINE")) 
                 org = iom_BIP;
             else {
-				if (iom_is_ok2print_unsupp_errors()){
-					fprintf(stderr, "Unrecognized data organization: %s = %s",
-							"AXIS_NAME", key->value);
-				}
+                if (iom_is_ok2print_unsupp_errors()){
+                    fprintf(stderr, "Unrecognized data organization: %s = %s",
+                            "AXIS_NAME", key->value);
+                }
             }
         }
         
-        /**
-         ** Size of data
-         **/
+            /**
+             ** Size of data
+             **/
         
         if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
             sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
         }
         
-        /**
-         ** Format
-         **/
+            /**
+             ** Format
+             **/
         
         key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope);
         
-        /**
-         ** This tells us if we happen to be using float vs int
-         **/
+            /**
+             ** This tells us if we happen to be using float vs int
+             **/
         
         key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope);
         
@@ -162,11 +162,11 @@ iom_GetISISHeader(
                                      key2 ? key2->value : NULL);
 
         if (format == iom_EDF_INVALID){
-			if (iom_is_ok2print_unsupp_errors()){
-				fprintf(stderr,
-						"%s has unsupported/illegal SIZE+TYPE combination.\n",
-						filename);
-			}
+            if (iom_is_ok2print_unsupp_errors()){
+                fprintf(stderr,
+                        "%s has unsupported/illegal SIZE+TYPE combination.\n",
+                        filename);
+            }
             return 0;
         }
         
@@ -193,7 +193,7 @@ iom_GetISISHeader(
             }
         }
 
-		if (iom_is_ok2print_details()){
+        if (iom_is_ok2print_details()){
             fprintf(stderr, "ISIS Qube: ");
             fprintf(stderr, "%dx%dx%d %s %s\t\n",
                     iom_GetSamples(size, org),
@@ -201,9 +201,9 @@ iom_GetISISHeader(
                     iom_GetBands(size, org),
                     iom_Org2Str(org), iom_EFormat2Str(format));
             
-            /*************************************************************/
-            /* THE FOLLOWING INFO MUST BE PLACED INTO THE HEADER SOMEHOW */
-            /*************************************************************/
+                /*************************************************************/
+                /* THE FOLLOWING INFO MUST BE PLACED INTO THE HEADER SOMEHOW */
+                /*************************************************************/
             
             for (i = 0 ; i < 3 ; i++) {
                 if (suffix[i]) {
@@ -213,10 +213,10 @@ iom_GetISISHeader(
             }
         }
         
-        /**
-         ** Cram everything into the appropriate header, and
-         ** make sure we have the right data file.
-         **/
+            /**
+             ** Cram everything into the appropriate header, and
+             ** make sure we have the right data file.
+             **/
         
         h->org = org;           /* data organization */
         h->size[0] = size[0];
@@ -231,15 +231,15 @@ iom_GetISISHeader(
         h->suffix[2] = suffix_size[2];
         h->corner = suffix[0]*suffix[1]*suffix_bytes;
 
-		  /*
-		  ** Fri Mar 29 15:44:18 MST 2002: We've added ^SPECTRAL_QUBE as
-		  ** as object pointer
-		  */
+            /*
+            ** Fri Mar 29 15:44:18 MST 2002: We've added ^SPECTRAL_QUBE as
+            ** as object pointer
+            */
 
-		  key = NULL;
-		  key = OdlFindKwd(ob, "^QUBE", NULL, 0, 0);
-		  if (key == NULL)
-				key = OdlFindKwd(ob, "^SPECTRAL_QUBE", NULL, 0, 0);
+        key = NULL;
+        key = OdlFindKwd(ob, "^QUBE", NULL, 0, 0);
+        if (key == NULL)
+            key = OdlFindKwd(ob, "^SPECTRAL_QUBE", NULL, 0, 0);
 
         
         if (key != NULL) {
@@ -255,17 +255,17 @@ iom_GetISISHeader(
             OdlFreeTree(ob);
         return(1);
     } else {
-      if ((image = OdlFindObjDesc(ob, "IMAGE", NULL, 0, 0, 0)) != NULL) {
+        if ((image = OdlFindObjDesc(ob, "IMAGE", NULL, 0, 0, 0)) != NULL) {
         
-        if ((key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))) {
-          size[0] = atoi(key->value);
-        }
-        if ((key = OdlFindKwd(image, "LINES", NULL, 0, scope))) {
-          size[1] = atoi(key->value);
-        }
-        if ((key = OdlFindKwd(image, "BANDS", NULL, 0, scope))) {
-          size[2] = atoi(key->value);
-        }
+            if ((key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))) {
+                size[0] = atoi(key->value);
+            }
+            if ((key = OdlFindKwd(image, "LINES", NULL, 0, scope))) {
+                size[1] = atoi(key->value);
+            }
+            if ((key = OdlFindKwd(image, "BANDS", NULL, 0, scope))) {
+                size[2] = atoi(key->value);
+            }
 		/*
 		** Thu Dec  1 14:43:00 MST 2005 - NsG
 		** 
@@ -275,111 +275,111 @@ iom_GetISISHeader(
 		** In the case of non-BSQ images, we need to manually reorganize the
 		** indices to match the organization.
 		**/
-		if ((key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope))) {
-			if (!strcasecmp(key->value, "BAND_SEQUENTIAL")) {
-				org = iom_BSQ;
-				/* 0 = x, 1 = y, 2 = z */
-				/* No switching */
-			} else if (!strcasecmp(key->value, "LINE_INTERLEAVED")) {
-				org = iom_BIL;
-				/* 0 = x, 1 = z, 2 = y */
-				t = size[1];
-				size[1] = size[2];
-				size[2] = t;
-			} else if (!strcasecmp(key->value, "SAMPLE_INTERLEAVED")) {
-				org = iom_BIP;
-				/* 0 = z, 1 = x, 2 = y */
-				t = size[0];
-				size[0] = size[2];
-				size[2] = size[1];
-				size[1] = t;
-			}
-		} else {
-			/* probable fix here.  Org wasn't getting set at all */
-			org = iom_BSQ;
-		}
+            if ((key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope))) {
+                if (!strcasecmp(key->value, "BAND_SEQUENTIAL")) {
+                    org = iom_BSQ;
+                        /* 0 = x, 1 = y, 2 = z */
+                        /* No switching */
+                } else if (!strcasecmp(key->value, "LINE_INTERLEAVED")) {
+                    org = iom_BIL;
+                        /* 0 = x, 1 = z, 2 = y */
+                    t = size[1];
+                    size[1] = size[2];
+                    size[2] = t;
+                } else if (!strcasecmp(key->value, "SAMPLE_INTERLEAVED")) {
+                    org = iom_BIP;
+                        /* 0 = z, 1 = x, 2 = y */
+                    t = size[0];
+                    size[0] = size[2];
+                    size[2] = size[1];
+                    size[1] = t;
+                }
+            } else {
+                    /* probable fix here.  Org wasn't getting set at all */
+                org = iom_BSQ;
+            }
         
-        key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
-        key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
+            key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
+            key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
         
-        format = iom_ConvertISISType( key1 ? key1->value : NULL,
-                                      key2 ? key2->value : NULL, 
-                                      NULL);
+            format = iom_ConvertISISType( key1 ? key1->value : NULL,
+                                          key2 ? key2->value : NULL, 
+                                          NULL);
         
-        if (format == iom_EDF_INVALID){
-			if (iom_is_ok2print_unsupp_errors()){
-				fprintf(stderr,
-					  "%s has unsupported/illegal SIZE+TYPE combination.\n",
-					  filename);
-			}
-          return 0;
+            if (format == iom_EDF_INVALID){
+                if (iom_is_ok2print_unsupp_errors()){
+                    fprintf(stderr,
+                            "%s has unsupported/illegal SIZE+TYPE combination.\n",
+                            filename);
+                }
+                return 0;
 	    }
 
 
-		if ((key = OdlFindKwd(image, "LINE_PREFIX_BYTES", NULL, 0, scope))) {
-			line_prefix = atoi(key->value);
-		}
+            if ((key = OdlFindKwd(image, "LINE_PREFIX_BYTES", NULL, 0, scope))) {
+                line_prefix = atoi(key->value);
+            }
         
-        /**
-         ** Load important IMAGE values
-         **/
-        if ((key = OdlFindKwd(ob, "^IMAGE", NULL, 0, 0)) != NULL) {
+                /**
+                 ** Load important IMAGE values
+                 **/
+            if ((key = OdlFindKwd(ob, "^IMAGE", NULL, 0, 0)) != NULL) {
           
-          /*
-          ** If the actual image data is located in a detached
-          ** data file, get that file name. Save this name in 
-          ** the header for future retrieval of data.
-          */
+                    /*
+                    ** If the actual image data is located in a detached
+                    ** data file, get that file name. Save this name in 
+                    ** the header for future retrieval of data.
+                    */
           
 		  
-          ddfname = OdlGetFileName(key, &start, &start_type);
-		  if (strcmp(ddfname, filename)) {
-		  	char *p;
+                ddfname = OdlGetFileName(key, &start, &start_type);
+                if (strcmp(ddfname, filename)) {
+                    char *p;
 		  	/*
 			** If the filename is different, then it's a detached label
 			*/
-			if ((p = strrchr(filename, '/')) != NULL) {
-                char *q;
+                    if ((p = strrchr(filename, '/')) != NULL) {
+                        char *q;
                 
-                q = calloc(strlen(ddfname)+(p-filename+1)+2, sizeof(char));
-                strncpy(q, filename, (p-filename+1));
-                strcat(q, "/"); strcat(q, ddfname);
+                        q = calloc(strlen(ddfname)+(p-filename+1)+2, sizeof(char));
+                        strncpy(q, filename, (p-filename+1));
+                        strcat(q, "/"); strcat(q, ddfname);
 
-                ddfname = q;
-			} else {
-				/* no directory specified in filename, just use ddfname */
-                ddfname = strdup(ddfname);
-			}
-		  }
-          else {
-              ddfname = strdup(ddfname);
-          }
+                        ddfname = q;
+                    } else {
+                            /* no directory specified in filename, just use ddfname */
+                        ddfname = strdup(ddfname);
+                    }
+                }
+                else {
+                    ddfname = strdup(ddfname);
+                }
           
-          if (start_type == ODL_RECORD_LOCATION) {
-            start = (start-1)*rlen;
-            h->dptr = start;
-          } 
-        }
-        if (r_obj != NULL) {
-          *r_obj = ob;
-        } else {
-          OdlFreeTree(ob);
-        }
+                if (start_type == ODL_RECORD_LOCATION) {
+                    start = (start-1)*rlen;
+                    h->dptr = start;
+                } 
+            }
+            if (r_obj != NULL) {
+                *r_obj = ob;
+            } else {
+                OdlFreeTree(ob);
+            }
         
-        h->org = org;
-        h->size[0] = size[0];
-        h->size[1] = size[1];
-        h->size[2] = size[2];
-        h->eformat = (iom_edf)format;
-        h->format = iom_Eformat2Iformat(h->eformat);
-        h->offset = 0;
-        h->gain = 0;
-		h->prefix[0] = line_prefix;
-        h->prefix[1] = h->prefix[2] = 0;
-        h->suffix[0] = h->suffix[1] = h->suffix[2] = 0;
-        h->ddfname = ddfname;
-        return(1);
-      }
+            h->org = org;
+            h->size[0] = size[0];
+            h->size[1] = size[1];
+            h->size[2] = size[2];
+            h->eformat = (iom_edf)format;
+            h->format = iom_Eformat2Iformat(h->eformat);
+            h->offset = 0;
+            h->gain = 0;
+            h->prefix[0] = line_prefix;
+            h->prefix[1] = h->prefix[2] = 0;
+            h->suffix[0] = h->suffix[1] = h->suffix[2] = 0;
+            h->ddfname = ddfname;
+            return(1);
+        }
     }
     return(0);
 }
@@ -391,7 +391,7 @@ iom_WriteISIS(
     void *data,
     struct iom_iheader *h,
     int force_write,
-	char *title
+    char *title
     )
 {
     int dsize;
@@ -400,27 +400,27 @@ iom_WriteISIS(
     FILE *fp = NULL;
 
     if (!force_write && access(fname, F_OK) == 0){
-		if (iom_is_ok2print_errors()){
-			fprintf(stderr, "File %s exists already.\n", fname);
-		}
+        if (iom_is_ok2print_errors()){
+            fprintf(stderr, "File %s exists already.\n", fname);
+        }
         return 0;
     }
 
     if ((fp = fopen(fname, "wb")) == NULL){
-		if (iom_is_ok2print_sys_errors()){
-			fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
-					fname, strerror(errno));
-		}
+        if (iom_is_ok2print_sys_errors()){
+            fprintf(stderr, "Unable to write file %s. Reason: %s.\n",
+                    fname, strerror(errno));
+        }
         return 0;
     }
     
     dsize = iom_iheaderDataSize(h); /* >>> I GUESS <<< */
     fsize = dsize/512+1;
 
-    /*
-    ** FOLLOWING CODE NEEDS TO BE AUGMENTED TO INCLUDE FLOATING POINT
-    ** DATA FILE I/O.
-    */
+        /*
+        ** FOLLOWING CODE NEEDS TO BE AUGMENTED TO INCLUDE FLOATING POINT
+        ** DATA FILE I/O.
+        */
 
     sprintf(buf, "PDS_VERSION = 3.0\r\n");
     sprintf(buf+strlen(buf), "RECORD_TYPE = FIXED_LENGTH\r\n");
@@ -443,35 +443,35 @@ iom_WriteISIS(
     sprintf(buf+strlen(buf), "    CORE_ITEM_BYTES = %d\r\n", 
             iom_NBYTESI(h->format));
 
-    /* Always output native-endian data. */
+        /* Always output native-endian data. */
 
 #ifdef WORDS_BIGENDIAN
-	switch (h->format) {
-		case iom_BYTE:
-		case iom_SHORT:
-		case iom_INT:
-			sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
-			break;
-		case iom_FLOAT:
-		case iom_DOUBLE:
-			sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_REAL\r\n");
-			break;
-	}
+    switch (h->format) {
+        case iom_BYTE:
+        case iom_SHORT:
+        case iom_INT:
+            sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
+            break;
+        case iom_FLOAT:
+        case iom_DOUBLE:
+            sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_REAL\r\n");
+            break;
+    }
 
 #else
 
-	switch (h->format) {
-		case iom_BYTE:
-		case iom_SHORT:
-		case iom_INT:
-    		sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
-			break;
+    switch (h->format) {
+        case iom_BYTE:
+        case iom_SHORT:
+        case iom_INT:
+            sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_INTEGER\r\n");
+            break;
 
-		case iom_FLOAT:
-		case iom_DOUBLE:
-    		sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_REAL\r\n");
-			break;
-	}
+        case iom_FLOAT:
+        case iom_DOUBLE:
+            sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = PC_REAL\r\n");
+            break;
+    }
 #endif /* WORDS_BIGENDIAN */
     
     sprintf(buf+strlen(buf), "    CORE_BASE = 0.0\r\n");
@@ -484,21 +484,21 @@ iom_WriteISIS(
     sprintf(buf+strlen(buf), "END\r\n");
     memset(buf+strlen(buf), ' ', 1024-strlen(buf));
 
-    /* write header to file */
+        /* write header to file */
     fwrite(buf, 1, 1024, fp);
 
-    /*
-    ** Write data to file.
-    ** We don't need to byte-swap data because it is written in
-    ** the machine's native format.
-    */
+        /*
+        ** Write data to file.
+        ** We don't need to byte-swap data because it is written in
+        ** the machine's native format.
+        */
     fwrite(data, iom_NBYTESI(h->format), dsize, fp);
 
     if (ferror(fp)){
-		if (iom_is_ok2print_sys_errors()){
-			fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
-					fname, strerror(errno));
-		}
+        if (iom_is_ok2print_sys_errors()){
+            fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
+                    fname, strerror(errno));
+        }
         fclose(fp);
         unlink(fname);
         return 0;
@@ -527,13 +527,13 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
 {
     int item_bytes = 0;
     int format = iom_EDF_INVALID; /* Assume invalid format to start with */
-	char *q;
+    char *q;
     
     if (bits){
         switch(atoi(bits)){
-        case 8: item_bytes = 1; break;
-        case 16: item_bytes = 2; break;
-        case 32: item_bytes = 4; break;
+            case 8: item_bytes = 1; break;
+            case 16: item_bytes = 2; break;
+            case 32: item_bytes = 4; break;
         }
     }
     else if (bytes){
@@ -543,67 +543,67 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     q = type;
     
     if ((!strcmp(q, "INT")) || 
-		(!strcmp(q,"UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"INTEGER"))){
+        (!strcmp(q,"UNSIGNED_INTEGER")) || 
+        (!strcmp(q,"INTEGER"))){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
-        case 1: format = iom_MSB_INT_1; break;
-        case 2: format = iom_MSB_INT_2; break;
-        case 4: format = iom_MSB_INT_4; break;
+            case 1: format = iom_MSB_INT_1; break;
+            case 2: format = iom_MSB_INT_2; break;
+            case 4: format = iom_MSB_INT_4; break;
 #else /* little endian */
-        case 1: format = iom_LSB_INT_1; break;
-        case 2: format = iom_LSB_INT_2; break;
-        case 4: format = iom_LSB_INT_4; break;
+            case 1: format = iom_LSB_INT_1; break;
+            case 2: format = iom_LSB_INT_2; break;
+            case 4: format = iom_LSB_INT_4; break;
 #endif /* WORDS_BIGENDIAN */
         }
     }
     else if (!strcmp(q, "SUN_INTEGER") ||
-		(!strcmp(q,"SUN_UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"MSB_UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"MSB_SIGNED_INTEGER")) ||
-		(!strcmp(q,"MSB_INTEGER"))) {
+             (!strcmp(q,"SUN_UNSIGNED_INTEGER")) || 
+             (!strcmp(q,"MSB_UNSIGNED_INTEGER")) || 
+             (!strcmp(q,"MSB_SIGNED_INTEGER")) ||
+             (!strcmp(q,"MSB_INTEGER"))) {
         switch(item_bytes){
-        case 1: format = iom_MSB_INT_1; break;
-        case 2: format = iom_MSB_INT_2; break;
-        case 4: format = iom_MSB_INT_4; break;
+            case 1: format = iom_MSB_INT_1; break;
+            case 2: format = iom_MSB_INT_2; break;
+            case 4: format = iom_MSB_INT_4; break;
         }
     }
     else if (!strcmp(q, "PC_INTEGER") ||
-		(!strcmp(q,"PC_UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"LSB_UNSIGNED_INTEGER")) || 
-		(!strcmp(q,"LSB_SIGNED_INTEGER")) ||
-		(!strcmp(q,"LSB_INTEGER")) ||
-    	(!strcmp(q, "VAX_INT")) ||
-		(!strcmp(q,"VAX_INTEGER"))) {
+             (!strcmp(q,"PC_UNSIGNED_INTEGER")) || 
+             (!strcmp(q,"LSB_UNSIGNED_INTEGER")) || 
+             (!strcmp(q,"LSB_SIGNED_INTEGER")) ||
+             (!strcmp(q,"LSB_INTEGER")) ||
+             (!strcmp(q, "VAX_INT")) ||
+             (!strcmp(q,"VAX_INTEGER"))) {
         switch(item_bytes){
-        case 1: format = iom_LSB_INT_1; break;
-        case 2: format = iom_LSB_INT_2; break;
-        case 4: format = iom_LSB_INT_4; break;
+            case 1: format = iom_LSB_INT_1; break;
+            case 2: format = iom_LSB_INT_2; break;
+            case 4: format = iom_LSB_INT_4; break;
         }
     }
     else if (!strcmp(q, "REAL")){
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
-        case 4: format = iom_MSB_IEEE_REAL_4; break;
+            case 4: format = iom_MSB_IEEE_REAL_4; break;
 #else /* little endian */
-        case 4: format = iom_LSB_IEEE_REAL_4; break;
+            case 4: format = iom_LSB_IEEE_REAL_4; break;
 #endif /* WORDS_BIGENDIAN */
         }
     }
     else if (!strcmp(q, "SUN_REAL") || !strcmp(q, "IEEE_REAL")){
         switch(item_bytes){
-        case 4: format = iom_MSB_IEEE_REAL_4; break;
+            case 4: format = iom_MSB_IEEE_REAL_4; break;
         }
     }
     else if (!strcmp(q, "PC_REAL") || !strcmp(q, "RIEEE_REAL")){
         switch(item_bytes){
-        case 4: format = iom_LSB_IEEE_REAL_4; break;
+            case 4: format = iom_LSB_IEEE_REAL_4; break;
         }
     }
     else if (!strcmp(q, "VAX_REAL")) {
         switch(item_bytes){
-        case 4: format = iom_VAX_REAL_4; break;
+            case 4: format = iom_VAX_REAL_4; break;
         }
-  }
+    }
     return(format);
 }
