@@ -31,6 +31,10 @@
 
 #include "header.h"
 #include "io_lablib3.h"
+#include <fcntl.h>
+#ifdef _WIN32
+#define mkstemp(p) open(_mktemp(p), _O_CREAT | _O_SHORT_LIVED | _O_EXCL)
+#endif
 
 
 long odl_message_count = {0};
