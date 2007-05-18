@@ -436,7 +436,7 @@ iom_WriteVicar(
 #endif 
 
 	/* Caution: See notes 1 and 2 if you modify the following line. */
-    fprintf(fp, "LBLSIZE=%-5d           ",len);
+    fprintf(fp, "LBLSIZE=%-10d      ",len);
     fwrite(ptr, strlen(ptr), 1, fp);
 
 	/*
