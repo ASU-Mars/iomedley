@@ -1,4 +1,4 @@
-prefix=@prefix@
+prefix=$(DESTDIR)@prefix@
 
 LIBTIFF = libtiff.a
 LIBTIFFDIR = libtiff
