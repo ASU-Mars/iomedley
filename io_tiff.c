@@ -142,11 +142,11 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 	** promote all the way up to int.
 	*/
 	{
-		ushort *us;
+		unsigned short *us;
 		short *s;
 		int i;
 
-		us = (ushort *)data;
+		us = (unsigned short *)data;
 		s = (short *)data;
 		for (i = 0 ; i < x*y*z ; i++) {
 			s[i] = ((int)(us[i]))-32768;
