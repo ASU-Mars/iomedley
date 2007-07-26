@@ -7,10 +7,6 @@
 #include <string.h>
 #include "io_lablib3.h"
 
-#ifdef HAVE_CONFIG_H
-#include <iom_config.h>
-#endif /* HAVE_CONFIG_H */
-
 /*
 ** CAUTION:
 ** iom_EFORMAT2STR[] in iomedley.c depends upon these values
@@ -154,9 +150,8 @@ struct iom_iheader {
 
 /* Stolen from vanilla/header.h */
 
-static char iom_ctmp;
 typedef char *iom_cptr;
-#define iom_swp(c1, c2)	(iom_ctmp = (c1) , (c1) = (c2) , (c2) = iom_ctmp)
+void iom_swp(iom_cptr pc1, iom_cptr pc2);
 
 #ifdef WORDS_BIGENDIAN
 
@@ -164,27 +159,27 @@ typedef char *iom_cptr;
 #define iom_MSB4(s) 	(s)
 #define iom_MSB2(s) 	(s)
 
-#define iom_LSB8(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[7]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[6]), \
-                         iom_swp(((iom_cptr)(s))[2], ((iom_cptr)(s))[5]), \
-                         iom_swp(((iom_cptr)(s))[3], ((iom_cptr)(s))[4]),(s))
+#define iom_LSB8(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[7])), \
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[6])), \
+                         iom_swp(&(((iom_cptr)(s))[2]), &(((iom_cptr)(s))[5])), \
+                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])),(s))
 
-#define iom_LSB4(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[3]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[2]),(s))
+#define iom_LSB4(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[3])), \
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])),(s))
 
-#define iom_LSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
+#define iom_LSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])),(s))
 
 #else /* little endian */
 
-#define iom_MSB8(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[7]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[6]), \
-                         iom_swp(((iom_cptr)(s))[2], ((iom_cptr)(s))[5]), \
-                         iom_swp(((iom_cptr)(s))[3], ((iom_cptr)(s))[4]),(s))
+#define iom_MSB8(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[7])), \
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[6])), \
+                         iom_swp(&(((iom_cptr)(s))[2]), &(((iom_cptr)(s))[5])), \
+                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])),(s))
 
-#define iom_MSB4(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[3]), \
-                         iom_swp(((iom_cptr)(s))[1], ((iom_cptr)(s))[2]),(s))
+#define iom_MSB4(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[3])), \
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])),(s))
 
-#define iom_MSB2(s) 	(iom_swp(((iom_cptr)(s))[0], ((iom_cptr)(s))[1]),(s))
+#define iom_MSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])),(s))
 
 #define iom_LSB8(s) 	(s)
 #define iom_LSB4(s) 	(s)

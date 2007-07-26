@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include "iomedley.h"
 
 #define BUF_SIZE 256

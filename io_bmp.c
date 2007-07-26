@@ -8,7 +8,10 @@
  * Reads in a bitmap file (1, 4, 8, 24 and 32 bit)
  *
  *****************************************************************/
-#include "iom_config.h"
+
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
 #include <stdlib.h>

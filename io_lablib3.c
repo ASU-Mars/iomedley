@@ -29,6 +29,10 @@
 /*                                                                        */
 /*========================================================================*/
 
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include "header.h"
 #include "io_lablib3.h"
 #include <fcntl.h>
@@ -42,6 +46,40 @@ short odl_suppress_messages = {TRUE};
 
 
 char * find_file(char *fname);
+
+/**************************************************************************/
+/*                  static Function Prototypes                            */
+/**************************************************************************/
+
+#ifdef _NO_PROTO
+
+static unsigned short ExpandIsRecursive();
+static char *OdlFormatMessage();
+static void OdlPrintKeywords();
+static short OdlNestingLevel();
+static short OdlValidBraces();
+static short OdlValidElement();
+static short OdlValidEndObjDesc();
+static short OdlValidIdentifier();
+static short OdlValidKwd();
+static short OdlValidObjDesc();
+static short OdlValidValueList();
+
+#else /* _NO_PROTO */
+
+static unsigned short ExpandIsRecursive (KEYWORD *, char *);
+static char *OdlFormatMessage (char *);
+static void OdlPrintKeywords (OBJDESC *, char *, FILE *);
+static short OdlNestingLevel (char *, long *, long *);
+static short OdlValidBraces (char *, long, long, char *, FILE *, long);
+static short OdlValidElement (char *, char *, FILE *, long, long);
+static short OdlValidEndObjDesc (OBJDESC *, char *, char *, char *, FILE *,long);
+static short OdlValidIdentifier (char *, char *, char *, FILE *, long);
+static short OdlValidKwd (OBJDESC *, char *, char *, char *, char *,FILE *,long);
+static short OdlValidObjDesc (OBJDESC *, char *, char *, char *, FILE *,long);
+static short OdlValidValueList (char *, char *, FILE *,long);
+
+#endif  /* _NO_PROTO  */
 
 
 

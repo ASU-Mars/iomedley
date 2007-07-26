@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1135,3 +1139,12 @@ iom__ConvertToBIP(unsigned char *data,
 
 }
 
+
+void iom_swp(iom_cptr pc1, iom_cptr pc2)
+{
+    char cTmp;
+    
+    cTmp = *pc1;
+    *pc1 = *pc2;
+    *pc2 = cTmp;
+}

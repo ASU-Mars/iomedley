@@ -1,4 +1,8 @@
 /*********************************** envi.c **********************************/
+#ifdef HAVE_CONFIG_H
+#include <iom_config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
