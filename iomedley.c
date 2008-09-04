@@ -835,8 +835,8 @@ iom_uncompress_with_name(char *fname)
 char *
 iom_expand_filename(char *s)
 {
-    char buf[1024];
-    char ebuf[256];
+    char buf[4096];
+    char ebuf[2048];
     char *p, *q, *e;
     struct passwd *pwent;
 
