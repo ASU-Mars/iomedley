@@ -829,7 +829,7 @@ iom_uncompress_with_name(char *fname)
 
 /**
  ** Try to expand environment variables and ~
- ** puts answer back into argument.  Make sure its big enough...
+ ** returns a pointer to a new path (now it doesn't modify the original argument)
  **/
 
 char *
@@ -911,8 +911,8 @@ iom_expand_filename(char *s)
             p++;
         }
     }
-    strcpy(s, buf);
-    return (s);
+
+    return strdup(buf);
 }
 
 
