@@ -850,6 +850,8 @@ iom_expand_filename(char *s)
                 q++;
             }
             strncpy(ebuf, p + 1, q - p - 1);
+	     ebuf[q-p-1] = '\0'; //add a null character at the end of string
+
             if ((e = getenv(ebuf)) == NULL) {
                 if (iom_is_ok2print_errors()){
                     fprintf(stderr, "error: unknown environment variable: %s\n",
@@ -895,6 +897,8 @@ iom_expand_filename(char *s)
                 return NULL;
 #else
                 strncpy(ebuf, p + 1, q - p - 1);
+		  ebuf[q-p-1] = '\0'; //add a null character at the end of string
+
                 if ((pwent = getpwnam(ebuf)) == NULL) {
                     if (iom_is_ok2print_errors()){
                         fprintf(stderr, "error: unknown user: %s\n", ebuf);
