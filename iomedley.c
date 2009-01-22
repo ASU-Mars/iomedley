@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <limits.h>
+#include <errno.h>
+#include <strings.h>
 #include <sys/types.h>
 #ifdef _WIN32
 #include <io.h>
@@ -100,7 +104,7 @@ char *iom_ORG2STR[] = {
 
 FILE *iom_uncompress(FILE * fp, char *fname);
 char *iom_expand_filename(char *s);
-int iom_byte_swap_data(char *data, int dsize, iom_edf eformat);
+int iom_byte_swap_data(char *data, size_t dsize, iom_edf eformat);
 
 /*
 ** SYNOPSIS:
@@ -204,11 +208,11 @@ iom_cleanup_iheader(struct iom_iheader *h)
 ** Byte-size can be calculated by multiplying the returned
 ** value with iom_NBYTESI(h->format).
 */
-int
+size_t
 iom_iheaderDataSize(struct iom_iheader *h)
 {
     int i;
-    int dsize = 1;
+    size_t dsize = 1;
     
     for(i = 0; i < 3; i++){
         dsize *= h->size[i];
@@ -376,6 +380,35 @@ iom_ClearSliceInHeader(
 }
 
 
+static ssize_t 
+read_fully(int fd, void *buff, size_t maxSingleReadSize, size_t nbytes){
+	size_t nread = 0;
+	ssize_t err;
+
+	while(nbytes > maxSingleReadSize){
+		if ((err = read(fd, buff+nread, maxSingleReadSize)) != maxSingleReadSize){
+			if (err > 0){
+				nread += err;
+			}
+			return nread;
+		}
+		nbytes -= maxSingleReadSize;
+		nread += maxSingleReadSize;
+	}
+
+	if (nbytes > 0){
+		if ((err = read(fd, buff+nread, nbytes)) != nbytes){
+			if (err > 0){
+				nread += err;
+			}
+			return nread;
+		}
+		nread += nbytes;
+	}
+
+	return nread;
+}
+
 
 /**
  ** read_qube_data() - generalized cube reader
@@ -404,15 +437,15 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 {
     void *data;
     void *p_data;
-    int dsize;
-    int i, x, y, z;
+    size_t dsize;
+    size_t i, x, y, z;
     int nbytes;
     int dim[3];                 /* dimension of output data */
-    int d[3];                   /* total dimension of file */
-    int plane;
-    int count;
-    int err;
-    int offset; /* offset into the data to start reading from */
+    size_t d[3];                   /* total dimension of file */
+    size_t plane;
+    size_t count;
+    ssize_t err; /* TODO: probably not the correct type for both read and lseek */
+    off_t offset; /* offset into the data to start reading from */
 
         /**
          ** data name definitions:
@@ -458,7 +491,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         h->dim[i] = dim[i];
 
             /* compute byte-sizes of planes including their prefixes and suffixes */
-        d[i] = h->size[i] * nbytes + h->suffix[i] + h->prefix[i];
+        d[i] = (size_t)h->size[i] * nbytes + h->suffix[i] + h->prefix[i];
         if (i && (h->suffix[i] + h->prefix[i]) % nbytes != 0) {
             if (iom_is_ok2print_warnings()){
                 fprintf(stderr, "Warning!  Prefix+suffix not divisible by pixel size\n");
@@ -477,7 +510,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 
     if ((data = malloc(dsize * nbytes)) == NULL) {
         if (iom_is_ok2print_errors()){
-            fprintf(stderr, "Unable to allocate %d bytes of memory.\n", dsize * nbytes);
+            fprintf(stderr, "Unable to allocate %ld bytes of memory.\n", dsize * nbytes);
         }
         for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
         return (NULL);
@@ -507,7 +540,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 
             /*........label.....plane.....offset............. */
         offset = h->dptr + (z + h->s_lo[2]) * 
-            (d[0] * h->size[1] + h->size[0] * (h->prefix[1]+h->suffix[1]) + h->corner) +
+            (d[0] * h->size[1] + (size_t)h->size[0] * (h->prefix[1]+h->suffix[1]) + h->corner) +
             d[0] * h->s_lo[1];
 
         if (!h->data){
@@ -516,9 +549,14 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
                 ** directly from the file.
                 */
             
-            lseek(fd, offset, 0);
+            if ((err = lseek(fd, offset, 0)) != offset){
+                if (iom_is_ok2print_errors()){
+                    fprintf(stderr, "Seek failed (offset: %ld): %s.\n", offset, strerror(errno));
+                }
+                break; /* return partial data */
+			}
             
-            if ((err = read(fd, p_data, plane)) != plane) {
+            if ((err = read_fully(fd, p_data, 1073741824L, plane)) != plane) {
                 if (iom_is_ok2print_errors()){
                     fprintf(stderr, "Early EOF.\n");
                 }
@@ -547,8 +585,8 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
             if (h->s_skip[0] == 1) {
                 memcpy((char *) data + count,
                        (char *) p_data + (h->prefix[0] + h->s_lo[0] * nbytes + y * d[0]), 
-                       dim[0] * nbytes);
-                count += dim[0] * nbytes;
+                       (size_t)dim[0] * nbytes);
+                count += (size_t)dim[0] * nbytes;
             } else {
                 for (x = 0; x < dim[0]; x += h->s_skip[0]) {
                     memcpy((char *) data + count,
@@ -584,7 +622,6 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     return (data);
 }
 
-
 /*
 ** iom_byte_swap_data()
 **
@@ -596,11 +633,11 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 int
 iom_byte_swap_data(
     char     *data,    /* data to be modified/adjusted/swapped */
-    int       dsize,   /* number of data elements */
+    size_t    dsize,   /* number of data elements */
     iom_edf  eformat  /* external format of the data */
     )
 {
-    int i;
+    size_t i;
     int format = -1;  /* native format of data as derived from "eformat" */
 
 
@@ -1081,7 +1118,7 @@ iom__ConvertToBIP(unsigned char *data,
     unsigned char *bip_data;
     size_t        offset, offset2;
     unsigned int  x, y, z;
-    unsigned int  xsize, ysize, zsize;
+    size_t        xsize, ysize, zsize;
     unsigned int  nbytes;
 
     if (h->org == iom_BIP) {
@@ -1112,7 +1149,7 @@ iom__ConvertToBIP(unsigned char *data,
     bip_data = (unsigned char *) malloc(ysize * xsize * zsize * nbytes);
     if (bip_data == NULL) {
         if (iom_is_ok2print_unsupp_errors()) {
-            fprintf(stderr, "ERROR: unable to allocate %d bytes in by iom__ConvertToBIP()", xsize * ysize * zsize * nbytes);
+            fprintf(stderr, "ERROR: unable to allocate %ld bytes in by iom__ConvertToBIP()", xsize * ysize * zsize * nbytes);
         }
         return 0;
     }

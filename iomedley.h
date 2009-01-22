@@ -120,7 +120,7 @@ struct iom_iheader {
 	/* It is derived from sub-selects.                             */
     int dim[3];	        /* sub-selected (or final dimension) (pixels) (org-order) */
     
-    int corner;         /* size of 1 whole plane */
+    size_t corner;         /* size of 1 whole plane */
     
     int byte_order;	    /* byteorder of data - don't use                 */
     
@@ -197,7 +197,7 @@ void iom_swp(iom_cptr pc1, iom_cptr pc2);
 ** value with iom_NBYTESI(h->format).
 **
 */
-int iom_iheaderDataSize(struct iom_iheader *h);
+size_t iom_iheaderDataSize(struct iom_iheader *h);
 
 /*
 ** Returns the number of bytes per data item for the internal
@@ -371,7 +371,7 @@ void iom_cleanup_iheader(struct iom_iheader *h);
 ** of non-zero dimension-lengths in the _iheader structure
 ** and the size of each element.
 */
-int iom_iheaderDataSize(struct iom_iheader *h);
+size_t iom_iheaderDataSize(struct iom_iheader *h);
 
 /*
 ** Prints the image header in the specified "stream" file.
@@ -412,7 +412,7 @@ void *iom_ReadImageSlice(FILE *fp, char *fname, struct iom_iheader *slice);
 */
 int iom_byte_swap_data(
 	char     *data,    /* data to be modified/adjusted/swapped */
-	int       dsize,   /* number of data elements */
+	size_t    dsize,   /* number of data elements */
 	iom_edf  eformat   /* external format of the data */
     );
 
