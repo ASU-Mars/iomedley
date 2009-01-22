@@ -154,7 +154,7 @@ iom_ReadPNG(FILE *fp,
   unsigned int	bit_depth;	/* Bits per channel. */
   unsigned int	color_type;
   unsigned int	i;
-  unsigned int	row_stride;	/* Bytes per scanline. */
+  size_t        row_stride;	/* Bytes per scanline. */
   unsigned char	*data;
 
   png_structp	png_ptr;
@@ -261,26 +261,26 @@ iom_ReadPNG(FILE *fp,
    * to each row.
    */
 
-  data = (unsigned char *) malloc(y * row_stride * z);
+  data = (unsigned char *) malloc(((size_t)y) * row_stride * ((size_t)z));
   if (!data) {
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %d bytes in iom_ReadPNG()\n",
-              y * row_stride);
+      fprintf(stderr, "ERROR: unable to allocate %ld bytes in iom_ReadPNG()\n",
+              ((size_t)y) * row_stride);
     }
     return 0;
   }
 
-  row_pointers = (png_bytep *) malloc(y * sizeof(png_bytep));
+  row_pointers = (png_bytep *) malloc(((size_t)y) * sizeof(png_bytep));
   if (!row_pointers) {
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %d bytes in iom_ReadPNG()\n",
-              y * sizeof(png_bytep));
+      fprintf(stderr, "ERROR: unable to allocate %ld bytes in iom_ReadPNG()\n",
+              ((size_t)y) * sizeof(png_bytep));
     }
     return 0;
   }
   
   for (i = 0; i < y; i++) {
-    row_pointers[i] = data + (i * row_stride);
+    row_pointers[i] = data + (((size_t)i) * row_stride);
   }
 
   /* Read entire image. */
@@ -330,7 +330,7 @@ iom_WritePNG(char *filename,
 
   unsigned char	*data;
   unsigned int	x, y, z;
-  unsigned int	row_stride;
+  size_t		row_stride;
   unsigned int	i;
   unsigned int	color_type, bit_depth;
   int free_data = 0;
@@ -511,14 +511,14 @@ iom_WritePNG(char *filename,
 
   /* Setup row pointers and write image. */
 
-  row_pointers = (png_bytep *) malloc(y * sizeof(png_bytep));
+  row_pointers = (png_bytep *) malloc(((size_t)y) * sizeof(png_bytep));
   if (!row_pointers) {
     if (free_data) {
       free(data);
     }
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %d bytes in iom_ReadPNG()\n",
-              y * sizeof(png_bytep));
+      fprintf(stderr, "ERROR: unable to allocate %ld bytes in iom_ReadPNG()\n",
+              ((size_t)y) * sizeof(png_bytep));
     }
     return 0;
   }
@@ -526,10 +526,10 @@ iom_WritePNG(char *filename,
   /* Calculate row stride.  NOTE that this needs to change if bit depths
      other than 8 or 16 are supported! */
 
-  row_stride = x * z * (bit_depth / 8);
+  row_stride = ((size_t)x) * ((size_t)z) * (bit_depth / 8);
 
   for (i = 0; i < y; i++) {
-    row_pointers[i] = data + (i * row_stride);
+    row_pointers[i] = data + (((size_t)i) * row_stride);
   }
 
   png_write_image(png_ptr, row_pointers);
