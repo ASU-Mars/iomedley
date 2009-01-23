@@ -251,7 +251,7 @@ iom_WritePNM(
     ** Ordinarily we would be byte-swapping data here but there is no
     ** need to do so, since we will only be writing byte data.
     */
-    fwrite(data, z, x*y, fp);
+    fwrite(data, z, ((size_t)x)*((size_t)y), fp);
     
     if (ferror(fp)){
 		if (iom_is_ok2print_sys_errors()){
@@ -273,8 +273,9 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
             int *zout, int *bits, unsigned char **dout, int *data_offset)
 {
     char id,format;
-    int x,y,z,count;
-    int i,j,k,d;
+    size_t x,y,z,count;
+    size_t i,j,k;
+	int d;
     int bitshift;
     int maxval;
     unsigned char *data;
