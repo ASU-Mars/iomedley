@@ -264,8 +264,8 @@ iom_ReadPNG(FILE *fp,
   data = (unsigned char *) malloc(((size_t)y) * row_stride * ((size_t)z));
   if (!data) {
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %ld bytes in iom_ReadPNG()\n",
-              ((size_t)y) * row_stride);
+      fprintf(stderr, "ERROR: unable to allocate %ld bytes for data in iom_ReadPNG()\n",
+              ((size_t)y) * row_stride * ((size_t)z));
     }
     return 0;
   }
@@ -273,9 +273,10 @@ iom_ReadPNG(FILE *fp,
   row_pointers = (png_bytep *) malloc(((size_t)y) * sizeof(png_bytep));
   if (!row_pointers) {
     if (iom_is_ok2print_unsupp_errors()) {
-      fprintf(stderr, "ERROR: unable to allocate %ld bytes in iom_ReadPNG()\n",
+      fprintf(stderr, "ERROR: unable to allocate %ld bytes for row-pointers in iom_ReadPNG()\n",
               ((size_t)y) * sizeof(png_bytep));
     }
+	free(data);
     return 0;
   }
   

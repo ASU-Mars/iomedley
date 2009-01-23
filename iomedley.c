@@ -1081,7 +1081,7 @@ iom__ConvertToBIP(unsigned char *data,
     unsigned char *bip_data;
     size_t        offset, offset2;
     unsigned int  x, y, z;
-    unsigned int  xsize, ysize, zsize;
+    size_t        xsize, ysize, zsize;
     unsigned int  nbytes;
 
     if (h->org == iom_BIP) {
@@ -1112,7 +1112,8 @@ iom__ConvertToBIP(unsigned char *data,
     bip_data = (unsigned char *) malloc(ysize * xsize * zsize * nbytes);
     if (bip_data == NULL) {
         if (iom_is_ok2print_unsupp_errors()) {
-            fprintf(stderr, "ERROR: unable to allocate %d bytes in by iom__ConvertToBIP()", xsize * ysize * zsize * nbytes);
+            fprintf(stderr, "ERROR: unable to allocate %ld bytes in by iom__ConvertToBIP()",
+				xsize * ysize * zsize * nbytes);
         }
         return 0;
     }
@@ -1124,12 +1125,12 @@ iom__ConvertToBIP(unsigned char *data,
             for (x = 0; x < xsize; x++) {
                 for (z = 0; z < zsize; z++) {
                     switch (h->org) { 
-                        case iom_BIP: offset = y * (xsize * zsize) + (x * zsize) + z; break;
-                        case iom_BSQ: offset = z * (ysize * xsize) + (y * xsize) + x; break; 
-                        case iom_BIL: offset = y * (xsize * zsize) + (z * xsize) + x; break;
+                        case iom_BIP: offset = ((size_t)y) * (xsize * zsize) + (((size_t)x) * zsize) + (size_t)z; break;
+                        case iom_BSQ: offset = ((size_t)z) * (ysize * xsize) + (((size_t)y) * xsize) + (size_t)x; break; 
+                        case iom_BIL: offset = ((size_t)y) * (xsize * zsize) + (((size_t)z) * xsize) + (size_t)x; break;
                                 /* No default; other orgs already excluded above. */
                     }
-                    offset2 = y * (xsize * zsize) + (x * zsize) + z;
+                    offset2 = ((size_t)y) * (xsize * zsize) + (((size_t)x) * zsize) + (size_t)z;
                     memcpy((bip_data + (offset2*nbytes)), 
                            (data + (offset*nbytes)), nbytes);
                 }
