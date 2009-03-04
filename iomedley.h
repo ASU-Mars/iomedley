@@ -365,15 +365,6 @@ void *iom_detach_iheader_data(struct iom_iheader *h);
 void iom_cleanup_iheader(struct iom_iheader *h);
 
 /*
-** iheaderDataSize()
-**
-** Calculates the size (in bytes) of data as the product
-** of non-zero dimension-lengths in the _iheader structure
-** and the size of each element.
-*/
-size_t iom_iheaderDataSize(struct iom_iheader *h);
-
-/*
 ** Prints the image header in the specified "stream" file.
 ** Note that "fname" is the name associated with the "header"
 ** and not the "stream."
