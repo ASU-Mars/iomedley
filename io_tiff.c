@@ -148,11 +148,11 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 	{
 		unsigned short *us;
 		short *s;
-		int i;
+		size_t i, dsize = ((size_t)x)*((size_t)y)*((size_t)z);
 
 		us = (unsigned short *)data;
 		s = (short *)data;
-		for (i = 0 ; i < x*y*z ; i++) {
+		for (i = 0 ; i < dsize ; i++) {
 			s[i] = ((int)(us[i]))-32768;
 		}
 		h->data = data;
@@ -170,7 +170,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bit
   TIFF		*tifffp;
   uint32	x, y, row;
   tdata_t	buffer;
-  int		row_stride;		/* Bytes per scanline. */
+  size_t	row_stride;		/* Bytes per scanline. */
   unsigned char	*data;
   unsigned short orient, z, bits_per_sample, planar_config, plane, fillorder, photometric;
   int            eformat;
@@ -255,7 +255,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bit
   row_stride = TIFFScanlineSize(tifffp); /* Bytes per scanline. */
 
   buffer = (tdata_t) _TIFFmalloc(row_stride);
-  data = (unsigned char *) malloc(y * row_stride);
+  data = (unsigned char *) malloc(((size_t)y) * row_stride);
 
   /* FIX: deal with endian issues? */
 
@@ -272,7 +272,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bit
 	TIFFClose(tifffp);
         return 0;
       } else
-	memcpy(data + row * row_stride, buffer, row_stride);
+	memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
     }
   } else {
     for (plane = 0; plane < z; plane++)
@@ -288,7 +288,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bit
 	  TIFFClose(tifffp);
           return 0;
 	} else
-	  memcpy(data + row * row_stride, buffer, row_stride);
+	  memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
       }
   }
 
@@ -421,7 +421,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   else /* 3 or 4 */
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
 
-  row_stride = x * z * (bits_per_sample / 8);
+  row_stride = ((size_t)x) * ((size_t)z) * (bits_per_sample / 8);
 
   /* Allocate memory for one scanline of output. */
 
