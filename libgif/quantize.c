@@ -20,6 +20,8 @@
 #endif /* __MSDOS__ */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "gif_lib.h"
 
 #define PROGRAM_NAME	"GIF_LIBRARY"

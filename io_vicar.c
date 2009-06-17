@@ -290,7 +290,8 @@ iom_WriteVicar(
     int force_write        /* Overwrite existing file */
     )
 {
-    char ptr[4096];     
+    char ptr[4096], lblsizebuff[1024];
+	char *lblsizefmt = "LBLSIZE=%-20d      ";
     int rec;
     int bands;
     int org;
@@ -415,16 +416,15 @@ iom_WriteVicar(
 
     sprintf(ptr+strlen(ptr), "DAT_TIM='%24.24s'  ", ctime(&t));
     
+	sprintf(lblsizebuff, lblsizefmt, 0);
     /**
      ** Compute the size of final label and write it to the output file 
 	 ** before writing the rest of the label (as constructed in the 
 	 ** above code).
 	 ** 
-	 ** Note1: The number "24" comes from the fprintf(fp, "LBLSIZE=..."
-	 ** line below.
-	 ** Note4: "2" leaves the gap for label terminator.
+	 ** "2" leaves the gap for label terminator.
      **/
-    len = (((strlen(ptr)+24+2) / rec)+1) * rec;
+    len = (((strlen(ptr)+strlen(lblsizebuff)+2) / rec)+1) * rec;
 
 #if 0
     if (VERBOSE > 1) {
@@ -439,16 +439,14 @@ iom_WriteVicar(
     }
 #endif 
 
-	/* Caution: See notes 1 and 2 if you modify the following line. */
-    fprintf(fp, "LBLSIZE=%-10d      ",len);
+    fprintf(fp, lblsizefmt,len);
     fwrite(ptr, strlen(ptr), 1, fp);
 
 	/*
-	** Note2: "24" comes from the fprintf(fp, "LBLSIZE=..." line above.
-	** Note3: "2" leaves the gap for label terminator which is a 
+	** "2" leaves the gap for label terminator which is a 
 	** binary-zero short.
 	*/
-    fprintf(fp, "%*s", len-strlen(ptr)-24-2, "");
+    fprintf(fp, "%*s", len-strlen(ptr)-strlen(lblsizebuff)-2, "");
 	{
         /* zero does not change form in any-endian machine */
 		short i = 0;

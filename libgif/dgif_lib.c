@@ -14,7 +14,6 @@
 #ifdef __MSDOS__
 #include <io.h>
 #include <alloc.h>
-#include <stdlib.h>
 #include <sys\stat.h>
 #else
 #include <sys/types.h>
@@ -23,6 +22,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "gif_lib.h"
 #include "gif_hash.h"

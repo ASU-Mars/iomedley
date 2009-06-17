@@ -105,7 +105,7 @@ extern char *iom_ORG2STR[];
 
 
 struct iom_iheader {
-    int dptr;           /* offset in bytes to first data value     */
+    size_t dptr;        /* offset in bytes to first data value     */
     int prefix[3];      /* size of prefix data (bytes)             */
     int suffix[3];      /* size of suffix data (bytes)             */
     
@@ -120,7 +120,7 @@ struct iom_iheader {
 	/* It is derived from sub-selects.                             */
     int dim[3];	        /* sub-selected (or final dimension) (pixels) (org-order) */
     
-    int corner;         /* size of 1 whole plane */
+    size_t corner;         /* size of 1 whole plane */
     
     int byte_order;	    /* byteorder of data - don't use                 */
     
@@ -197,7 +197,7 @@ void iom_swp(iom_cptr pc1, iom_cptr pc2);
 ** value with iom_NBYTESI(h->format).
 **
 */
-int iom_iheaderDataSize(struct iom_iheader *h);
+size_t iom_iheaderDataSize(struct iom_iheader *h);
 
 /*
 ** Returns the number of bytes per data item for the internal
@@ -207,7 +207,8 @@ int iom_iheaderItemBytesI(struct iom_iheader *h);
 
 
 int iom_is_compressed(FILE * fp);
-FILE *iom_uncompress(FILE * fp, char *fname);
+FILE *iom_uncompress(FILE * fp, const char *fname);
+char *iom_uncompress_with_name(const char *fname);
 
 
 
@@ -241,7 +242,7 @@ int iom_GetIMathHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetISISHeader(FILE *fp, char *fname, struct iom_iheader *h, char *msg_file, OBJDESC **r_obj);
 int iom_GetGRDHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetGOESHeader(FILE *fp, char *fname, struct iom_iheader *h);
-int iom_GetAVIRISHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
+int iom_GetAVIRISHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetENVIHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 
 /*
@@ -365,15 +366,6 @@ void *iom_detach_iheader_data(struct iom_iheader *h);
 void iom_cleanup_iheader(struct iom_iheader *h);
 
 /*
-** iheaderDataSize()
-**
-** Calculates the size (in bytes) of data as the product
-** of non-zero dimension-lengths in the _iheader structure
-** and the size of each element.
-*/
-int iom_iheaderDataSize(struct iom_iheader *h);
-
-/*
 ** Prints the image header in the specified "stream" file.
 ** Note that "fname" is the name associated with the "header"
 ** and not the "stream."
@@ -412,7 +404,7 @@ void *iom_ReadImageSlice(FILE *fp, char *fname, struct iom_iheader *slice);
 */
 int iom_byte_swap_data(
 	char     *data,    /* data to be modified/adjusted/swapped */
-	int       dsize,   /* number of data elements */
+	size_t    dsize,   /* number of data elements */
 	iom_edf  eformat   /* external format of the data */
     );
 
@@ -422,7 +414,7 @@ int iom_byte_swap_data(
  ** Try to expand environment variables and ~
  ** puts answer back into argument.  Make sure its big enough...
  **/
-char *iom_expand_filename(char *s);
+char *iom_expand_filename(const char *s);
 
 
 /*----------------------------------------------------------------------

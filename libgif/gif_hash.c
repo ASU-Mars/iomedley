@@ -27,11 +27,13 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "gif_lib.h"
 #include "gif_hash.h"
 
 #define PROGRAM_NAME	"GIF_LIBRARY"
+static long SENTINEL = HT_GET_KEY(~0UL);
 
 /* #define  DEBUG_HIT_RATE    Debug number of misses per hash Insert/Exists. */
 
@@ -95,7 +97,7 @@ void _InsertHashTable(GifHashTableType *HashTable, unsigned long Key, int Code)
 	NumberOfMisses++;
 #endif /* DEBUG_HIT_RATE */
 
-    while (HT_GET_KEY(HTable[HKey]) != 0xFFFFFL) {
+    while (HT_GET_KEY(HTable[HKey]) != SENTINEL) {
 #ifdef DEBUG_HIT_RATE
 	    NumberOfMisses++;
 #endif /* DEBUG_HIT_RATE */
@@ -118,7 +120,7 @@ int _ExistsHashTable(GifHashTableType *HashTable, unsigned long Key)
 	NumberOfMisses++;
 #endif /* DEBUG_HIT_RATE */
 
-    while ((HTKey = HT_GET_KEY(HTable[HKey])) != 0xFFFFFL) {
+    while ((HTKey = HT_GET_KEY(HTable[HKey])) != SENTINEL) {
 #ifdef DEBUG_HIT_RATE
 	    NumberOfMisses++;
 #endif /* DEBUG_HIT_RATE */

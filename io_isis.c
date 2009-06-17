@@ -60,7 +60,7 @@ iom_GetISISHeader(
     int i;
     float       offset, gain;
     unsigned short start_type;
-    unsigned long start;
+    size_t start;
     int suffix_bytes = 0;
     char *err_file = NULL;
     char *ddfname = NULL; /* Detached Data-File Name */
@@ -239,7 +239,7 @@ iom_GetISISHeader(
         h->suffix[0] = suffix_size[0];
         h->suffix[1] = suffix_size[1];
         h->suffix[2] = suffix_size[2];
-        h->corner = suffix[0]*suffix[1]*suffix_bytes;
+        h->corner = (size_t)suffix[0]*(size_t)suffix[1]*(size_t)suffix_bytes;
 
             /*
             ** Fri Mar 29 15:44:18 MST 2002: We've added ^SPECTRAL_QUBE as
@@ -400,7 +400,7 @@ iom_GetISISHeader(
             return(1);
         }
     }
-    if((NULL != ob) && (r_obj != ob)) {
+    if((NULL != ob) && (*r_obj != ob)) {
         OdlFreeTree(ob);
         ob = NULL;
     }
@@ -417,8 +417,8 @@ iom_WriteISIS(
     char *title
     )
 {
-    int dsize;
-    int fsize;
+    size_t dsize;
+    size_t fsize;
     char buf[1025];
     FILE *fp = NULL;
 
@@ -448,7 +448,7 @@ iom_WriteISIS(
     sprintf(buf, "PDS_VERSION = 3.0\r\n");
     sprintf(buf+strlen(buf), "RECORD_TYPE = FIXED_LENGTH\r\n");
     sprintf(buf+strlen(buf), "RECORD_BYTES = 512\r\n");
-    sprintf(buf+strlen(buf), "FILE_RECORDS = %d\r\n",fsize+2);
+    sprintf(buf+strlen(buf), "FILE_RECORDS = %ld\r\n",fsize+2);
     sprintf(buf+strlen(buf), "LABEL_RECORDS = 2\r\n");
     sprintf(buf+strlen(buf), "FILE_STATE = CLEAN\r\n");
     sprintf(buf+strlen(buf), "^QUBE = 3\r\n");

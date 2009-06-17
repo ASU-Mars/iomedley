@@ -227,6 +227,8 @@ char *OdlTempFname();
 unsigned short OdlWildCardCompare(char *, char *);
 short CheckBalance(char *);
 int ListToArray(TB_STRING_LIST *, char ***);
+OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned short suppress_messages);
+
 
 #endif  /* _NO_PROTO  */
                               

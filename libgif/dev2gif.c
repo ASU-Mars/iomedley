@@ -28,6 +28,7 @@
 #endif /* __X11__ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "gif_lib.h"
 
 #define PROGRAM_NAME	"GIF_LIBRARY"

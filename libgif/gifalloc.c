@@ -10,6 +10,8 @@
 * 15 Sep 92 - Version 1.0 by Eric Raymond.				     *
 *****************************************************************************/
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "gif_lib.h"
 
 #define MAX(x, y)	(((x) > (y)) ? (x) : (y))

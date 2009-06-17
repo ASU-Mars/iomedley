@@ -106,6 +106,7 @@
 #endif /* USE_VARARGS */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "getarg.h"
 

@@ -25,6 +25,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "gif_lib.h"
 #include "gif_hash.h"

@@ -200,7 +200,7 @@ iom_WritePNM(
     int force_write
     )
 {
-    int   x, y, z;
+    size_t   x, y, z;
     FILE *fp = NULL;
 
 	if (h->format != iom_BYTE){
@@ -245,15 +245,13 @@ iom_WritePNM(
         return 0;
     }
     
-    fprintf(fp, "P%c\n%d %d\n255\n", (z == 1 ? '5' : '6'), x, y);
+    fprintf(fp, "P%c\n%ld %ld\n255\n", (z == 1 ? '5' : '6'), x, y);
 
     /*
     ** Ordinarily we would be byte-swapping data here but there is no
     ** need to do so, since we will only be writing byte data.
     */
-    fwrite(data, z, ((size_t)x)*((size_t)y), fp);
-    
-    if (ferror(fp)){
+    if (fwrite(data, z, x*y, fp) != (x*y) || ferror(fp)){
 		if (iom_is_ok2print_sys_errors()){
 			fprintf(stderr, "Error writing to file %s. Reason: %s.\n",
 					fname, strerror(errno));
@@ -267,6 +265,32 @@ iom_WritePNM(
     
     return 1;
 }
+
+#define CHECK_READ_1(read_call,item_bytes,items,file_type,file_name) \
+	if ((read_call) != (items)){ \
+		if (iom_is_ok2print_unsupp_errors()){ \
+			fprintf(stderr, "Error reading %ld bytes from %s file %s.\n", \
+				((item_bytes)*(items)), (file_type), \
+				((file_name) == NULL? "(null)": (file_name))); \
+		} \
+		return 0; \
+	}
+
+#define CHECK_MALLOC_1(malloc_call,bytes) \
+	if ((malloc_call) == NULL){ \
+		if (iom_is_ok2print_unsupp_errors()){ \
+			fprintf(stderr, "Error allocating %ld bytes.\n", (bytes)); \
+		} \
+		return 0; \
+	}
+
+#define MAX_VAL_FAILURE(maxval,file_type,filename) \
+	if (iom_is_ok2print_unsupp_errors()){ \
+		fprintf(stderr, "Unable to read %s file %s. Odd maxval %d.\n", \
+				(file_type), ((filename) == NULL ? "(null)" : (filename)), (maxval)); \
+	} \
+	return(0);
+
 
 int
 iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout, 
@@ -304,7 +328,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
     count = 0;
     switch (format) {
     case '1':                 /* plain pbm format */
-        data = (unsigned char *)calloc(1, x*y);
+        CHECK_MALLOC_1(data = (unsigned char *)calloc(1, x*y), 1*x*y);
         for (i = 0 ; i < y ; i++) {
             for (j = 0 ; j < x ; j++) {
                 data[count++] = getbit(fp);
@@ -316,14 +340,15 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         maxval = get_int(fp);
 		*data_offset = ftell(fp);
         if (maxval == 255) {
-            data = (unsigned char *)calloc(1, x*y);
+            CHECK_MALLOC_1(data = (unsigned char *)calloc(1, x*y), 1*x*y);
             k = x*y;
             for (i = 0 ; i < k ; i++) {
                 data[count++] = get_int(fp);
             }
             *bits = 8;
         } else if (maxval == 65535) {
-            unsigned short *sdata = (unsigned short *)calloc(2, x*y);
+            unsigned short *sdata;
+			CHECK_MALLOC_1(sdata = (unsigned short *)calloc(2, x*y), 2*x*y);
             k = x*y;
             for (i = 0 ; i < k ; i++) {
                 sdata[count++] = get_int(fp);
@@ -331,15 +356,13 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
             data = (unsigned char *)sdata;
             *bits = 16;
         } else {
-            fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",
-                    filename == NULL ? "(null)" : filename);
-            return(0);
+			MAX_VAL_FAILURE(maxval,"pgm",filename);
         }
         break;
     case '3':                 /* plain ppm format */
         maxval = get_int(fp);
 		*data_offset = ftell(fp);
-        data = (unsigned char *)calloc(3, x*y);
+        CHECK_MALLOC_1(data = (unsigned char *)calloc(3, x*y),3*x*y);
         for (i = 0 ; i < y ; i++) {
             for (j = 0 ; j < x ; j++) {
                 data[count++] = get_int(fp);
@@ -356,7 +379,7 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         *** It does not appear to be correctly compatable with
         *** the code to convert raw to plain. Oh well.
         **/
-        data = (unsigned char *)calloc(1, x*y);
+        CHECK_MALLOC_1(data = (unsigned char *)calloc(1, x*y),1*x*y);
         for (i = 0 ; i < y ; i++) {
             bitshift = -1;
             for (j = 0 ; j < x ; j++) {
@@ -374,12 +397,12 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         maxval = get_int(fp);
 		*data_offset = ftell(fp);
         if (maxval <= 255) {
-            data = (unsigned char *)calloc(1, x*y);
-            fread(data, 1, x*y, fp);
+            CHECK_MALLOC_1(data = (unsigned char *)calloc(1, x*y),1*x*y);
+            CHECK_READ_1(fread(data, 1, x*y, fp),1,x*y,"pgm",filename);
             *bits = 8;
         } else if (maxval == 65535) {
-            data = (unsigned char *)calloc(2, x*y);
-            fread(data, 2, x*y, fp);
+            CHECK_MALLOC_1(data = (unsigned char *)calloc(2, x*y),2*x*y);
+            CHECK_READ_1(fread(data, 2, x*y, fp),2,x*y,"pgm",filename);
             *bits = 16;
 
             /*
@@ -390,25 +413,17 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
 #endif /* WORDS_BIGENDIAN */
             
         } else {
-			if (iom_is_ok2print_unsupp_errors()){
-				fprintf(stderr, "Unable to read pgm file %s.  Odd maxval.\n",
-						filename == NULL ? "(null)" : filename);
-			}
-            return(0);
+			MAX_VAL_FAILURE(maxval,"pgm",filename);
         }
         break;
     case '6':                 /* raw ppm format */
         maxval = get_int(fp);
 		*data_offset = ftell(fp);
         if (maxval > 255) {
-			if (iom_is_ok2print_unsupp_errors()){
-				fprintf(stderr, "Unable to read ppm file %s with maxval > 255.\n",
-						filename == NULL ? "(null)" : filename);
+			MAX_VAL_FAILURE(maxval,"ppm",filename);
 			}
-            return(0);
-        }
-        data = (unsigned char *)calloc(3, x*y);
-        fread(data, 3, x*y, fp);
+        CHECK_MALLOC_1(data = (unsigned char *)calloc(3, x*y),3*x*y);
+        CHECK_READ_1(fread(data, 3, x*y, fp), 3, x*y,"ppm",filename);
         z=3;
         *bits = 8;
         break;
