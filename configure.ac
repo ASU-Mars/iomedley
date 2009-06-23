@@ -33,9 +33,12 @@ AC_STRUCT_TM
 dnl Check for endian
 AC_C_BIGENDIAN
 
+dnl Enable Position Independent Code (often required by 64-bit systems)
+export CFLAGS="${CFLAGS} -fPIC"
+
 dnl Set some defaults
-test "$prefix" = NONE && prefix=/usr/local
-test "$exec_prefix" = NONE && exec_prefix=${prefix}
+dnl test "$prefix" = NONE && prefix=/usr/local
+dnl test "$exec_prefix" = NONE && exec_prefix=${prefix}
 
 dnl Checks for header files.
 AC_HEADER_DIRENT

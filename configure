@@ -3550,8 +3550,8 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
-test "$prefix" = NONE && prefix=/usr/local
-test "$exec_prefix" = NONE && exec_prefix=${prefix}
+export CFLAGS="${CFLAGS} -fPIC"
+
 
 
 
