@@ -209,9 +209,6 @@ int iom_iheaderItemBytesI(struct iom_iheader *h);
 int iom_is_compressed(FILE * fp);
 FILE *iom_uncompress(FILE * fp, const char *fname);
 char *iom_uncompress_with_name(const char *fname);
-char *iom_uncompress_with_name(char *fname);
-
-
 
 int iom_isVicar(FILE *fp);
 int iom_isIMath(FILE *fp);
