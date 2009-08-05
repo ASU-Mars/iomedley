@@ -109,6 +109,7 @@ typedef struct Keyword_Structure
 #ifdef _NO_PROTO
 
 OBJDESC *OdlParseLabelFile();
+OBJDESC *OdlParseLabelFptr();
 OBJDESC *OdlParseLabelString();
 OBJDESC *OdlExpandLabelFile();
 OBJDESC *OdlFindObjDesc();
@@ -169,6 +170,7 @@ int ListToArray();
 #else
 
 OBJDESC *OdlParseLabelFile (char *, char *, MASK, unsigned short);
+OBJDESC *OdlParseLabelFptr (FILE *, char *, MASK, unsigned short);
 OBJDESC *OdlParseLabelString (char *, char *, MASK, unsigned short);
 OBJDESC *OdlExpandLabelFile (OBJDESC *, char *, char *, MASK, unsigned short);
 OBJDESC *OdlFindObjDesc(OBJDESC *, char *, char *, char *, 
@@ -187,8 +189,11 @@ int OdlGetObjDescChildCount (OBJDESC *);
 int OdlGetObjDescLevel (OBJDESC *);
 OBJDESC *OdlGetObjDescParent (OBJDESC *);
 void OdlAdjustObjDescLevel (OBJDESC *);
-KEYWORD *OdlFindKwd (OBJDESC *, char *, char *, unsigned long, unsigned short);
-KEYWORD *OdlNextKwd (KEYWORD *, char *, char *, unsigned long, unsigned short);
+KEYWORD *OdlFindKwd (const OBJDESC *, const char *, const char *,
+                     const unsigned long, const unsigned short);
+KEYWORD *OdlNextKwd (const KEYWORD *, const char *, const char *,
+                     const unsigned long,
+                     const unsigned short);
 KEYWORD *OdlCutKwd (KEYWORD *);
 KEYWORD *OdlPasteKwd (KEYWORD *, OBJDESC *);
 KEYWORD *OdlPasteKwdBefore (KEYWORD *, KEYWORD *);
@@ -237,4 +242,3 @@ OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned
 /**************************************************************************/
 
 #endif  /*  __LABLIB3_LOADED  */
-

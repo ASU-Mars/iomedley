@@ -1508,17 +1508,19 @@ OBJDESC *OdlGetObjDescParent (OBJDESC *object)
 
 KEYWORD *OdlFindKwd (start_object, keyword_name, keyword_value, 
                          keyword_position, search_scope)
-OBJDESC *start_object;
-char *keyword_name;
-char *keyword_value;
-unsigned long keyword_position;
-unsigned short search_scope;
+const OBJDESC *start_object;
+const char *keyword_name;
+const char *keyword_value;
+const unsigned long keyword_position;
+const unsigned short search_scope;
 
 #else
 
-KEYWORD *OdlFindKwd (OBJDESC *start_object, char *keyword_name, 
-                     char *keyword_value, unsigned long keyword_position, 
-                     unsigned short search_scope)
+KEYWORD *OdlFindKwd (const OBJDESC *start_object,
+                     const char *keyword_name,
+                     const char *keyword_value,
+                     const unsigned long keyword_position,
+                     const unsigned short search_scope)
 
 #endif
 {
@@ -1594,17 +1596,19 @@ KEYWORD *OdlFindKwd (OBJDESC *start_object, char *keyword_name,
 KEYWORD *OdlNextKwd (start_keyword, keyword_name, keyword_value, 
                      keyword_position, search_scope)
 
-KEYWORD *start_keyword;
-char *keyword_name;
-char *keyword_value;
-unsigned long keyword_position;
-unsigned short search_scope;
+const KEYWORD *start_keyword;
+const char *keyword_name;
+const char *keyword_value;
+const unsigned long keyword_position;
+const unsigned short search_scope;
 
 #else
 
-KEYWORD *OdlNextKwd (KEYWORD *start_keyword, char *keyword_name, 
-                     char *keyword_value, unsigned long keyword_position, 
-                     unsigned short search_scope)
+KEYWORD *OdlNextKwd (const KEYWORD *start_keyword,
+                     const char *keyword_name,
+                     const char *keyword_value,
+                     const unsigned long keyword_position,
+                     const unsigned short search_scope)
 
 #endif
 {

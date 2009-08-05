@@ -136,27 +136,39 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
   if (bits == 8) {
     h->format = iom_BYTE;
     h->eformat = iom_NATIVE_INT_1; /* libtiff always reads in native format */
-  } else { /* 16 */
+  } else if (bits == 16) {
     h->format = iom_SHORT;
     h->eformat = iom_NATIVE_INT_2;
-	/*
-	** TIFF 16-bit is unsigned.  We need to deal with that here.
-	**
-	** Our two options are to shift down to signed 15-bits, or
-	** promote all the way up to int.
-	*/
-	{
-		unsigned short *us;
-		short *s;
-		size_t i, dsize = ((size_t)x)*((size_t)y)*((size_t)z);
+    /*
+     ** TIFF 16-bit is unsigned.  We need to deal with that here.
+     **
+     ** Our two options are to shift down to signed 15-bits, or
+     ** promote all the way up to int.
+     */
+    {
+      unsigned short *us;
+      short *s;
+      size_t i, dsize = ((size_t)x)*((size_t)y)*((size_t)z);
 
-		us = (unsigned short *)data;
-		s = (short *)data;
-		for (i = 0 ; i < dsize ; i++) {
-			s[i] = ((int)(us[i]))-32768;
-		}
-		h->data = data;
-	}
+      us = (unsigned short *)data;
+      s = (short *)data;
+      for (i = 0 ; i < dsize ; i++) {
+        s[i] = ((int)(us[i]))-32768;
+      }
+      h->data = data;
+      if (iom_is_ok2print_progress()) {
+        printf("Shifting 16-bit tiff down by 32768.\n");
+      }
+    }
+  } else if (bits == 32) {
+    // TODO(gorelick): Mon Jun 22 10:29:27 PDT 2009
+    // We're currently assuming that this is a float.  We should 
+    // reall be checking TIFFTAG_SAMPLEFORMAT for SAMPLEFORMAT_IEEEFP,
+    // but iom_ReadTIFF doesn't do format yet.  (This wrapper function
+    // is kinda weak, really).
+    printf("Warning: Assuming 32-bit pixels are MSB_IEEE_FLOAT");
+    h->format = iom_FLOAT;
+    h->eformat = iom_MSB_IEEE_REAL_4;
   }
 
   return 1;
@@ -164,7 +176,8 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 }
 
 int
-iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bits, unsigned char **dout, int *orgout)
+iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, 
+             int *bits, unsigned char **dout, int *orgout)
 {
 
   TIFF		*tifffp;
@@ -200,7 +213,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, int *bit
 
   TIFFGetFieldDefaulted(tifffp, TIFFTAG_BITSPERSAMPLE, &bits_per_sample);	/* Not always set in file. */
 
-  if (bits_per_sample != 8 && bits_per_sample != 16) {
+  if (bits_per_sample != 8 && bits_per_sample != 16 && bits_per_sample != 32) {
     TIFFError(NULL, "File %s contains an unsupported (%d) bits-per-sample.", filename, bits_per_sample);
     TIFFClose(tifffp);
     return 0;
@@ -336,9 +349,6 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
     if (iom_is_ok2print_errors()) {
       fprintf(stderr, "File %s already exists.\n", filename);
     }
-    if (h->org != iom_BIP) {
-      free(data);
-    }
     return 0;
   }
 
@@ -350,6 +360,9 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   } else if (h->format == iom_SHORT) {
     bits_per_sample = 16;
     fillorder = (h->eformat == iom_MSB_INT_2 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+  } else if (h->format == iom_FLOAT) {
+    bits_per_sample = 32;
+    fillorder = (h->eformat == iom_MSB_IEEE_REAL_4 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
   } else {
     if (iom_is_ok2print_errors()) {
       fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_FORMAT2STR[h->format]);
@@ -361,9 +374,9 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   /* Make sure data is 1-band, 3-band (RGB) or 4-band (RGBA). */
 
-  if (z != 1 && z != 3) {
+  if (z > 4) {
     if (iom_is_ok2print_errors()) {
-      fprintf(stderr, "Cannot write TIFF files with depths other than 1 or 3.\n");
+      fprintf(stderr, "Cannot write TIFF files with depths greater than 4.\n");
     }
     return 0;
   }
@@ -407,8 +420,12 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
   TIFFSetField(tifffp, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
   TIFFSetField(tifffp,  TIFFTAG_ROWSPERSTRIP,
-              			max(1,(int)(8*1024 / TIFFScanlineSize(tifffp))));
+              	max(1,(int)(8*1024 / TIFFScanlineSize(tifffp))));
   TIFFSetField(tifffp,  TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+
+  if (bits_per_sample == 32) {
+    TIFFSetField(tifffp,  TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+  }
 
 #ifdef WORDS_BIGENDIAN
   TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
@@ -416,10 +433,20 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);
 #endif
 
-  if (z == 1)
+  if (z == 1 || z == 2) {
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else /* 3 or 4 */
+  } else if (z == 3 || z == 4) {
+    /* 3 or 4 */
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+  }
+
+  if (z == 2 || z == 4) {
+    // Identify that we have an alpha channel.
+    // This is a goofy way to pass an extra value, but everyone seems to do it.
+    unsigned short  sample_info[1];
+    sample_info[0] = EXTRASAMPLE_ASSOCALPHA;
+    TIFFSetField(tifffp, TIFFTAG_EXTRASAMPLES, 1, &sample_info[0]);
+  }
 
   row_stride = ((size_t)x) * ((size_t)z) * (bits_per_sample / 8);
 

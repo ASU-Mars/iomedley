@@ -209,6 +209,7 @@ int iom_iheaderItemBytesI(struct iom_iheader *h);
 int iom_is_compressed(FILE * fp);
 FILE *iom_uncompress(FILE * fp, const char *fname);
 char *iom_uncompress_with_name(const char *fname);
+char *iom_uncompress_with_name(char *fname);
 
 
 
@@ -458,5 +459,9 @@ int iom__ConvertToBIP(unsigned char *,       /* Image data */
 		      struct iom_iheader *,  /* Image geometry */
 		      unsigned char **       /* BIP image data output */
 		      );
+
+int iom_isAVIRIS(FILE *);
+int iom_WriteENVI(char *, void *, struct iom_iheader *, int);
+iom_edf iom_ConvertISISType(char *, char *, char *);
 
 #endif /* _IOMEDLEY_H_ */
