@@ -1,4 +1,5 @@
 prefix=$(DESTDIR)@prefix@
+exec_prefix=$(DESTDIR)@exec_prefix@
 libdir=$(DESTDIR)@libdir@
 
 LIBTIFF = libtiff.a
@@ -80,10 +81,11 @@ clean:
 	cd $(LIBJPEGDIR) && make clean && cd ..
 	cd $(LIBGIFDIR) && make clean && cd ..
 
-$(libdir):
-	install -d $(libdir)
+## $(libdir):
+## 	install -d $(libdir)
 
 install: all
+	-install -d $(libdir)
 	install -m 644 $(LIBIOMEDLEY) $(libdir)
 
 io_aviris.o: io_aviris.c iomedley.h io_lablib3.h toolbox.h
