@@ -73,6 +73,57 @@ libpng.a: $(OBJS)
 clean:
 	rm -f *.o libpng.a pngtest pngout.png
 
+DISTFILES= \
+	example.c \
+	png.c \
+	pngerror.c \
+	pnggccrd.c \
+	pngget.c \
+	pngmem.c \
+	pngpread.c \
+	pngread.c \
+	pngrio.c \
+	pngrtran.c \
+	pngrutil.c \
+	pngset.c \
+	pngtest.c \
+	pngtrans.c \
+	pngvcrd.c \
+	pngwio.c \
+	pngwrite.c \
+	pngwtran.c \
+	pngwutil.c \
+	png.h \
+	pngasmrd.h \
+	pngconf.h \
+	Makefile \
+	Makefile.in \
+	configure \
+	configure.in \
+	ANNOUNCE \
+	CHANGES \
+	INSTALL \
+	KNOWNBUG \
+	LICENSE \
+	README \
+	TODO \
+	Y2KINFO \
+	libpng.3 \
+	libpngpf.3 \
+	png.5 \
+	pngbar.jpg \
+	pngbar.png \
+	pngnow.png \
+	pngtest.png
+
+distdir:
+	rm -rf $(distdir)
+	mkdir $(distdir)
+	cp $(DISTFILES) $(distdir)
+	cp -r scripts $(distdir)
+	-rm -rf $(distdir)/scripts/.svn
+	-rm -rf $(distdir)/scripts/CVS
+
 #DOCS = ANNOUNCE CHANGES INSTALL KNOWNBUG LICENSE README TODO Y2KINFO
 #writelock:
 #	chmod a-w *.[ch35] $(DOCS) scripts/*

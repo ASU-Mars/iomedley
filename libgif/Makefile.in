@@ -111,5 +111,30 @@ quantize.o: gif_lib.h
 qprintf.o: gif_lib.h
 getarg.o: getarg.h
 
+DISTFILES =  \
+	dev2gif.c \
+	dgif_lib.c \
+	egif_lib.c \
+	getarg.c \
+	gif_err.c \
+	gif_font.c \
+	gif_hash.c \
+	gifalloc.c \
+	qprintf.c \
+	quantize.c \
+	getarg.h \
+	gif_hash.h \
+	gif_lib.h \
+	Makefile \
+	Makefile.in \
+	makefile.tc \
+	configure \
+	configure.in
+
+distdir:
+	rm -rf $(distdir)
+	mkdir $(distdir)
+	cp $(DISTFILES) $(distdir)
+
 clean:
 	rm -f *.[oa] *~

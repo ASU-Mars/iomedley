@@ -2,6 +2,8 @@ prefix=$(DESTDIR)@prefix@
 exec_prefix=$(DESTDIR)@exec_prefix@
 libdir=$(DESTDIR)@libdir@
 
+SHELL = /bin/sh
+
 LIBTIFF = libtiff.a
 LIBTIFFDIR = libtiff
 
@@ -87,6 +89,54 @@ clean:
 install: all
 	-install -d $(libdir)
 	install -m 644 $(LIBIOMEDLEY) $(libdir)
+
+DISTFILES= \
+	io_aviris.c \
+	io_bmp.c \
+	io_envi.c \
+	io_ers.c \
+	io_gif.c \
+	io_goes.c \
+	io_grd.c \
+	io_imath.c \
+	io_isis.c \
+	io_jpeg.c \
+	io_lablib3.c \
+	io_png.c \
+	io_pnm.c \
+	io_raw.c \
+	io_tiff.c \
+	io_vicar.c \
+	iomedley.c \
+	test.c \
+	tools.c \
+	configwin.h \
+	header.h \
+	io_envi.h \
+	io_lablib3.h \
+	iom_config.h \
+	iomedley.h \
+	toolbox.h \
+	tools.h \
+	Makefile \
+	Makefile.in \
+	Makefile.min \
+	Makefile.win \
+	config.guess \
+	config.sub \
+	configure \
+	configure.ac \
+	configwin.h \
+	README
+
+distdir:
+	rm -rf $(distdir)
+	mkdir $(distdir)
+	cp $(DISTFILES) $(distdir)
+	cd $(LIBGIFDIR) && $(MAKE) distdir=$(distdir)/$(LIBGIFDIR) distdir
+	cd $(LIBTIFFDIR) && $(MAKE) distdir=$(distdir)/$(LIBTIFFDIR) distdir
+	cd $(LIBPNGDIR) && $(MAKE) distdir=$(distdir)/$(LIBPNGDIR) distdir
+	cd $(LIBJPEGDIR) && $(MAKE) distdir=$(distdir)/$(LIBJPEGDIR) distdir
 
 io_aviris.o: io_aviris.c iomedley.h io_lablib3.h toolbox.h
 io_envi.o: io_envi.c io_envi.h iomedley.h io_lablib3.h toolbox.h
