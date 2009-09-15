@@ -81,7 +81,7 @@ iom_isGIF(FILE *fp)
 
   /* Returns 1 if fp is a GIF file, 0 otherwise. */
 
-  unsigned char	magic[GIF_MAGIC_LEN];
+  char	magic[GIF_MAGIC_LEN];
   int		i, c;
 
   rewind(fp);
@@ -92,7 +92,7 @@ iom_isGIF(FILE *fp)
     magic[i] = (unsigned char) c;
   }
 
-  if (!strncmp(magic, GIF_MAGIC, GIF_MAGIC_LEN))
+  if (!memcmp(magic, GIF_MAGIC, GIF_MAGIC_LEN))
     return 1;
   else
     return 0;
@@ -158,7 +158,6 @@ iom_ReadGIF(FILE *fp,
 
   unsigned int                  x, y, z;
   unsigned int                  i, j;
-  int				row_stride;	/* Bytes per scanline. */
   unsigned char			*data = NULL;
   unsigned char                 *r, *g, *b;
   unsigned int			colormap_idx;
@@ -273,7 +272,8 @@ iom_ReadGIF(FILE *fp,
 	colormap = (ColorMapObject *) malloc(sizeof(ColorMapObject));
 	if (!colormap) {
 	  if (iom_is_ok2print_sys_errors()) {
-	    fprintf(stderr, "Unable to allocate %d bytes for image data.\n", sizeof(ColorMapObject));
+	    fprintf(stderr, "Unable to allocate %ld bytes for image data.\n", 
+                    sizeof(ColorMapObject));
 	  }
 	  if (gifdata)
 	    free(gifdata);
@@ -284,7 +284,8 @@ iom_ReadGIF(FILE *fp,
 	colormap->Colors = (GifColorType *) malloc(sizeof(GifColorType) * 256);
 	if (!colormap->Colors) {
 	  if (iom_is_ok2print_sys_errors()) {
-	    fprintf(stderr, "Unable to allocate %d bytes for image data.\n", sizeof(GifColorType) * 256);
+	    fprintf(stderr, "Unable to allocate %ld bytes for image data.\n", 
+                    sizeof(GifColorType) * 256);
 	  }
 	  free(colormap);
 	  free(gifdata);

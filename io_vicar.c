@@ -56,7 +56,7 @@ iom_isVicar(FILE *fp)
 **   s2 is the string
 */
 static char *
-vicar_get_value(char *s1, char *s2)
+vicar_get_value(const char *s1, const char *s2)
 {
     char *p;
     int len;
@@ -291,7 +291,7 @@ iom_WriteVicar(
     )
 {
     char ptr[4096], lblsizebuff[1024];
-	char *lblsizefmt = "LBLSIZE=%-20d      ";
+    const char *lblsizefmt = "LBLSIZE=%-20d      ";
     int rec;
     int bands;
     int org;
@@ -446,7 +446,7 @@ iom_WriteVicar(
 	** "2" leaves the gap for label terminator which is a 
 	** binary-zero short.
 	*/
-    fprintf(fp, "%*s", len-strlen(ptr)-strlen(lblsizebuff)-2, "");
+    fprintf(fp, "%*s", (int)(len-strlen(ptr)-strlen(lblsizebuff)-2), "");
 	{
         /* zero does not change form in any-endian machine */
 		short i = 0;

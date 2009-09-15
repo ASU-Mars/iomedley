@@ -90,9 +90,9 @@ iom_GetISISHeader(
     }
     else {
 #ifdef _WIN32
-        err_file = "nul:";
+        err_file = (char *)"nul:";
 #else
-        err_file = "/dev/null";
+        err_file = (char *)"/dev/null";
 #endif /* _WIN32 */
     }
 
@@ -116,9 +116,9 @@ iom_GetISISHeader(
          **		in addition.
          **/
     qube = NULL;
-    qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
+    qube = OdlFindObjDesc(ob, (char *)"QUBE", NULL, 0, 0, 0);
     if (qube == NULL)
-        qube = OdlFindObjDesc(ob, "SPECTRAL_QUBE", NULL, 0, 0, 0);
+        qube = OdlFindObjDesc(ob, (char *)"SPECTRAL_QUBE", NULL, 0, 0, 0);
     
     if (qube != NULL) {
         
@@ -270,15 +270,15 @@ iom_GetISISHeader(
         }
         return(1);
     } else {
-        if ((image = OdlFindObjDesc(ob, "IMAGE", NULL, 0, 0, 0)) != NULL) {
+        if ((image = OdlFindObjDesc(ob, (char *)"IMAGE", NULL, 0, 0, 0)) != NULL) {
         
-            if ((key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))) {
+            if ((key = OdlFindKwd(image, (char *)"LINE_SAMPLES", NULL, 0, scope))) {
                 size[0] = atoi(key->value);
             }
-            if ((key = OdlFindKwd(image, "LINES", NULL, 0, scope))) {
+            if ((key = OdlFindKwd(image, (char *)"LINES", NULL, 0, scope))) {
                 size[1] = atoi(key->value);
             }
-            if ((key = OdlFindKwd(image, "BANDS", NULL, 0, scope))) {
+            if ((key = OdlFindKwd(image, (char *)"BANDS", NULL, 0, scope))) {
                 size[2] = atoi(key->value);
             }
 		/*

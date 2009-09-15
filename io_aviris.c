@@ -138,6 +138,3 @@ iom_GetAVIRISHeader(
 
     return(1);
 }
-
-
-

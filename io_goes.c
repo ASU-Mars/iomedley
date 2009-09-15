@@ -151,4 +151,3 @@ iom_GetGOESHeader(
     
 	return(1);
 }
-

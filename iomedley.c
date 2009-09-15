@@ -34,7 +34,7 @@ int iom_orders[3][3] = {
     { 1,2,0 }
 };
 
-char *iom_EFORMAT2STR[] = {
+const char *iom_EFORMAT2STR[] = {
     "(invalid)",
     "LSB BYTE",
     "LSB SHORT",
@@ -86,7 +86,7 @@ char *iom_EFORMAT2STR[] = {
     "VAX DOUBLE"
 };
 
-char *iom_FORMAT2STR[] = {
+const char *iom_FORMAT2STR[] = {
     0,
     "byte",
     "short",
@@ -95,7 +95,7 @@ char *iom_FORMAT2STR[] = {
     "double"
 };
  
-char *iom_ORG2STR[] = {
+const char *iom_ORG2STR[] = {
     "bsq",
     "bil",
     "bip"
@@ -761,9 +761,9 @@ iom_Eformat2Iformat(iom_edf efmt)
         case iom_VAX_REAL_8:
             ifmt = iom_DOUBLE;
             break;
-        
+        default:                // Catch all the other cases.
+            break;
     }
-
     return ifmt;
 }
 
@@ -880,7 +880,7 @@ iom_expand_filename(const char *s)
 
     buf[0] = '\0';
 
-    p = s;
+    p = (char *)s;
     while (p && *p) {
         if (*p == '$') {        /* environment variable expansion */
             q = p + 1;

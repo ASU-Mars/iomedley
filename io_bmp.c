@@ -169,19 +169,16 @@ int iom_ReadBMP (FILE *fp,
                  int  *zout, 
                  unsigned char **dout)
 {
-  int          i, c, c1, rv, j;
-  
+  int          i, c, rv;
+
   /* header info */
-  unsigned int bfSize, bfOffBits, biSize, biWidth, biHeight, biPlanes;
+  unsigned int bfSize, bfOffBits, biSize, biPlanes;
   unsigned int biBitCount, biCompression, biSizeImage, biXPelsPerMeter;
   unsigned int biYPelsPerMeter, biClrUsed, biClrImportant;
   
   int           bPad;
   char          *cmpstr;
-  char          buf[512], *bname;
   unsigned char red[256], green[256], blue[256];
-
-  unsigned char *pp, *ptr;
 
   *dout = (unsigned char *) NULL;
   
@@ -344,9 +341,9 @@ int iom_ReadBMP (FILE *fp,
 
   if (rv) printf("File appears truncated.  Winging it.\n");
   
-  if      (biCompression == BI_RLE4) cmpstr = ", RLE4 compressed";
-  else if (biCompression == BI_RLE8) cmpstr = ", RLE8 compressed";
-  else cmpstr = "";
+  if      (biCompression == BI_RLE4) cmpstr = (char *)", RLE4 compressed";
+  else if (biCompression == BI_RLE8) cmpstr = (char *)", RLE8 compressed";
+  else cmpstr = (char *)"";
 
   //  printf("%sBMP\n", 
   //	 ((biSize==WIN_OS2_OLD) ? "Old OS/2 " :
@@ -729,8 +726,8 @@ int iom_WriteBMP(char *filename,
   int x, y, z;
   unsigned char *data;
   FILE *fp = NULL;
-  int i, j, nc, nbits, bperlin, cmaplen;
-  unsigned char *sp, *dp, graymap[256];
+  int i, nc, nbits, bperlin, cmaplen;
+  unsigned char graymap[256];
   
   if (!force && access(filename, F_OK) == 0)
     {
@@ -952,7 +949,7 @@ void writeBMP8(FILE *fp, unsigned char *data, int w, int h)
   // the value of the pixel pointer (pp) data is the grayscale value -
   // and the grayscale value corresponds to the colormap value - 0 to 255.
 
-  int   i,j,c,padw;
+  int   i,j,padw;
   unsigned char *pp;
 
   padw = ((w + 3)/4) * 4; /* 'w' padded to a multiple of 4pix (32 bits) */
@@ -974,7 +971,7 @@ void writeBMP8(FILE *fp, unsigned char *data, int w, int h)
 /*******************************************/
 void writeBMP24(FILE *fp, unsigned char *data, int w, int h)
 {
-  int   i,j,c,padb;
+  int   i,j,padb;
   unsigned char *pp;
 
   padb = (4 - ((w*3) % 4)) & 0x03;  /* # of pad bytes to write at EOscanline */

@@ -160,47 +160,47 @@ static short OdlValidValueList (char *, char *, FILE *,long);
 
 OBJDESC *OdlParseLabelFile (filespec, message_fname, expand, suppress_messages)
 
-char *filespec;
-char *message_fname;
-MASK expand;
-unsigned short suppress_messages;
+  char *filespec;
+  char *message_fname;
+  MASK expand;
+  unsigned short suppress_messages;
 
 #else
 
-OBJDESC *OdlParseLabelFile (char *filespec, char *message_fname, MASK expand, 
-                           unsigned short suppress_messages)
+OBJDESC *OdlParseLabelFile (char *filespec, char *message_fname, MASK expand,
+                            unsigned short suppress_messages)
 
 #endif
 
 {
-    OBJDESC *root = {NULL};
-    
-    odl_suppress_messages = suppress_messages;
-    root = (OBJDESC *) OdlParseFile(filespec,NULL,message_fname,NULL,suppress_messages,1,1,0);
-    root = (OBJDESC *) OdlExpandLabelFile(root, filespec, message_fname, expand,
-                                         suppress_messages);
+  OBJDESC *root = {NULL};
 
-    return(root);
+  odl_suppress_messages = suppress_messages;
+  root = (OBJDESC *) OdlParseFile(filespec,NULL,message_fname,NULL,suppress_messages,1,1,0);
+  root = (OBJDESC *) OdlExpandLabelFile(root, filespec, message_fname, expand,
+                                        suppress_messages);
+
+  return(root);
 
 }  /*  End:  "OdlParseLabelFile"  */
 
 
 
 OBJDESC *OdlParseLabelFptr (fp, message_fname, expand, suppress_messages)
-FILE *fp;
-char *message_fname;
-MASK expand;
-unsigned short suppress_messages;
+  FILE *fp;
+  char *message_fname;
+  MASK expand;
+  unsigned short suppress_messages;
 
 {
-    OBJDESC *root = {NULL};
-    
-    odl_suppress_messages = suppress_messages;
-    root = (OBJDESC *) OdlParseFile(0,fp,message_fname,NULL,suppress_messages,1,1,0);
-    root = (OBJDESC *) OdlExpandLabelFile(root, NULL, message_fname, expand,
-                                         suppress_messages);
+  OBJDESC *root = {NULL};
 
-    return(root);
+  odl_suppress_messages = suppress_messages;
+  root = (OBJDESC *) OdlParseFile(0,fp,message_fname,NULL,suppress_messages,1,1,0);
+  root = (OBJDESC *) OdlExpandLabelFile(root, NULL, message_fname, expand,
+                                        suppress_messages);
+
+  return(root);
 
 }  /*  End:  "OdlParseLabelFptr"  */
 
@@ -248,8 +248,8 @@ unsigned short suppress_messages;
 
 #ifdef _NO_PROTO
 
-OBJDESC *OdlParseLabelString (odl_string, message_fname, 
-                             expand, suppress_messages)
+OBJDESC *OdlParseLabelString (odl_string, message_fname,
+                              expand, suppress_messages)
 
 char *odl_string;
 char *message_fname;
@@ -258,37 +258,38 @@ unsigned short suppress_messages;
 
 #else
 
-OBJDESC *OdlParseLabelString (char *odl_string, char *message_fname, 
-                             MASK expand, unsigned short suppress_messages)
+OBJDESC *OdlParseLabelString (char *odl_string, char *message_fname,
+                              MASK expand, unsigned short suppress_messages)
 
 #endif
 {
-    OBJDESC *root = {NULL};
-    FILE *tmp_fptr = {NULL};
-    char *tmp_fname = {NULL};
+  OBJDESC *root = {NULL};
+  FILE *tmp_fptr = {NULL};
+  char *tmp_fname = {NULL};
 
-    odl_suppress_messages = suppress_messages;
+  odl_suppress_messages = suppress_messages;
 
-    tmp_fname = (char *) OdlTempFname();
+  tmp_fname = (char *) OdlTempFname();
 
-    if (tmp_fname == NULL)
-        OdlPrintMessage(message_fname,NULL,0,"Unable to create a temporary file");
+  if (tmp_fname == NULL)
+    OdlPrintMessage(message_fname,NULL,0,
+                    (char *)"Unable to create a temporary file");
 
-    if ((tmp_fptr = (FILE *) fopen(tmp_fname, "w")) != NULL)
-    {
-        fprintf(tmp_fptr, "%s", odl_string);
-        fclose(tmp_fptr);
-        root = (OBJDESC *) OdlParseLabelFile(tmp_fname, message_fname, 
-                                            expand, suppress_messages);
+  if ((tmp_fptr = (FILE *) fopen(tmp_fname, "w")) != NULL)
+  {
+    fprintf(tmp_fptr, "%s", odl_string);
+    fclose(tmp_fptr);
+    root = (OBJDESC *) OdlParseLabelFile(tmp_fname, message_fname,
+                                         expand, suppress_messages);
 #ifdef VMS
-        AppendString(tmp_fname, ";*")
+    AppendString(tmp_fname, ";*")
 #endif
         remove(tmp_fname);
-    }
+  }
 
-    LemmeGo(tmp_fname)
-    
-    return(root);
+  LemmeGo(tmp_fname)
+
+      return(root);
 
 }  /*  End:  "OdlParseLabelString"  */
 
@@ -335,158 +336,158 @@ OBJDESC *OdlParseLabelString (char *odl_string, char *message_fname,
 
 OBJDESC *OdlExpandLabelFile (object, orig_fspec, message_fname, expand, suppress_messages)
 
-OBJDESC *object;
-char *orig_fspec, *message_fname;
-MASK expand;
-unsigned short suppress_messages;
+  OBJDESC *object;
+  char *orig_fspec, *message_fname;
+  MASK expand;
+  unsigned short suppress_messages;
 
 #else
 
-OBJDESC *OdlExpandLabelFile (OBJDESC *object, char *orig_fspec, char *message_fname, MASK expand, 
-                            unsigned short suppress_messages)
+OBJDESC *OdlExpandLabelFile (OBJDESC *object, char *orig_fspec, char *message_fname, MASK expand,
+                             unsigned short suppress_messages)
 
 #endif
 {
-    KEYWORD *kwd = {NULL};
-    KEYWORD *new_kwd = {NULL};
-    KEYWORD *save_kwd = {NULL};
-    OBJDESC *temp_root = {NULL};
-    OBJDESC *new_obj = {NULL};
-    OBJDESC *save_obj = {NULL};
-    FILE *l_ptr = {NULL};
-    unsigned long start_loc = {1};
-    unsigned short loc_type = {ODL_RECORD_LOCATION};
-    unsigned short done = {FALSE};
-    char *fspec = {NULL};
-    char *fname = {NULL};
-    char *keyword_name = {NULL};
-    char error_message[5*(TB_MAXLINE + TB_MAXPATH + TB_MAXFNAME)];
+  KEYWORD *kwd = {NULL};
+  KEYWORD *new_kwd = {NULL};
+  KEYWORD *save_kwd = {NULL};
+  OBJDESC *temp_root = {NULL};
+  OBJDESC *new_obj = {NULL};
+  OBJDESC *save_obj = {NULL};
+  FILE *l_ptr = {NULL};
+  unsigned long start_loc = {1};
+  unsigned short loc_type = {ODL_RECORD_LOCATION};
+  unsigned short done = {FALSE};
+  char *fspec = {NULL};
+  char *fname = {NULL};
+  char *keyword_name = {NULL};
+  char error_message[5*(TB_MAXLINE + TB_MAXPATH + TB_MAXFNAME)];
 
-    odl_suppress_messages = suppress_messages;
+  odl_suppress_messages = suppress_messages;
 
-    /*  Let's expand all ^STRUCTURE keywords, shall we?  */
-    if ((expand&ODL_EXPAND_STRUCTURE) == ODL_EXPAND_STRUCTURE)
-    {
-        expand -= ODL_EXPAND_STRUCTURE;
-        CopyString(keyword_name, "^*STRUCTURE")
-    }
-    else
+  /*  Let's expand all ^STRUCTURE keywords, shall we?  */
+  if ((expand&ODL_EXPAND_STRUCTURE) == ODL_EXPAND_STRUCTURE)
+  {
+    expand -= ODL_EXPAND_STRUCTURE;
+    CopyString(keyword_name, "^*STRUCTURE")
+  }
+  else
     /*  On second thought, let's expand all ^CATALOG keywords  */
     if ((expand&ODL_EXPAND_CATALOG) == ODL_EXPAND_CATALOG)
     {
-        expand -= ODL_EXPAND_CATALOG;
-        CopyString(keyword_name, "^*CATALOG")
+      expand -= ODL_EXPAND_CATALOG;
+      CopyString(keyword_name, "^*CATALOG")
     }
     else
-    /*  Hmmm. I guess we have nothing left to expand.  */
+      /*  Hmmm. I guess we have nothing left to expand.  */
     {
-        expand = ODL_NOEXPAND;
-        done = TRUE;
+      expand = ODL_NOEXPAND;
+      done = TRUE;
     }
 
-    /*  Keep expanding until we can expand no more forever  */
-    while (! done)
-    {
-        /*  Find the expand keyword wherever it my be hiding  */
-        kwd = (KEYWORD *) OdlFindKwd(object, keyword_name,
-                                     NULL, 1, ODL_RECURSIVE_DOWN);
+  /*  Keep expanding until we can expand no more forever  */
+  while (! done)
+  {
+    /*  Find the expand keyword wherever it my be hiding  */
+    kwd = (KEYWORD *) OdlFindKwd(object, keyword_name,
+                                 NULL, 1, ODL_RECURSIVE_DOWN);
 
-        /*  We're done if there aren't any more keywords to expand  */
-        if (kwd == NULL)
-            done = TRUE;
+    /*  We're done if there aren't any more keywords to expand  */
+    if (kwd == NULL)
+      done = TRUE;
+    else
+    {
+      /*  Get the file name, minus quotes and blanks, sans path  */
+      fname = (char *) OdlGetFileName(kwd, &start_loc, &loc_type);
+
+      /*  We're in trouble if we've encountered this file before  */
+      if (ExpandIsRecursive(kwd, fname))
+      {
+        sprintf(error_message,
+                "Recursive %s statement found in file:  %s",
+                keyword_name, fname);
+        OdlPrintMessage(message_fname,NULL,kwd->line_number,error_message);
+      }
+      else
+      {
+        /*  Figure out exactly where the file is located  */
+        fspec = (char *) OdlGetFileSpec(fname, orig_fspec);
+
+        /*  We're in trouble if we can't find the file  */
+        if (fspec == NULL)
+        {
+          sprintf(error_message,
+                  "Unable to locate %s file:  %s",
+                  keyword_name, fname);
+          OdlPrintMessage(message_fname,NULL,kwd->line_number,error_message);
+        }
         else
         {
-            /*  Get the file name, minus quotes and blanks, sans path  */
-            fname = (char *) OdlGetFileName(kwd, &start_loc, &loc_type);
+          l_ptr = (FILE *) OdlLocateStart(fspec, start_loc, loc_type);
 
-            /*  We're in trouble if we've encountered this file before  */
-            if (ExpandIsRecursive(kwd, fname))
+
+          /*  Parse the file  */
+          temp_root = (OBJDESC *) OdlParseFile(fspec,l_ptr,
+                                               message_fname,NULL,suppress_messages,1,1,1);
+
+          /*  Was there anything in the file to parse?  */
+          if (temp_root != NULL)
+          {
+            /*  Append any keywords  */
+            for (new_kwd=temp_root->first_keyword;
+                 new_kwd != NULL; new_kwd = save_kwd)
             {
-                sprintf(error_message, 
-                        "Recursive %s statement found in file:  %s", 
-                        keyword_name, fname);
-                OdlPrintMessage(message_fname,NULL,kwd->line_number,error_message);
+              save_kwd = new_kwd->right_sibling;
+              OdlPasteKwd((KEYWORD *) OdlCutKwd(new_kwd),
+                          kwd->parent);
             }
-            else
+
+            /*  Append any sub-objects  */
+            for (new_obj=temp_root->first_child;
+                 new_obj != NULL; new_obj = save_obj)
             {
-                /*  Figure out exactly where the file is located  */
-                fspec = (char *) OdlGetFileSpec(fname, orig_fspec);
+              save_obj = new_obj->right_sibling;
+              OdlPasteObjDesc((OBJDESC *) OdlCutObjDesc(new_obj),
+                              kwd->parent);
+            }
 
-                /*  We're in trouble if we can't find the file  */
-                if (fspec == NULL)
-                {
-                    sprintf(error_message, 
-                            "Unable to locate %s file:  %s",
-                            keyword_name, fname);
-                    OdlPrintMessage(message_fname,NULL,kwd->line_number,error_message);
-                }
-                else
-                {
-                    l_ptr = (FILE *) OdlLocateStart(fspec, start_loc, loc_type);
+            /*  Deallocate the temporary root  */
+            temp_root->first_keyword = NULL;
+            temp_root->first_child = NULL;
+            temp_root = (OBJDESC *) OdlFreeTree(temp_root);
 
-   
-                    /*  Parse the file  */
-                    temp_root = (OBJDESC *) OdlParseFile(fspec,l_ptr,
-                                             message_fname,NULL,suppress_messages,1,1,1);
-                    
-                    /*  Was there anything in the file to parse?  */
-                    if (temp_root != NULL)
-                    {
-                        /*  Append any keywords  */
-                        for (new_kwd=temp_root->first_keyword;
-                                 new_kwd != NULL; new_kwd = save_kwd)
-                        {
-                            save_kwd = new_kwd->right_sibling;
-                            OdlPasteKwd((KEYWORD *) OdlCutKwd(new_kwd),
-                                        kwd->parent);
-                        }
+          }  /*  End:  "if (temp_root != NULL) ..."  */
 
-                        /*  Append any sub-objects  */
-                        for (new_obj=temp_root->first_child;
-                                 new_obj != NULL; new_obj = save_obj)
-                        {
-                            save_obj = new_obj->right_sibling;
-                            OdlPasteObjDesc((OBJDESC *) OdlCutObjDesc(new_obj),
-                                            kwd->parent);
-                        }
+          /*  Free the file spec storage  */
+          LemmeGo(fspec)
+              CloseMe(l_ptr)
 
-                        /*  Deallocate the temporary root  */
-                        temp_root->first_keyword = NULL;
-                        temp_root->first_child = NULL;
-                        temp_root = (OBJDESC *) OdlFreeTree(temp_root);
+        }  /*  End:  "if (fspec == NULL) ... else ..."  */
 
-                    }  /*  End:  "if (temp_root != NULL) ..."  */
-    
-                    /*  Free the file spec storage  */
-                    LemmeGo(fspec)
-					CloseMe(l_ptr)
+      }  /*  End:  "if (ExpandIsRecursive( ... else ..."  */
 
-                }  /*  End:  "if (fspec == NULL) ... else ..."  */
+      OdlFreeKwd((KEYWORD *)OdlCutKwd(kwd));
 
-            }  /*  End:  "if (ExpandIsRecursive( ... else ..."  */
+      /*  Free the file name storage  */
+      LemmeGo(fname)
 
-            OdlFreeKwd((KEYWORD *)OdlCutKwd(kwd));
+    }  /*  End:  "if (kwd == NULL) ... else ..."  */
 
-            /*  Free the file name storage  */
-            LemmeGo(fname)
-            
-        }  /*  End:  "if (kwd == NULL) ... else ..."  */
+  }  /*  End:  "while (! done) ..."  */
 
-    }  /*  End:  "while (! done) ..."  */
+  /*  Free the keyword name storage  */
+  LemmeGo(keyword_name)
 
-    /*  Free the keyword name storage  */
-    LemmeGo(keyword_name)
+      /*  Check and see if there are any other keywords to expand  */
+      if (expand != ODL_NOEXPAND)
+      {
+        object = (OBJDESC *) OdlExpandLabelFile(object, orig_fspec,
+                                                message_fname,
+                                                expand, suppress_messages);
+      }
 
-    /*  Check and see if there are any other keywords to expand  */
-    if (expand != ODL_NOEXPAND)
-    {
-        object = (OBJDESC *) OdlExpandLabelFile(object, orig_fspec, 
-                                               message_fname, 
-                                               expand, suppress_messages);
-    }
-
-    /*  Return the root of the expanded tree  */
-    return(object);
+  /*  Return the root of the expanded tree  */
+  return(object);
 
 }  /*  End:  "OdlExpandLabelFile"  */
 
@@ -500,8 +501,8 @@ OBJDESC *OdlExpandLabelFile (OBJDESC *object, char *orig_fspec, char *message_fn
 
 static unsigned short ExpandIsRecursive (keyword, exp_fname)
 
-KEYWORD *keyword;
-char *exp_fname;
+  KEYWORD *keyword;
+  char *exp_fname;
 
 #else
 
@@ -509,14 +510,14 @@ static unsigned short ExpandIsRecursive (KEYWORD *keyword, char *exp_fname)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    char *temp_fname = {NULL};
-    unsigned short found = {FALSE};
+  OBJDESC *obj = {NULL};
+  char *temp_fname = {NULL};
+  unsigned short found = {FALSE};
 
-    if ((keyword != NULL) && (exp_fname != NULL))
-    {
+  if ((keyword != NULL) && (exp_fname != NULL))
+  {
 #if (defined( VAX) || defined( ALPHA_VMS))
-        UpperCase(exp_fname)
+    UpperCase(exp_fname)
 #endif
 
         CopyString(temp_fname, keyword->file_name)
@@ -526,23 +527,23 @@ static unsigned short ExpandIsRecursive (KEYWORD *keyword, char *exp_fname)
 #endif
 
         found = (strcmp(temp_fname, exp_fname) == 0);
-        LemmeGo(temp_fname)
+    LemmeGo(temp_fname)
 
-        for (obj=keyword->parent; 
-                  ((! found) && (obj != NULL)); obj=obj->parent)
+        for (obj=keyword->parent;
+             ((! found) && (obj != NULL)); obj=obj->parent)
         {
-            CopyString(temp_fname, obj->file_name)
+          CopyString(temp_fname, obj->file_name)
 
 #if (defined( VAX) || defined( ALPHA_VMS))
-            UpperCase(temp_fname)
+              UpperCase(temp_fname)
 #endif
 
-            found = (strcmp(temp_fname, exp_fname) == 0);
-            LemmeGo(temp_fname)
+              found = (strcmp(temp_fname, exp_fname) == 0);
+          LemmeGo(temp_fname)
         }
-    }
+  }
 
-    return(found);
+  return(found);
 
 }  /*  End:  "ExpandIsRecursive"  */
 
@@ -588,59 +589,61 @@ static unsigned short ExpandIsRecursive (KEYWORD *keyword, char *exp_fname)
 
 #ifdef _NO_PROTO
 
-OBJDESC *OdlFindObjDesc(start_object, object_class, keyword_name, 
-                       keyword_value, object_position, search_scope)
+OBJDESC *OdlFindObjDesc(start_object, object_class, keyword_name,
+                        keyword_value, object_position, search_scope)
 
 OBJDESC *start_object;
-char *object_class;
-char *keyword_name;
-char *keyword_value;
+const char *object_class;
+const char *keyword_name;
+const char *keyword_value;
 unsigned long object_position;
 unsigned short search_scope;
 
 #else
 
-OBJDESC *OdlFindObjDesc( OBJDESC *start_object, char *object_class, 
-                        char *keyword_name, char *keyword_value, 
-                        unsigned long object_position, 
+OBJDESC *OdlFindObjDesc(OBJDESC *start_object,
+                        const char *object_class,
+                        const char *keyword_name,
+                        const char *keyword_value,
+                        unsigned long object_position,
                         unsigned short search_scope)
 
 #endif
 {
-    OBJDESC *found_object = {NULL};
-    OBJDESC *obj = {NULL};
-    KEYWORD *kwd = {NULL};
-    unsigned short found = {FALSE};
-    unsigned short scope = search_scope;
-    unsigned long current_position = {0};
+  OBJDESC *found_object = {NULL};
+  OBJDESC *obj = {NULL};
+  KEYWORD *kwd = {NULL};
+  unsigned short found = {FALSE};
+  unsigned short scope = search_scope;
+  unsigned long current_position = {0};
 
-    for (obj=start_object;
-          ((obj != NULL) && (! found));
-            obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope))
+  for (obj=start_object;
+       ((obj != NULL) && (! found));
+       obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope))
+  {
+    if (object_class == NULL)
+      found = TRUE;
+    else
+      found = OdlWildCardCompare(object_class, obj->obj_class);
+
+    if ((found) && (keyword_name != NULL))
     {
-        if (object_class == NULL)
-             found = TRUE;
-        else
-             found = OdlWildCardCompare(object_class, obj->obj_class);
+      kwd = (KEYWORD *) OdlFindKwd(obj, keyword_name,
+                                   NULL, 1, ODL_THIS_OBJECT);
+      found = (kwd != NULL);
+    }
 
-        if ((found) && (keyword_name != NULL))
-        {
-            kwd = (KEYWORD *) OdlFindKwd(obj, keyword_name, 
-                                         NULL, 1, ODL_THIS_OBJECT);
-            found = (kwd != NULL);
-        }
+    if ((found) && (keyword_value != NULL))
+      found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
 
-        if ((found) && (keyword_value != NULL))
-            found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
+    if ((found) && (object_position > 0))
+      found = ((++current_position) == object_position);
 
-        if ((found) && (object_position > 0))
-            found = ((++current_position) == object_position);
+    if (found) found_object = obj;
 
-        if (found) found_object = obj;    
+  }  /*  End:  "for (obj=start_object; ..."  */
 
-    }  /*  End:  "for (obj=start_object; ..."  */
-
-    return(found_object);
+  return(found_object);
 
 }  /*  End:  "OdlFindObjDesc"  */
 
@@ -677,53 +680,53 @@ OBJDESC *OdlFindObjDesc( OBJDESC *start_object, char *object_class,
 
 OBJDESC *OdlNextObjDesc (object, root_level, search_scope)
 
-OBJDESC *object;
-unsigned long root_level;
-unsigned short *search_scope;
+  OBJDESC *object;
+  unsigned long root_level;
+  unsigned short *search_scope;
 
 #else
 
-OBJDESC *OdlNextObjDesc (OBJDESC *object, unsigned long root_level, 
-                        unsigned short *search_scope)
+OBJDESC *OdlNextObjDesc (OBJDESC *object, unsigned long root_level,
+                         unsigned short *search_scope)
 
 #endif
 {
-    OBJDESC *next_object = {NULL};
+  OBJDESC *next_object = {NULL};
 
-    if (object != NULL)
+  if (object != NULL)
+  {
+    switch (*search_scope)
     {
-        switch (*search_scope)
-        {
-            /*  look only in the current object  */
-            case ODL_THIS_OBJECT    :  next_object = NULL;
-                                       break;
+      /*  look only in the current object  */
+      case ODL_THIS_OBJECT    :  next_object = NULL;
+                                 break;
 
-            /*  look at the current object's first child now, and its   */
-            /*  child's right siblings in subsequent searches           */
-            case ODL_CHILDREN_ONLY  :  next_object = object->first_child;
-                                       *search_scope = ODL_SIBLINGS_ONLY;
-                                       break;
+                                 /*  look at the current object's first child now, and its   */
+                                 /*  child's right siblings in subsequent searches           */
+      case ODL_CHILDREN_ONLY  :  next_object = object->first_child;
+                                 *search_scope = ODL_SIBLINGS_ONLY;
+                                 break;
 
-            /*  look at the current object's right sibling  */
-            case ODL_SIBLINGS_ONLY  :  next_object = object->right_sibling;
-                                       break;
+                                 /*  look at the current object's right sibling  */
+      case ODL_SIBLINGS_ONLY  :  next_object = object->right_sibling;
+                                 break;
 
-            /*  treat the current object as the root of a sub-tree  */
-            case ODL_RECURSIVE_DOWN :  next_object = (OBJDESC *) OdlTraverseTree(object, root_level);
-                                       break;
+                                 /*  treat the current object as the root of a sub-tree  */
+      case ODL_RECURSIVE_DOWN :  next_object = (OBJDESC *) OdlTraverseTree(object, root_level);
+                                 break;
 
-            /*  search children, then siblings, then move up to parent  */
-            /*  keep going until the end of the label is reached        */
-            default                 :  next_object = (OBJDESC *) 
-                                                      OdlTraverseTree(object, 
-                                                                     (unsigned long) 0);
-                                       break;
+                                 /*  search children, then siblings, then move up to parent  */
+                                 /*  keep going until the end of the label is reached        */
+      default                 :  next_object = (OBJDESC *)
+                                 OdlTraverseTree(object,
+                                                 (unsigned long) 0);
+                                 break;
 
-        }  /*  End:  "switch (*search_scope) ..."  */
+    }  /*  End:  "switch (*search_scope) ..."  */
 
-    }  /*  End:  "if (object != NULL) ..."  */
+  }  /*  End:  "if (object != NULL) ..."  */
 
-    return(next_object);
+  return(next_object);
 
 }  /*  End:  "OdlNextObjDesc"  */
 
@@ -762,7 +765,7 @@ OBJDESC *OdlNextObjDesc (OBJDESC *object, unsigned long root_level,
 
 OBJDESC *OdlCutObjDesc (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -770,25 +773,25 @@ OBJDESC *OdlCutObjDesc (OBJDESC *object)
 
 #endif
 {
-    if (object != NULL)
-    {
-        if (object->right_sibling == NULL)
-            object->parent->last_child = object->left_sibling;
-        else
-            object->right_sibling->left_sibling = object->left_sibling;
+  if (object != NULL)
+  {
+    if (object->right_sibling == NULL)
+      object->parent->last_child = object->left_sibling;
+    else
+      object->right_sibling->left_sibling = object->left_sibling;
 
-        if (object->left_sibling == NULL)
-            object->parent->first_child = object->right_sibling;
-        else
-            object->left_sibling->right_sibling = object->right_sibling;
+    if (object->left_sibling == NULL)
+      object->parent->first_child = object->right_sibling;
+    else
+      object->left_sibling->right_sibling = object->right_sibling;
 
-        object->parent = NULL;
-        object->left_sibling = NULL;
-        object->right_sibling = NULL;
+    object->parent = NULL;
+    object->left_sibling = NULL;
+    object->right_sibling = NULL;
 
-    }  /*  End:  "if (object != NULL) ..."  */
-    
-    return(object);
+  }  /*  End:  "if (object != NULL) ..."  */
+
+  return(object);
 
 }  /*  End routine:  "OdlCutObjDesc"  */
 
@@ -825,8 +828,8 @@ OBJDESC *OdlCutObjDesc (OBJDESC *object)
 
 OBJDESC *OdlPasteObjDesc (new_object, parent_object)
 
-OBJDESC *new_object;
-OBJDESC *parent_object;
+  OBJDESC *new_object;
+  OBJDESC *parent_object;
 
 #else
 
@@ -834,25 +837,25 @@ OBJDESC *OdlPasteObjDesc (OBJDESC *new_object, OBJDESC *parent_object)
 
 #endif
 {
-    if ((new_object != NULL) && (parent_object != NULL))
-    {
-        new_object->left_sibling = parent_object->last_child;
-        new_object->right_sibling = NULL;
-        new_object->parent = parent_object;
-    
-        if (parent_object->first_child == NULL)
-            parent_object->first_child = new_object;
+  if ((new_object != NULL) && (parent_object != NULL))
+  {
+    new_object->left_sibling = parent_object->last_child;
+    new_object->right_sibling = NULL;
+    new_object->parent = parent_object;
 
-        if (parent_object->last_child != NULL)
-            parent_object->last_child->right_sibling = new_object;
+    if (parent_object->first_child == NULL)
+      parent_object->first_child = new_object;
 
-        parent_object->last_child = new_object;
+    if (parent_object->last_child != NULL)
+      parent_object->last_child->right_sibling = new_object;
 
-        OdlAdjustObjDescLevel(new_object);
+    parent_object->last_child = new_object;
 
-    }  /*  End:  "if ((new_object != NULL) && ..."  */
-    
-    return(new_object);
+    OdlAdjustObjDescLevel(new_object);
+
+  }  /*  End:  "if ((new_object != NULL) && ..."  */
+
+  return(new_object);
 
 }  /*  End routine:  "OdlPasteObjDesc"  */
 
@@ -889,8 +892,8 @@ OBJDESC *OdlPasteObjDesc (OBJDESC *new_object, OBJDESC *parent_object)
 
 OBJDESC *OdlPasteObjDescBefore (new_object, old_object)
 
-OBJDESC *new_object;
-OBJDESC *old_object;
+  OBJDESC *new_object;
+  OBJDESC *old_object;
 
 #else
 
@@ -898,24 +901,24 @@ OBJDESC *OdlPasteObjDescBefore (OBJDESC *new_object, OBJDESC *old_object)
 
 #endif
 {
-    if ((new_object != NULL) && (old_object != NULL))
-    {
-        new_object->left_sibling = old_object->left_sibling;
-        new_object->right_sibling = old_object;
-        new_object->parent = old_object->parent;
-    
-        if (old_object->left_sibling == NULL)
-            old_object->parent->first_child = new_object;
-        else
-            old_object->left_sibling->right_sibling = new_object;
+  if ((new_object != NULL) && (old_object != NULL))
+  {
+    new_object->left_sibling = old_object->left_sibling;
+    new_object->right_sibling = old_object;
+    new_object->parent = old_object->parent;
 
-        old_object->left_sibling = new_object;
+    if (old_object->left_sibling == NULL)
+      old_object->parent->first_child = new_object;
+    else
+      old_object->left_sibling->right_sibling = new_object;
 
-        OdlAdjustObjDescLevel(new_object);
+    old_object->left_sibling = new_object;
 
-    }  /*  End:  "if ((new_object != NULL) && ..."  */
-    
-    return(new_object);
+    OdlAdjustObjDescLevel(new_object);
+
+  }  /*  End:  "if ((new_object != NULL) && ..."  */
+
+  return(new_object);
 
 }  /*  End routine:  "OdlPasteObjDescBefore"  */
 
@@ -952,8 +955,8 @@ OBJDESC *OdlPasteObjDescBefore (OBJDESC *new_object, OBJDESC *old_object)
 
 OBJDESC *OdlPasteObjDescAfter (new_object, old_object)
 
-OBJDESC *new_object;
-OBJDESC *old_object;
+  OBJDESC *new_object;
+  OBJDESC *old_object;
 
 #else
 
@@ -961,24 +964,24 @@ OBJDESC *OdlPasteObjDescAfter (OBJDESC *new_object, OBJDESC *old_object)
 
 #endif
 {
-    if ((new_object != NULL) && (old_object != NULL))
-    {
-        new_object->right_sibling = old_object->right_sibling;
-        new_object->left_sibling = old_object;
-        new_object->parent = old_object->parent;
-    
-        if (old_object->right_sibling == NULL)
-            old_object->parent->last_child = new_object;
-        else
-            old_object->right_sibling->left_sibling = new_object;
+  if ((new_object != NULL) && (old_object != NULL))
+  {
+    new_object->right_sibling = old_object->right_sibling;
+    new_object->left_sibling = old_object;
+    new_object->parent = old_object->parent;
 
-        old_object->right_sibling = new_object;
+    if (old_object->right_sibling == NULL)
+      old_object->parent->last_child = new_object;
+    else
+      old_object->right_sibling->left_sibling = new_object;
 
-        OdlAdjustObjDescLevel(new_object);
+    old_object->right_sibling = new_object;
 
-    }  /*  End:  "if ((new_object != NULL) && ..."  */
-    
-    return(new_object);
+    OdlAdjustObjDescLevel(new_object);
+
+  }  /*  End:  "if ((new_object != NULL) && ..."  */
+
+  return(new_object);
 
 }  /*  End routine:  "OdlPasteObjDescAfter"  */
 
@@ -1016,7 +1019,7 @@ OBJDESC *OdlPasteObjDescAfter (OBJDESC *new_object, OBJDESC *old_object)
 
 OBJDESC *OdlCopyObjDesc (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1024,18 +1027,18 @@ OBJDESC *OdlCopyObjDesc (OBJDESC *object)
 
 #endif
 {
-    OBJDESC *new_object = {NULL};
+  OBJDESC *new_object = {NULL};
 
-    if (object != NULL)
-    {
-        new_object = OdlNewObjDesc(object->obj_class, 
+  if (object != NULL)
+  {
+    new_object = OdlNewObjDesc(object->obj_class,
                                object->pre_comment, object->line_comment,
                                object->post_comment, object->end_comment,
-                               object->file_name, object->is_a_group, 
+                               object->file_name, object->is_a_group,
                                object->line_number);
-    }
-    
-    return(new_object);
+  }
+
+  return(new_object);
 
 }  /*  End routine:  "OdlCopyObjDesc"  */
 
@@ -1070,33 +1073,33 @@ OBJDESC *OdlCopyObjDesc (OBJDESC *object)
 
 #ifdef _NO_PROTO
 
-OBJDESC *OdlNewObjDesc (object_class, pre_comment, line_comment, post_comment, 
-                       end_comment, file_name, is_a_group, line_number)
-char *object_class;
-char *pre_comment;
-char *line_comment;
-char *post_comment;
-char *end_comment;
-char *file_name;
-short is_a_group;
-long line_number;
+OBJDESC *OdlNewObjDesc (object_class, pre_comment, line_comment, post_comment,
+                        end_comment, file_name, is_a_group, line_number)
+const char *object_class;
+const char *pre_comment;
+const char *line_comment;
+const char *post_comment;
+const char *end_comment;
+const char *file_name;
+const short is_a_group;
+const long line_number;
 
 #else
 
-OBJDESC *OdlNewObjDesc (char *object_class, char *pre_comment, 
-                       char *line_comment, char *post_comment, 
-                       char *end_comment, char *file_name, short is_a_group,
-                       long line_number)
+OBJDESC *OdlNewObjDesc (const char *object_class, const char *pre_comment,
+                        const char *line_comment, const char *post_comment,
+                        const char *end_comment, const char *file_name,
+                        const short is_a_group, const long line_number)
 
 #endif
 {
-    OBJDESC *new_object = {NULL};
+  OBJDESC *new_object = {NULL};
 
-    if ((new_object = (OBJDESC *)malloc(sizeof(OBJDESC))) == NULL)
-        SayGoodbye()
-    else
-    {
-        CopyString(new_object->obj_class, object_class)
+  if ((new_object = (OBJDESC *)malloc(sizeof(OBJDESC))) == NULL)
+    SayGoodbye()
+  else
+  {
+    CopyString(new_object->obj_class, object_class)
         CopyString(new_object->pre_comment, pre_comment)
         CopyString(new_object->line_comment, line_comment)
         CopyString(new_object->post_comment, post_comment)
@@ -1104,22 +1107,22 @@ OBJDESC *OdlNewObjDesc (char *object_class, char *pre_comment,
         CopyString(new_object->file_name, file_name)
 
         new_object->is_a_group = is_a_group;
-        new_object->child_count = 0;
-        new_object->line_number = line_number;
-        new_object->level = 0;
-        new_object->parent = NULL;
-        new_object->left_sibling = NULL;
-        new_object->right_sibling = NULL;
-        new_object->first_child = NULL;
-        new_object->last_child = NULL;
-        new_object->first_keyword = NULL;
-        new_object->last_keyword = NULL;
-        new_object->appl1 = NULL;
-        new_object->appl2 = NULL;
+    new_object->child_count = 0;
+    new_object->line_number = line_number;
+    new_object->level = 0;
+    new_object->parent = NULL;
+    new_object->left_sibling = NULL;
+    new_object->right_sibling = NULL;
+    new_object->first_child = NULL;
+    new_object->last_child = NULL;
+    new_object->first_keyword = NULL;
+    new_object->last_keyword = NULL;
+    new_object->appl1 = NULL;
+    new_object->appl2 = NULL;
 
-    }  /*  End:  "if ((new_object = ... else ..."  */
+  }  /*  End:  "if ((new_object = ... else ..."  */
 
-    return(new_object);
+  return(new_object);
 
 }  /*  End routine:  "OdlNewObjDesc"  */
 
@@ -1162,7 +1165,7 @@ OBJDESC *OdlNewObjDesc (char *object_class, char *pre_comment,
 
 char *OdlGetLabelVersion (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1170,24 +1173,24 @@ char *OdlGetLabelVersion (OBJDESC *object)
 
 #endif
 {
-    KEYWORD *kwd = {NULL};
-    char *version = {NULL};
+  KEYWORD *kwd = {NULL};
+  char *version = {NULL};
 
-    if (object != NULL)
+  if (object != NULL)
+  {
+    kwd = (KEYWORD *) OdlFindKwd(object, "PDS_VERSION_ID",
+                                 NULL, 1, ODL_THIS_OBJECT);
+    if (kwd == NULL)
     {
-        kwd = (KEYWORD *) OdlFindKwd(object, "PDS_VERSION_ID", 
-                                     NULL, 1, ODL_THIS_OBJECT);
-        if (kwd == NULL) 
-        {
-            kwd = (KEYWORD *) OdlFindKwd(object, "ODL_VERSION_NUMBER", 
-                                         NULL, 1, ODL_THIS_OBJECT);
-        }
-
-        if (kwd != NULL) 
-            version = (char *) OdlGetKwdValue(kwd);
+      kwd = (KEYWORD *) OdlFindKwd(object, "ODL_VERSION_NUMBER",
+                                   NULL, 1, ODL_THIS_OBJECT);
     }
 
-    return(version);
+    if (kwd != NULL)
+      version = (char *) OdlGetKwdValue(kwd);
+  }
+
+  return(version);
 
 }  /*  End:  "OdlGetLabelVersion"  */
 
@@ -1227,7 +1230,7 @@ char *OdlGetLabelVersion (OBJDESC *object)
 
 char *OdlGetObjDescClassName (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1235,12 +1238,12 @@ char *OdlGetObjDescClassName (OBJDESC *object)
 
 #endif
 {
-    char *class_name = {NULL};
+  char *class_name = {NULL};
 
-    if (object != NULL)
-        class_name = object->obj_class;
+  if (object != NULL)
+    class_name = object->obj_class;
 
-    return(class_name);
+  return(class_name);
 
 }  /*  End:  "OdlGetObjDescClassName"  */
 
@@ -1277,7 +1280,7 @@ char *OdlGetObjDescClassName (OBJDESC *object)
 
 int OdlGetObjDescChildCount (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1285,16 +1288,16 @@ int OdlGetObjDescChildCount (OBJDESC *object)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    int child_count = {0};
+  OBJDESC *obj = {NULL};
+  int child_count = {0};
 
-    if (object != NULL)
-    {
-        for (obj=object->first_child; obj != NULL; obj=obj->right_sibling)
-            ++child_count;
-    }
+  if (object != NULL)
+  {
+    for (obj=object->first_child; obj != NULL; obj=obj->right_sibling)
+      ++child_count;
+  }
 
-    return(child_count);
+  return(child_count);
 
 }  /*  End:  "OdlGetObjDescChildCount"  */
 
@@ -1331,7 +1334,7 @@ int OdlGetObjDescChildCount (OBJDESC *object)
 
 int OdlGetObjDescLevel (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1339,16 +1342,16 @@ int OdlGetObjDescLevel (OBJDESC *object)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    int level = {0};
+  OBJDESC *obj = {NULL};
+  int level = {0};
 
-    if (object != NULL)
-    {
-        for (obj=object->parent; obj != NULL; obj=obj->parent)
-            ++level;
-    }
+  if (object != NULL)
+  {
+    for (obj=object->parent; obj != NULL; obj=obj->parent)
+      ++level;
+  }
 
-    return(level);
+  return(level);
 
 }  /*  End:  "OdlGetObjDescLevel"  */
 
@@ -1389,7 +1392,7 @@ int OdlGetObjDescLevel (OBJDESC *object)
 
 void OdlAdjustObjDescLevel (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1397,16 +1400,16 @@ void OdlAdjustObjDescLevel (OBJDESC *object)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    unsigned short scope = {ODL_RECURSIVE_DOWN};
+  OBJDESC *obj = {NULL};
+  unsigned short scope = {ODL_RECURSIVE_DOWN};
 
-    for (obj=object; obj != NULL; 
-             obj = (OBJDESC *) OdlNextObjDesc(obj, object->level, &scope))
-    {
-        obj->level = (obj->parent == NULL) ? 0 : (1 + obj->parent->level);
-    }
+  for (obj=object; obj != NULL;
+       obj = (OBJDESC *) OdlNextObjDesc(obj, object->level, &scope))
+  {
+    obj->level = (obj->parent == NULL) ? 0 : (1 + obj->parent->level);
+  }
 
-    return;
+  return;
 
 }  /*  End routine:  "OdlAdjustObjDescLevel"  */
 
@@ -1446,7 +1449,7 @@ void OdlAdjustObjDescLevel (OBJDESC *object)
 
 OBJDESC *OdlGetObjDescParent (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -1454,12 +1457,12 @@ OBJDESC *OdlGetObjDescParent (OBJDESC *object)
 
 #endif
 {
-    OBJDESC *parent = {NULL};
+  OBJDESC *parent = {NULL};
 
-    if (object != NULL)
-        parent = object->parent;
+  if (object != NULL)
+    parent = object->parent;
 
-    return(parent);
+  return(parent);
 
 }  /*  End:  "OdlGetObjDescParent"  */
 
@@ -1506,8 +1509,8 @@ OBJDESC *OdlGetObjDescParent (OBJDESC *object)
 
 #ifdef _NO_PROTO
 
-KEYWORD *OdlFindKwd (start_object, keyword_name, keyword_value, 
-                         keyword_position, search_scope)
+KEYWORD *OdlFindKwd (start_object, keyword_name, keyword_value,
+                     keyword_position, search_scope)
 const OBJDESC *start_object;
 const char *keyword_name;
 const char *keyword_value;
@@ -1524,37 +1527,37 @@ KEYWORD *OdlFindKwd (const OBJDESC *start_object,
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    KEYWORD *kwd = {NULL};
-    KEYWORD *found_kwd = {NULL};
-    unsigned short found = {FALSE};
-    unsigned short scope = search_scope;
-    unsigned long current_position = {0};
+  OBJDESC *obj = {NULL};
+  KEYWORD *kwd = {NULL};
+  KEYWORD *found_kwd = {NULL};
+  unsigned short found = {FALSE};
+  unsigned short scope = search_scope;
+  unsigned long current_position = {0};
 
-    for (obj=start_object;
-            ((obj != NULL) && (! found));
-                obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope))
+  for (obj=(OBJDESC *)start_object;
+       ((obj != NULL) && (! found));
+       obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope))
+  {
+    for (kwd=obj->first_keyword; ((kwd != NULL) && (! found)); kwd=kwd->right_sibling)
     {
-        for (kwd=obj->first_keyword; ((kwd != NULL) && (! found)); kwd=kwd->right_sibling)
-        {
-            if (keyword_name == NULL)
-                found = TRUE;
-            else
-                found = OdlWildCardCompare(keyword_name, kwd->name);
+      if (keyword_name == NULL)
+        found = TRUE;
+      else
+        found = OdlWildCardCompare(keyword_name, kwd->name);
 
-            if ((found) && (keyword_value != NULL))
-                found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
-    
-            if ((found) && (keyword_position > 0))
-                found = ((++current_position) == keyword_position);
-    
-            if (found) found_kwd = kwd;    
+      if ((found) && (keyword_value != NULL))
+        found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
 
-        }  /*  End:  "for (kwd=obj-> ..."  */
+      if ((found) && (keyword_position > 0))
+        found = ((++current_position) == keyword_position);
 
-    }  /*  End:  "for (obj=start_object; ..."  */
+      if (found) found_kwd = kwd;
 
-    return(found_kwd);
+    }  /*  End:  "for (kwd=obj-> ..."  */
+
+  }  /*  End:  "for (obj=start_object; ..."  */
+
+  return(found_kwd);
 
 }  /*  End:  "OdlFindKwd"  */
 
@@ -1593,7 +1596,7 @@ KEYWORD *OdlFindKwd (const OBJDESC *start_object,
 
 #ifdef _NO_PROTO
 
-KEYWORD *OdlNextKwd (start_keyword, keyword_name, keyword_value, 
+KEYWORD *OdlNextKwd (start_keyword, keyword_name, keyword_value,
                      keyword_position, search_scope)
 
 const KEYWORD *start_keyword;
@@ -1612,50 +1615,50 @@ KEYWORD *OdlNextKwd (const KEYWORD *start_keyword,
 
 #endif
 {
-    OBJDESC *start_object = {NULL};
-    OBJDESC *obj = {NULL};
-    KEYWORD *kwd = {NULL};
-    KEYWORD *found_kwd = {NULL};
-    unsigned short found = {FALSE};
-    unsigned short scope = search_scope;
-    unsigned long current_position = {0};
+  OBJDESC *start_object = {NULL};
+  OBJDESC *obj = {NULL};
+  KEYWORD *kwd = {NULL};
+  KEYWORD *found_kwd = {NULL};
+  unsigned short found = {FALSE};
+  unsigned short scope = search_scope;
+  unsigned long current_position = {0};
 
-    if (start_keyword != NULL)
+  if (start_keyword != NULL)
+  {
+    start_object = start_keyword->parent;
+    obj = start_object;
+    kwd = start_keyword;
+
+    do
     {
-        start_object = start_keyword->parent;
-        obj = start_object;
-        kwd = start_keyword; 
-    
-        do
-        {
-            for ( ; ((kwd != NULL) && (! found)); kwd=kwd->right_sibling)
-            {
-                if (keyword_name == NULL)
-                    found = TRUE;
-                else
-                    found = OdlWildCardCompare(keyword_name, kwd->name);
-        
-                if ((found) && (keyword_value != NULL))
-                    found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
-        
-                if ((found) && (keyword_position > 0))
-                    found = ((++current_position) == keyword_position);
-        
-                if (found) found_kwd = kwd;    
-        
-            }  /*  End:  "for (kwd=start_keyword; ..."  */
-    
-            if (! found)
-            {
-                obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope);
-                kwd = (KEYWORD *) OdlGetFirstKwd(obj);
-            }
-    
-        }  while ((obj != NULL) && (! found));
+      for ( ; ((kwd != NULL) && (! found)); kwd=kwd->right_sibling)
+      {
+        if (keyword_name == NULL)
+          found = TRUE;
+        else
+          found = OdlWildCardCompare(keyword_name, kwd->name);
 
-    }  /*  End:  "if (start_keyword != NULL) ..."  */
+        if ((found) && (keyword_value != NULL))
+          found = OdlWildCardCompare(keyword_value, (char *) OdlGetKwdValue(kwd));
 
-    return(found_kwd);
+        if ((found) && (keyword_position > 0))
+          found = ((++current_position) == keyword_position);
+
+        if (found) found_kwd = kwd;
+
+      }  /*  End:  "for (kwd=start_keyword; ..."  */
+
+      if (! found)
+      {
+        obj = (OBJDESC *) OdlNextObjDesc(obj, start_object->level, &scope);
+        kwd = (KEYWORD *) OdlGetFirstKwd(obj);
+      }
+
+    }  while ((obj != NULL) && (! found));
+
+  }  /*  End:  "if (start_keyword != NULL) ..."  */
+
+  return(found_kwd);
 
 }  /*  End:  "OdlNextKwd"  */
 
@@ -1698,7 +1701,7 @@ KEYWORD *OdlNextKwd (const KEYWORD *start_keyword,
 
 KEYWORD *OdlCutKwd (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -1706,27 +1709,27 @@ KEYWORD *OdlCutKwd (KEYWORD *keyword)
 
 #endif
 {
-    if (keyword != NULL)
-    {
-        if (keyword->left_sibling != NULL)
-            keyword->left_sibling->right_sibling = keyword->right_sibling;
+  if (keyword != NULL)
+  {
+    if (keyword->left_sibling != NULL)
+      keyword->left_sibling->right_sibling = keyword->right_sibling;
 
-        if (keyword->right_sibling != NULL)
-            keyword->right_sibling->left_sibling = keyword->left_sibling;
+    if (keyword->right_sibling != NULL)
+      keyword->right_sibling->left_sibling = keyword->left_sibling;
 
-        if (keyword->parent->first_keyword == keyword)
-            keyword->parent->first_keyword = keyword->right_sibling;
+    if (keyword->parent->first_keyword == keyword)
+      keyword->parent->first_keyword = keyword->right_sibling;
 
-        if (keyword->parent->last_keyword == keyword)
-            keyword->parent->last_keyword = keyword->left_sibling;
+    if (keyword->parent->last_keyword == keyword)
+      keyword->parent->last_keyword = keyword->left_sibling;
 
-        keyword->parent = NULL;
-        keyword->left_sibling = NULL;
-        keyword->right_sibling = NULL;
+    keyword->parent = NULL;
+    keyword->left_sibling = NULL;
+    keyword->right_sibling = NULL;
 
-    }  /*  End:  "if ((keyword != NULL) && ..."  */
+  }  /*  End:  "if ((keyword != NULL) && ..."  */
 
-    return(keyword);
+  return(keyword);
 
 }  /*  End routine:  "OdlCutKwd"  */
 
@@ -1762,8 +1765,8 @@ KEYWORD *OdlCutKwd (KEYWORD *keyword)
 
 KEYWORD *OdlPasteKwd (keyword, object)
 
-KEYWORD *keyword;
-OBJDESC *object;
+  KEYWORD *keyword;
+  OBJDESC *object;
 
 #else
 
@@ -1771,23 +1774,23 @@ KEYWORD *OdlPasteKwd (KEYWORD *keyword, OBJDESC *object)
 
 #endif
 {
-    if ((keyword != NULL) && (object != NULL))
-    {
-        keyword->parent = object;
-        keyword->left_sibling = object->last_keyword;
-        keyword->right_sibling = NULL;
+  if ((keyword != NULL) && (object != NULL))
+  {
+    keyword->parent = object;
+    keyword->left_sibling = object->last_keyword;
+    keyword->right_sibling = NULL;
 
-        if (object->first_keyword == NULL)
-            object->first_keyword = keyword;
+    if (object->first_keyword == NULL)
+      object->first_keyword = keyword;
 
-        if (object->last_keyword != NULL)
-            object->last_keyword->right_sibling = keyword;
+    if (object->last_keyword != NULL)
+      object->last_keyword->right_sibling = keyword;
 
-        object->last_keyword = keyword;
+    object->last_keyword = keyword;
 
-    }  /*  End:  "if ((keyword != NULL) && ..."  */
+  }  /*  End:  "if ((keyword != NULL) && ..."  */
 
-    return(keyword);
+  return(keyword);
 
 }  /*  End routine:  "OdlPasteKwd"  */
 
@@ -1823,8 +1826,8 @@ KEYWORD *OdlPasteKwd (KEYWORD *keyword, OBJDESC *object)
 
 KEYWORD *OdlPasteKwdBefore (new_keyword, old_keyword)
 
-KEYWORD *new_keyword;
-KEYWORD *old_keyword;
+  KEYWORD *new_keyword;
+  KEYWORD *old_keyword;
 
 #else
 
@@ -1832,22 +1835,22 @@ KEYWORD *OdlPasteKwdBefore (KEYWORD *new_keyword, KEYWORD *old_keyword)
 
 #endif
 {
-    if ((new_keyword != NULL) && (old_keyword != NULL))
-    {
-        new_keyword->parent = old_keyword->parent;
-        new_keyword->left_sibling = old_keyword->left_sibling;
-        new_keyword->right_sibling = old_keyword;
+  if ((new_keyword != NULL) && (old_keyword != NULL))
+  {
+    new_keyword->parent = old_keyword->parent;
+    new_keyword->left_sibling = old_keyword->left_sibling;
+    new_keyword->right_sibling = old_keyword;
 
-        if (old_keyword->left_sibling == NULL)
-            old_keyword->parent->first_keyword = new_keyword;
-        else
-            old_keyword->left_sibling->right_sibling = new_keyword;
+    if (old_keyword->left_sibling == NULL)
+      old_keyword->parent->first_keyword = new_keyword;
+    else
+      old_keyword->left_sibling->right_sibling = new_keyword;
 
-        old_keyword->left_sibling = new_keyword;
+    old_keyword->left_sibling = new_keyword;
 
-    }  /*  End:  "if ((new_keyword != NULL) && ..."  */
+  }  /*  End:  "if ((new_keyword != NULL) && ..."  */
 
-    return(new_keyword);
+  return(new_keyword);
 
 }  /*  End routine:  "OdlPasteKwdBefore"  */
 
@@ -1883,8 +1886,8 @@ KEYWORD *OdlPasteKwdBefore (KEYWORD *new_keyword, KEYWORD *old_keyword)
 
 KEYWORD *OdlPasteKwdAfter (new_keyword, old_keyword)
 
-KEYWORD *new_keyword;
-KEYWORD *old_keyword;
+  KEYWORD *new_keyword;
+  KEYWORD *old_keyword;
 
 #else
 
@@ -1892,22 +1895,22 @@ KEYWORD *OdlPasteKwdAfter (KEYWORD *new_keyword, KEYWORD *old_keyword)
 
 #endif
 {
-    if ((new_keyword != NULL) && (old_keyword != NULL))
-    {
-        new_keyword->parent = old_keyword->parent;
-        new_keyword->right_sibling = old_keyword->right_sibling;
-        new_keyword->left_sibling = old_keyword;
+  if ((new_keyword != NULL) && (old_keyword != NULL))
+  {
+    new_keyword->parent = old_keyword->parent;
+    new_keyword->right_sibling = old_keyword->right_sibling;
+    new_keyword->left_sibling = old_keyword;
 
-        if (old_keyword->right_sibling == NULL)
-            old_keyword->parent->last_keyword = new_keyword;
-        else
-            old_keyword->right_sibling->left_sibling = new_keyword;
+    if (old_keyword->right_sibling == NULL)
+      old_keyword->parent->last_keyword = new_keyword;
+    else
+      old_keyword->right_sibling->left_sibling = new_keyword;
 
-        old_keyword->right_sibling = new_keyword;
+    old_keyword->right_sibling = new_keyword;
 
-    }  /*  End:  "if ((new_keyword != NULL) && ..."  */
+  }  /*  End:  "if ((new_keyword != NULL) && ..."  */
 
-    return(new_keyword);
+  return(new_keyword);
 
 }  /*  End routine:  "OdlPasteKwdAfter"  */
 
@@ -1944,7 +1947,7 @@ KEYWORD *OdlPasteKwdAfter (KEYWORD *new_keyword, KEYWORD *old_keyword)
 
 KEYWORD *OdlCopyKwd (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -1952,16 +1955,16 @@ KEYWORD *OdlCopyKwd (KEYWORD *keyword)
 
 #endif
 {
-    KEYWORD *new_keyword = {NULL};
+  KEYWORD *new_keyword = {NULL};
 
-    if (keyword != NULL)
-    {
-        new_keyword = OdlNewKwd(keyword->name, keyword->value, 
-                                 keyword->pre_comment, keyword->line_comment,
-                                 keyword->file_name, keyword->line_number);
-    }
+  if (keyword != NULL)
+  {
+    new_keyword = OdlNewKwd(keyword->name, keyword->value,
+                            keyword->pre_comment, keyword->line_comment,
+                            keyword->file_name, keyword->line_number);
+  }
 
-    return(new_keyword);
+  return(new_keyword);
 
 }  /*  End routine:  "OdlCopyKwd"  */
 
@@ -1991,12 +1994,12 @@ KEYWORD *OdlCopyKwd (KEYWORD *keyword)
 /*      This routine creates a new keyword structure, initializes       */
 /*      its fields with the values passed in, and returns a pointer     */
 /*      to it.                                                          */
-/*                                                                      */      
+/*                                                                      */
 /************************************************************************/
 
 #ifdef _NO_PROTO
 
-KEYWORD *OdlNewKwd (keyword_name, value_text, pre_comment, 
+KEYWORD *OdlNewKwd (keyword_name, value_text, pre_comment,
                     line_comment, file_name, line_number)
 
 char *keyword_name;
@@ -2008,18 +2011,18 @@ long line_number;
 
 #else
 
-KEYWORD *OdlNewKwd (char *keyword_name, char *value_text, char *pre_comment, 
+KEYWORD *OdlNewKwd (char *keyword_name, char *value_text, char *pre_comment,
                     char *line_comment, char *file_name, long line_number)
 
 #endif
 {
-    KEYWORD *new_keyword = {NULL};
+  KEYWORD *new_keyword = {NULL};
 
-    if ((new_keyword = (KEYWORD *)malloc(sizeof(KEYWORD))) == NULL)
-        SayGoodbye()
-    else
-    {
-        CopyString(new_keyword->name, keyword_name)
+  if ((new_keyword = (KEYWORD *)malloc(sizeof(KEYWORD))) == NULL)
+    SayGoodbye()
+  else
+  {
+    CopyString(new_keyword->name, keyword_name)
         CopyString(new_keyword->pre_comment, pre_comment)
         CopyString(new_keyword->line_comment, line_comment)
         CopyString(new_keyword->file_name, file_name)
@@ -2027,27 +2030,27 @@ KEYWORD *OdlNewKwd (char *keyword_name, char *value_text, char *pre_comment,
 
         new_keyword->is_a_pointer = (keyword_name == NULL) ? FALSE : (*keyword_name == '^');
 
-        if (value_text == NULL) 
-        {
-            new_keyword->size = 0;
-            new_keyword->is_a_list = FALSE;
-        }
-        else
-        {
-            new_keyword->size = strlen(new_keyword->value);
-            new_keyword->is_a_list = ((*value_text == '{') || (*value_text == '('));
-        }
+    if (value_text == NULL)
+    {
+      new_keyword->size = 0;
+      new_keyword->is_a_list = FALSE;
+    }
+    else
+    {
+      new_keyword->size = strlen(new_keyword->value);
+      new_keyword->is_a_list = ((*value_text == '{') || (*value_text == '('));
+    }
 
-        new_keyword->line_number = line_number;
-        new_keyword->parent = NULL;
-        new_keyword->left_sibling = NULL;
-        new_keyword->right_sibling = NULL;
-        new_keyword->appl1 = NULL;
-        new_keyword->appl2 = NULL;
+    new_keyword->line_number = line_number;
+    new_keyword->parent = NULL;
+    new_keyword->left_sibling = NULL;
+    new_keyword->right_sibling = NULL;
+    new_keyword->appl1 = NULL;
+    new_keyword->appl2 = NULL;
 
-    }  /*  End:  "if ((new_keyword = ... else ..."  */
+  }  /*  End:  "if ((new_keyword = ... else ..."  */
 
-    return(new_keyword);
+  return(new_keyword);
 
 }  /*  End routine:  "OdlNewKwd"  */
 
@@ -2088,7 +2091,7 @@ KEYWORD *OdlNewKwd (char *keyword_name, char *value_text, char *pre_comment,
 
 KEYWORD *OdlGetFirstKwd (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -2096,12 +2099,12 @@ KEYWORD *OdlGetFirstKwd (OBJDESC *object)
 
 #endif
 {
-    KEYWORD *kwd = {NULL};
+  KEYWORD *kwd = {NULL};
 
-    if (object != NULL)
-        kwd = object->first_keyword;
+  if (object != NULL)
+    kwd = object->first_keyword;
 
-    return(kwd);
+  return(kwd);
 
 }  /*  End:  "OdlGetFirstKwd"  */
 
@@ -2142,7 +2145,7 @@ KEYWORD *OdlGetFirstKwd (OBJDESC *object)
 
 KEYWORD *OdlGetNextKwd (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2150,12 +2153,12 @@ KEYWORD *OdlGetNextKwd (KEYWORD *keyword)
 
 #endif
 {
-    KEYWORD *kwd = {NULL};
+  KEYWORD *kwd = {NULL};
 
-    if (keyword != NULL)
-        kwd = keyword->right_sibling;
+  if (keyword != NULL)
+    kwd = keyword->right_sibling;
 
-    return(kwd);
+  return(kwd);
 
 }  /*  End:  "OdlGetNextKwd"  */
 
@@ -2195,7 +2198,7 @@ KEYWORD *OdlGetNextKwd (KEYWORD *keyword)
 
 char *OdlGetKwdValue (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2203,12 +2206,12 @@ char *OdlGetKwdValue (KEYWORD *keyword)
 
 #endif
 {
-    char *value = {NULL};
+  char *value = {NULL};
 
-    if (keyword != NULL)
-        value = keyword->value;
+  if (keyword != NULL)
+    value = keyword->value;
 
-    return(value);
+  return(value);
 
 }  /*  End:  "OdlGetKwdValue"  */
 
@@ -2264,7 +2267,7 @@ char *OdlGetKwdValue (KEYWORD *keyword)
 
 TB_STRING_LIST *OdlGetAllKwdValues (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2272,47 +2275,47 @@ TB_STRING_LIST *OdlGetAllKwdValues(KEYWORD *keyword)
 
 #endif
 {
-    TB_STRING_LIST *value_list = {NULL};
-    char *val_start = {NULL};
-    char *val_stop = {NULL};
-    char save_ch;
-	int type;
+  TB_STRING_LIST *value_list = {NULL};
+  char *val_start = {NULL};
+  char *val_stop = {NULL};
+  char save_ch;
+  int type;
 
-    if (keyword != NULL)
+  if (keyword != NULL)
+  {
+    if (keyword->value != NULL)
     {
-        if (keyword->value != NULL)
+      type = OdlGetKwdValueType(keyword);
+      if (type == ODL_SEQUENCE || type == ODL_SET) {
+        for (val_start=(char *)OdlValueStart(keyword->value);
+             *val_start != '\0';
+             val_start=(char *)OdlValueStart(val_stop+1))
         {
-			type = OdlGetKwdValueType(keyword);
-			if (type == ODL_SEQUENCE || type == ODL_SET) {
-				for (val_start=(char *)OdlValueStart(keyword->value);
-						 *val_start != '\0'; 
-							 val_start=(char *)OdlValueStart(val_stop+1))
-				{
-					val_stop = (char *) OdlValueEnd(val_start);
-					save_ch = *(val_stop + 1); *(val_stop + 1) = '\0';
-					AddStringToList(val_start, value_list)
-					*(val_stop + 1) = save_ch;
-				}
-			} else {
-				/*
-				** This is not a sequence or a set, so just return the one
-				*/
-				AddStringToList(keyword->value, value_list);
-			}
+          val_stop = (char *) OdlValueEnd(val_start);
+          save_ch = *(val_stop + 1); *(val_stop + 1) = '\0';
+          AddStringToList(val_start, value_list)
+              *(val_stop + 1) = save_ch;
+        }
+      } else {
+        /*
+         ** This is not a sequence or a set, so just return the one
+         */
+        AddStringToList(keyword->value, value_list);
+      }
 
-        }  /*  End:  "if (keyword->value != NULL) ..."  */
+    }  /*  End:  "if (keyword->value != NULL) ..."  */
 
-    }  /*  End:  "if (keyword != NULL) ..."  */
+  }  /*  End:  "if (keyword != NULL) ..."  */
 
-    return(value_list);
+  return(value_list);
 
 }  /*  End:  "OdlGetAllKwdValues"  */
 
 #ifdef _NO_PROTO
 
 int OdlGetAllKwdValuesArray (keyword, array)
-	KEYWORD *keyword;
-	char ***array;
+  KEYWORD *keyword;
+  char ***array;
 
 #else
 
@@ -2320,17 +2323,17 @@ int OdlGetAllKwdValuesArray (KEYWORD *keyword, char ***array)
 
 #endif
 {
-    TB_STRING_LIST *value_list = {NULL};
+  TB_STRING_LIST *value_list = {NULL};
 
-	*array = NULL;
+  *array = NULL;
 
-	value_list = OdlGetAllKwdValues(keyword);
+  value_list = OdlGetAllKwdValues(keyword);
 
-    if (value_list) {
-        return(ListToArray(value_list, array));
-    } else {
-        return(0);
-    }
+  if (value_list) {
+    return(ListToArray(value_list, array));
+  } else {
+    return(0);
+  }
 
 }  /*  End:  "OdlGetAllKwdValues"  */
 
@@ -2379,7 +2382,7 @@ int OdlGetAllKwdValuesArray (KEYWORD *keyword, char ***array)
 
 unsigned short OdlGetKwdValueType (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2387,9 +2390,9 @@ unsigned short OdlGetKwdValueType (KEYWORD *keyword)
 
 #endif
 {
-    unsigned short type = {ODL_UNKNOWN};
-    if (keyword != NULL) type = (unsigned short) OdlDataType(keyword->value);
-    return(type);
+  unsigned short type = {ODL_UNKNOWN};
+  if (keyword != NULL) type = (unsigned short) OdlDataType(keyword->value);
+  return(type);
 
 }  /*  End:  "OdlGetKwdValueType"  */
 
@@ -2430,7 +2433,7 @@ unsigned short OdlGetKwdValueType (KEYWORD *keyword)
 
 char *OdlGetKwdUnit (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2438,29 +2441,29 @@ char *OdlGetKwdUnit (KEYWORD *keyword)
 
 #endif
 {
-    char *c = {NULL};
-    char *unit = {NULL};
+  char *c = {NULL};
+  char *unit = {NULL};
 
-    /*  If we were given a keyword to use  */
-    if (keyword != NULL)
+  /*  If we were given a keyword to use  */
+  if (keyword != NULL)
+  {
+    /*  Attempt to locate the units string  */
+    c = (char *) strchr(keyword->value, '<');
+
+    if (c != NULL)
     {
-        /*  Attempt to locate the units string  */
-        c = (char *) strchr(keyword->value, '<');
+      /*  We found it!  Now copy it and make it upper case  */
+      CopyString(unit, c)
+          UpperCase(unit)
 
-        if (c != NULL)
-        {
-            /*  We found it!  Now copy it and make it upper case  */
-            CopyString(unit, c)
-            UpperCase(unit)
-    
-            /*  Close off the units string  */
-            c = (char *) strchr(unit, '>');
-            if (c != NULL) *(c + 1) = '\0';
-        }
+          /*  Close off the units string  */
+          c = (char *) strchr(unit, '>');
+      if (c != NULL) *(c + 1) = '\0';
+    }
 
-    }  /*  End:  "if (keyword != NULL) ..."  */
+  }  /*  End:  "if (keyword != NULL) ..."  */
 
-    return(unit);
+  return(unit);
 
 }  /*  End:  "OdlGetKwdUnit"  */
 
@@ -2500,7 +2503,7 @@ char *OdlGetKwdUnit (KEYWORD *keyword)
 
 char *OdlGetKwdName (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2508,12 +2511,12 @@ char *OdlGetKwdName (KEYWORD *keyword)
 
 #endif
 {
-    char *name = {NULL};
+  char *name = {NULL};
 
-    if (keyword != NULL)
-        name = keyword->name;
+  if (keyword != NULL)
+    name = keyword->name;
 
-    return(name);
+  return(name);
 
 }  /*  End:  "OdlGetKwdName"  */
 
@@ -2558,7 +2561,7 @@ char *OdlGetKwdName (KEYWORD *keyword)
 
 OBJDESC *OdlFreeTree (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -2566,25 +2569,25 @@ OBJDESC *OdlFreeTree (OBJDESC *object)
 
 #endif
 {
-    if (object != NULL)
-    {
-        OdlFreeTree(object->first_child);
-        OdlFreeTree(object->right_sibling);
-        OdlFreeAllKwds(object);
-        LemmeGo(object->obj_class)      
+  if (object != NULL)
+  {
+    OdlFreeTree(object->first_child);
+    OdlFreeTree(object->right_sibling);
+    OdlFreeAllKwds(object);
+    LemmeGo(object->obj_class)
         LemmeGo(object->pre_comment)
         LemmeGo(object->line_comment)
         LemmeGo(object->post_comment)
         LemmeGo(object->end_comment)
         LemmeGo(object->file_name)
         LemmeGo(object)
-    }               
-                    
-    return(object);
-                    
+  }
+
+  return(object);
+
 }  /*  End:  "OdlFreeTree"  */
-                    
-        
+
+
 
 
 /************************************************************************/
@@ -2619,7 +2622,7 @@ OBJDESC *OdlFreeTree (OBJDESC *object)
 
 KEYWORD *OdlFreeAllKwds (object)
 
-OBJDESC *object;
+  OBJDESC *object;
 
 #else
 
@@ -2627,22 +2630,22 @@ KEYWORD *OdlFreeAllKwds (OBJDESC *object)
 
 #endif
 {
-    KEYWORD *kwd = {NULL};
+  KEYWORD *kwd = {NULL};
 
-    if (object != NULL)
-    {
-        for (kwd=object->first_keyword; kwd != NULL; 
-                    kwd=(KEYWORD *) OdlFreeKwd(kwd)) ;
+  if (object != NULL)
+  {
+    for (kwd=object->first_keyword; kwd != NULL;
+         kwd=(KEYWORD *) OdlFreeKwd(kwd)) ;
 
-        object->first_keyword = NULL;
-        object->last_keyword = NULL;
-    }               
-                    
-    return(kwd);
-                    
+    object->first_keyword = NULL;
+    object->last_keyword = NULL;
+  }
+
+  return(kwd);
+
 }  /*  End:  "OdlFreeAllKwds"  */
-                    
-        
+
+
 
 
 
@@ -2677,7 +2680,7 @@ KEYWORD *OdlFreeAllKwds (OBJDESC *object)
 
 KEYWORD *OdlFreeKwd (keyword)
 
-KEYWORD *keyword;
+  KEYWORD *keyword;
 
 #else
 
@@ -2685,24 +2688,24 @@ KEYWORD *OdlFreeKwd (KEYWORD *keyword)
 
 #endif
 {
-    KEYWORD *next_kwd = {NULL};
+  KEYWORD *next_kwd = {NULL};
 
-    if (keyword != NULL)
-    {
-        next_kwd = keyword->right_sibling;
-        LemmeGo(keyword->name)        
-        LemmeGo(keyword->file_name)   
-        LemmeGo(keyword->value)       
-        LemmeGo(keyword->pre_comment) 
-        LemmeGo(keyword->line_comment)            
+  if (keyword != NULL)
+  {
+    next_kwd = keyword->right_sibling;
+    LemmeGo(keyword->name)
+        LemmeGo(keyword->file_name)
+        LemmeGo(keyword->value)
+        LemmeGo(keyword->pre_comment)
+        LemmeGo(keyword->line_comment)
         LemmeGo(keyword)
-    }               
-                    
-    return(next_kwd);
-                    
+  }
+
+  return(next_kwd);
+
 }  /*  End:  "OdlFreeKwd"  */
-                    
-        
+
+
 
 
 /*========================================================================*/
@@ -2746,8 +2749,8 @@ KEYWORD *OdlFreeKwd (KEYWORD *keyword)
 
 FILE *OdlOpenMessageFile (message_fname, message_fptr)
 
-char *message_fname;
-FILE *message_fptr;
+  char *message_fname;
+  FILE *message_fptr;
 
 #else
 
@@ -2755,23 +2758,22 @@ FILE *OdlOpenMessageFile (char *message_fname, FILE *message_fptr)
 
 #endif
 {
-    FILE *fptr = {stdout};
-    char *c = message_fname;
+  FILE *fptr = {stdout};
 
-    if (message_fptr != NULL)
-        fptr = message_fptr;
-    else
-        if (message_fname != NULL && ! odl_suppress_messages)
-        {
-            if ((fptr = (FILE *) fopen(message_fname, "a")) == NULL)
-            {
-                fptr = stdout;
-                OdlPrintMessage(NULL, NULL, 0,
-                    "Unable to open the output file.  Messages will be written to the terminal");
-            }
-        }
+  if (message_fptr != NULL)
+    fptr = message_fptr;
+  else
+    if (message_fname != NULL && ! odl_suppress_messages)
+    {
+      if ((fptr = (FILE *) fopen(message_fname, "a")) == NULL)
+      {
+        fptr = stdout;
+        OdlPrintMessage(NULL, NULL, 0,
+                        "Unable to open the output file.  Messages will be written to the terminal");
+      }
+    }
 
-    return(fptr);
+  return(fptr);
 
 }  /*  End routine:  "OdlOpenMessageFile"  */
 
@@ -2882,95 +2884,95 @@ FILE *OdlOpenMessageFile (char *message_fname, FILE *message_fptr)
 
 char *OdlGetFileName (keyword, start_location, start_location_type)
 
-KEYWORD *keyword;
-unsigned long *start_location;
-unsigned short *start_location_type;
+  KEYWORD *keyword;
+  unsigned long *start_location;
+  unsigned short *start_location_type;
 
 #else
 
-char *OdlGetFileName (KEYWORD *keyword, unsigned long *start_location, 
+char *OdlGetFileName (KEYWORD *keyword, unsigned long *start_location,
                       unsigned short *start_location_type)
 
 #endif
 {
-    char *fname = {NULL};
-    char *text = {NULL};
-    char *unit = {NULL};
-    char *first_word = {NULL};
-    char *second_word = {NULL};
+  char *fname = {NULL};
+  char *text = {NULL};
+  char *unit = {NULL};
+  char *first_word = {NULL};
+  char *second_word = {NULL};
 
-    if (keyword != NULL)
-    {
-        /*  Make a copy of the keyword's value  */
-        CopyString(text, keyword->value)
-    
+  if (keyword != NULL)
+  {
+    /*  Make a copy of the keyword's value  */
+    CopyString(text, keyword->value)
+
         /*  Get rid of parens, braces, and commas  */
         ReplaceChar(text, '(', ' ')
         ReplaceChar(text, ')', ' ')
         ReplaceChar(text, '{', ' ')
         ReplaceChar(text, '}', ' ')
         ReplaceChar(text, ',', ' ')
-    
+
         /*  Locate the units string  */
         unit = (char *) strchr(text, '<');
-    
-        /*  Remove the units string if it's there  */
-        if (unit != NULL) *unit = '\0';
-    
-        /*  Find the first word  */
-        first_word = (char *) OdlFirstWord(text);
-    
-        /*  If the first word is quoted, then it's a file name  */
-        if ((*first_word == '"') || (*first_word == '\''))
-        {
-            /*  Look for a second word  */
-            second_word = (char *) OdlNextWord(first_word);
-    
-            /*  If we can't find one, then the location is record 1  */
-            if (*second_word == '\0')
-                *start_location = 1;
-            else
-            {
-                /*  Otherwise, the second word is the location  */
-                *start_location = atoi(second_word);
-                *(second_word - 1) = '\0';
-            }
-    
-            /*  Copy and clean up the file name  */
-            CopyString(fname, (first_word+1))
-            ReplaceChar(fname, '"', ' ');
-            ReplaceChar(fname, '\'', ' ');
-            StripTrailing(fname, ' ')
-        }
-        else
-        {
-            /*  Since the first word isn't quoted, we assume that it's a     */
-            /*  location, and that the file name is the one associated with  */
-            /*  the keyword itself (e.g., we're looking at attached data)    */
-            *start_location = atoi(first_word);
-            CopyString(fname, keyword->file_name)
 
-        }  /*  End:  "if ((*first_word == '"') || ... else ..."  */
-    
-        /*  No unit string means a record location  */
-        if (unit == NULL)
-            *start_location_type = ODL_RECORD_LOCATION;
-        else
-        {
-            /*  Otherwise, find out what kind of units string we have  */
-            UpperCase(unit)
-            *unit = '<';  /* Bug fix SM 10/24/94 */
-            if (strncmp(unit, "<BYTE", 5) == 0)
-                *start_location_type = ODL_BYTE_LOCATION;
-            else
-                *start_location_type = ODL_RECORD_LOCATION;
-        }
-    
-        LemmeGo(text)
+    /*  Remove the units string if it's there  */
+    if (unit != NULL) *unit = '\0';
 
-    }  /*  End:  "if (keyword != NULL) ..."  */
+    /*  Find the first word  */
+    first_word = (char *) OdlFirstWord(text);
 
-    return(fname);
+    /*  If the first word is quoted, then it's a file name  */
+    if ((*first_word == '"') || (*first_word == '\''))
+    {
+      /*  Look for a second word  */
+      second_word = (char *) OdlNextWord(first_word);
+
+      /*  If we can't find one, then the location is record 1  */
+      if (*second_word == '\0')
+        *start_location = 1;
+      else
+      {
+        /*  Otherwise, the second word is the location  */
+        *start_location = atoi(second_word);
+        *(second_word - 1) = '\0';
+      }
+
+      /*  Copy and clean up the file name  */
+      CopyString(fname, (first_word+1))
+          ReplaceChar(fname, '"', ' ');
+      ReplaceChar(fname, '\'', ' ');
+      StripTrailing(fname, ' ')
+    }
+    else
+    {
+      /*  Since the first word isn't quoted, we assume that it's a     */
+      /*  location, and that the file name is the one associated with  */
+      /*  the keyword itself (e.g., we're looking at attached data)    */
+      *start_location = atoi(first_word);
+      CopyString(fname, keyword->file_name)
+
+    }  /*  End:  "if ((*first_word == '"') || ... else ..."  */
+
+    /*  No unit string means a record location  */
+    if (unit == NULL)
+      *start_location_type = ODL_RECORD_LOCATION;
+    else
+    {
+      /*  Otherwise, find out what kind of units string we have  */
+      UpperCase(unit)
+          *unit = '<';  /* Bug fix SM 10/24/94 */
+      if (strncmp(unit, "<BYTE", 5) == 0)
+        *start_location_type = ODL_BYTE_LOCATION;
+      else
+        *start_location_type = ODL_RECORD_LOCATION;
+    }
+
+    LemmeGo(text)
+
+  }  /*  End:  "if (keyword != NULL) ..."  */
+
+  return(fname);
 
 }  /*  End:  "OdlGetFileName"  */
 
@@ -3013,7 +3015,7 @@ char *OdlGetFileName (KEYWORD *keyword, unsigned long *start_location,
 
 char *OdlGetFileSpec (fname, orig_fspec)   /* this is still TBD */
 
-char *fname, *orig_fspec;
+  char *fname, *orig_fspec;
 
 #else
 
@@ -3021,31 +3023,31 @@ char *OdlGetFileSpec (char *fname, char *orig_fspec)   /* this is still TBD */
 
 #endif
 {
-    char *fspec = {NULL}, *p;
+  char *fspec = {NULL}, *p;
 
 
-    if (fname != NULL)
-    {
-		/*
-		** If there was a directory specified, use it.
-		*/
-		if (strchr(orig_fspec, '/') != NULL)  {
-			CopyString(fspec, orig_fspec);
-			p = strrchr(fspec, '/');
-			*(p+1) = '\0';
-			AppendString(fspec, fname);
-		} else {
-			CopyString(fspec, fname);
-		}
+  if (fname != NULL)
+  {
+    /*
+     ** If there was a directory specified, use it.
+     */
+    if (strchr(orig_fspec, '/') != NULL)  {
+      CopyString(fspec, orig_fspec);
+      p = strrchr(fspec, '/');
+      *(p+1) = '\0';
+      AppendString(fspec, fname);
+    } else {
+      CopyString(fspec, fname);
+    }
 
-		if (access(fspec, F_OK) != 0) {
-			/**
-			 ** Try some alternate versions
-			 **/
-			fspec = find_file(fspec);
-		}
-	}
-    return(fspec);
+    if (access(fspec, F_OK) != 0) {
+      /**
+       ** Try some alternate versions
+       **/
+      fspec = find_file(fspec);
+    }
+  }
+  return(fspec);
 
 }  /*  End:  "OdlGetFileSpec"  */
 
@@ -3079,59 +3081,59 @@ char *OdlGetFileSpec (char *fname, char *orig_fspec)   /* this is still TBD */
 /*      find the start of the data by using the start_location and      */
 /*      location_type that were passed in.  It returns a pointer to     */
 /*      the start of the data within the file.                          */
-/*                                                                      */      
+/*                                                                      */
 /************************************************************************/
 
 #ifdef _NO_PROTO
 
 FILE *OdlLocateStart (filespec, start_location, start_location_type)
 
-char *filespec;
-unsigned long start_location;
-unsigned short start_location_type;
+  char *filespec;
+  unsigned long start_location;
+  unsigned short start_location_type;
 
 #else
 
-FILE *OdlLocateStart (char *filespec, unsigned long start_location, 
+FILE *OdlLocateStart (char *filespec, unsigned long start_location,
                       unsigned short start_location_type)
 
 #endif
 {
-    FILE *fptr = {NULL};
-    unsigned short reached_the_end = {FALSE};
-    char buffer [TB_MAX_BUFFER];  /* Bug fix 11/2/94 SM:                     */
-                                  /* Was TB_MAX_BUFFER + 1, which won't      */
-                                  /* compile on platforms with 2-byte ints,  */
-                                  /* because it's 1 bigger than than MAX_INT.*/
-    unsigned long i;
+  FILE *fptr = {NULL};
+  unsigned short reached_the_end = {FALSE};
+  char buffer [TB_MAX_BUFFER];  /* Bug fix 11/2/94 SM:                     */
+  /* Was TB_MAX_BUFFER + 1, which won't      */
+  /* compile on platforms with 2-byte ints,  */
+  /* because it's 1 bigger than than MAX_INT.*/
+  unsigned long i;
 
-    if (filespec != NULL)
+  if (filespec != NULL)
+  {
+    if (start_location_type == ODL_BYTE_LOCATION)
     {
-        if (start_location_type == ODL_BYTE_LOCATION)
+      fptr = (FILE *) fopen(filespec, "rb");
+      if ((fptr != NULL) && (start_location > 1))
+        reached_the_end = (fseek(fptr,start_location,0) != 0);
+    }
+    else
+    {
+      fptr = (FILE *) fopen(filespec, "r");
+      if (fptr != NULL)
+      {
+        for (i=1; ((i < start_location) && (! reached_the_end)); ++i)
         {
-            fptr = (FILE *) fopen(filespec, "rb");
-            if ((fptr != NULL) && (start_location > 1))
-                reached_the_end = (fseek(fptr,start_location,0) != 0);
+          if (! fgets(buffer, TB_MAX_BUFFER, fptr))
+            reached_the_end = TRUE;
         }
-        else
-        {
-            fptr = (FILE *) fopen(filespec, "r");
-            if (fptr != NULL)
-            {
-                for (i=1; ((i < start_location) && (! reached_the_end)); ++i)
-                {
-                    if (! fgets(buffer, TB_MAX_BUFFER, fptr))
-                        reached_the_end = TRUE;
-                }
-            }
+      }
 
-        }  /*  End:  "if (start_location_type == ... else ..."  */
- 
-        if (reached_the_end) CloseMe(fptr)
+    }  /*  End:  "if (start_location_type == ... else ..."  */
 
-    }  /*  End:  "if (filespec != NULL) ..."  */
+    if (reached_the_end) CloseMe(fptr)
 
-    return(fptr);
+  }  /*  End:  "if (filespec != NULL) ..."  */
+
+  return(fptr);
 
 }  /*  End:  "OdlGetFileSpec"  */
 
@@ -3186,56 +3188,56 @@ FILE *OdlLocateStart (char *filespec, unsigned long start_location,
 
 short OdlPrintMessage (message_fname, message_fptr, line_number, text)
 
-char *message_fname;
-FILE *message_fptr;
-long line_number;
-char *text;
+  const char *message_fname;
+  FILE *message_fptr;
+  long line_number;
+  const char *text;
 
 #else
 
-short OdlPrintMessage (char *message_fname, FILE *message_fptr, 
-                       long line_number, char *text)
+short OdlPrintMessage (const char *message_fname, FILE *message_fptr,
+                       long line_number, const char *text)
 
 #endif
 {
-    FILE *m_ptr = {NULL};
-    char line_prompt[20];
-    char *line_out = {NULL};
+  FILE *m_ptr = {NULL};
+  char line_prompt[20];
+  char *line_out = {NULL};
 
-    ++odl_message_count;
+  ++odl_message_count;
 
-    if (! odl_suppress_messages)
+  if (! odl_suppress_messages)
+  {
+    m_ptr = (message_fptr != NULL) ? message_fptr :
+        (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+
+    if (line_number == 0)
+      strcpy(line_prompt, "");
+    else
+      sprintf(line_prompt, " Line %ld -- ", line_number);
+
+    if (text == NULL)
     {
-        m_ptr = (message_fptr != NULL) ? message_fptr :
-                                         (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
-    
-        if (line_number == 0)
-            strcpy(line_prompt, "");
-        else
-            sprintf(line_prompt, " Line %d -- ", line_number);
-    
-        if (text == NULL)
-        {
-            NewString(line_out, (20 + strlen(line_prompt)))
-            sprintf(line_out, "%s Unknown error", line_prompt);
-        }
-        else
-        {
-            NewString(line_out, (20 + strlen(line_prompt) + strlen(text)))
-            sprintf(line_out, "%s%s", line_prompt, text);
-        }
-    
-        line_out = OdlFormatMessage(line_out);
-        fprintf(m_ptr, "%s", line_out);
-        LemmeGo(line_out)
-    
+      NewString(line_out, (20 + strlen(line_prompt)))
+          sprintf(line_out, "%s Unknown error", line_prompt);
+    }
+    else
+    {
+      NewString(line_out, (20 + strlen(line_prompt) + strlen(text)))
+          sprintf(line_out, "%s%s", line_prompt, text);
+    }
+
+    line_out = OdlFormatMessage(line_out);
+    fprintf(m_ptr, "%s", line_out);
+    LemmeGo(line_out)
+
         /*  if we opened the message file in this routine then close it  */
         if ((m_ptr != stdout) && (message_fptr == NULL))
-            CloseMe(m_ptr)
+          CloseMe(m_ptr)
 
-    }  /*  End:  "if (! odl_suppress_messages) ..."  */
-    
-    return(FALSE);
+  }  /*  End:  "if (! odl_suppress_messages) ..."  */
+
+  return(FALSE);
 
 }  /*  End routine:  OdlPrintMessage  */
 
@@ -3275,40 +3277,40 @@ short OdlPrintMessage (char *message_fname, FILE *message_fptr,
 
 short OdlPrintLine (message_fname, message_fptr, text)
 
-char *message_fname;
-FILE *message_fptr;
-char *text;
+  const char *message_fname;
+  FILE *message_fptr;
+  const char *text;
 
 #else
 
-short OdlPrintLine (char *message_fname, FILE *message_fptr, 
-                       char *text)
+short OdlPrintLine (const char *message_fname, FILE *message_fptr,
+                    const char *text)
 
 #endif
 {
-    FILE *m_ptr = {NULL};
+  FILE *m_ptr = {NULL};
 
-    if (! odl_suppress_messages)
+  if (! odl_suppress_messages)
+  {
+    m_ptr = (message_fptr != NULL) ? message_fptr :
+        (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+
+    if (text == NULL)
     {
-        m_ptr = (message_fptr != NULL) ? message_fptr :
-                                         (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
-    
-        if (text == NULL)
-        {
-            fprintf(m_ptr, "%s", "Unknown error\n");
-        }
-        else
-        {
-            fprintf(m_ptr, "%s", text);
-        }
-    
-        /*  if we opened the message file in this routine then close it  */
-        if ((m_ptr != stdout) && (message_fptr == NULL))
-            CloseMe(m_ptr)
+      fprintf(m_ptr, "%s", "Unknown error\n");
+    }
+    else
+    {
+      fprintf(m_ptr, "%s", text);
+    }
 
-    }  /*  End:  "if (! odl_suppress_messages) ..."  */
-    
-    return(FALSE);
+    /*  if we opened the message file in this routine then close it  */
+    if ((m_ptr != stdout) && (message_fptr == NULL))
+      CloseMe(m_ptr)
+
+  }  /*  End:  "if (! odl_suppress_messages) ..."  */
+
+  return(FALSE);
 
 }  /*  End routine:  OdlPrintLine  */
 
@@ -3320,8 +3322,8 @@ short OdlPrintLine (char *message_fname, FILE *message_fptr,
 #ifdef _NO_PROTO
 
 static char *OdlFormatMessage (text)
-                                                      
-char *text;
+
+  char *text;
 
 #else
 
@@ -3329,23 +3331,23 @@ static char *OdlFormatMessage (char *text)
 
 #endif
 {
-    char *new_text = {NULL};
-    char *first_char = {NULL};
-    char *last_char = {NULL};
-    char *dashes = {NULL};
-    char *blanks = {NULL};
-    char *c = {NULL};
-    char save_it = {'\0'};
-    long report_indent = {0};
-    long report_width = {75};
-    long line_size = {0};
-    long len = {0};
-    long i = {0};
+  char *new_text = {NULL};
+  char *first_char = {NULL};
+  char *last_char = {NULL};
+  char *dashes = {NULL};
+  char *blanks = {NULL};
+  char *c = {NULL};
+  char save_it = {'\0'};
+  long report_indent = {0};
+  long report_width = {75};
+  long line_size = {0};
+  long len = {0};
+  long i = {0};
 
-    /* IF a message was passed in THEN                                     */
-    if (text != NULL)
-    {
-        NewString(new_text, 1)
+  /* IF a message was passed in THEN                                     */
+  if (text != NULL)
+  {
+    NewString(new_text, 1)
 
         /* Find the double dash delimiter thingy in the message.           */
         /*     Messages will look something like this:                     */
@@ -3355,90 +3357,90 @@ static char *OdlFormatMessage (char *text)
         /*     be indented.                                                */
 
         if ((dashes = strstr(text, " -- ")) != NULL)
-            report_indent = 4 + ((long) (dashes - text));
+          report_indent = 4 + ((long) (dashes - text));
 
-        if (report_indent >= (report_width - 2))
-            report_indent = 0;
+    if (report_indent >= (report_width - 2))
+      report_indent = 0;
 
-        /* Initialize the string of blanks used for indentation.           */
-        NewString(blanks, report_indent + 1)
+    /* Initialize the string of blanks used for indentation.           */
+    NewString(blanks, report_indent + 1)
         for (i=0; i < report_indent; ++i)
-            *(blanks+i) = ' ';
-        *(blanks+i) = '\0';
+          *(blanks+i) = ' ';
+    *(blanks+i) = '\0';
 
-        /* Figure out the size of the wrapped parts of the line.           */
-        line_size = report_width - report_indent;
+    /* Figure out the size of the wrapped parts of the line.           */
+    line_size = report_width - report_indent;
 
-        /* Now that we have all that out of the way, we can LOOP through   */
-        /*         the string until we have wrapped and written the        */
-        /*         whole thing.                                            */
-        for (first_char=text; *first_char != '\0'; first_char = last_char)
-        {
-            /* Find the length of the remaining part of the string.        */
-            len = strlen(first_char);
+    /* Now that we have all that out of the way, we can LOOP through   */
+    /*         the string until we have wrapped and written the        */
+    /*         whole thing.                                            */
+    for (first_char=text; *first_char != '\0'; first_char = last_char)
+    {
+      /* Find the length of the remaining part of the string.        */
+      len = strlen(first_char);
 
-            /* IF we are at the beginning of the string THEN               */
-            /*     Use the total width of the report to figure out where   */
-            /*         the end of the line should be.                      */
-            /* ELSE                                                        */
-            /*     Write the blanks to the report file and use the space   */
-            /*         left over after indentation to figure out where     */
-            /*         the end of the line should be.                      */
-            /* ENDIF                                                       */
+      /* IF we are at the beginning of the string THEN               */
+      /*     Use the total width of the report to figure out where   */
+      /*         the end of the line should be.                      */
+      /* ELSE                                                        */
+      /*     Write the blanks to the report file and use the space   */
+      /*         left over after indentation to figure out where     */
+      /*         the end of the line should be.                      */
+      /* ENDIF                                                       */
 
-            if (first_char == text) 
-            {
-                if (len > report_width)
-                    last_char = (char *) (first_char + report_width);
-                else
-                    last_char = (char *) (first_char + len);
-            }
+      if (first_char == text)
+      {
+        if (len > report_width)
+          last_char = (char *) (first_char + report_width);
+        else
+          last_char = (char *) (first_char + len);
+      }
+      else
+      {
+        AppendString(new_text, blanks)
+
+            if (len > line_size)
+              last_char = (char *) (first_char + line_size);
             else
-            {
-                AppendString(new_text, blanks)
+              last_char = (char *) (first_char + len);
 
-                if (len > line_size)
-                    last_char = (char *) (first_char + line_size);
-                else
-                    last_char = (char *) (first_char + len);
+      }  /*  End:  "if (first_char == text) ... else ..."  */
 
-            }  /*  End:  "if (first_char == text) ... else ..."  */
+      /* IF the current part of the message is still too large to    */
+      /*        fit without wrapping THEN                            */
+      /*     Find the last blank in the line and wrap there.         */
+      /* ENDIF                                                       */
 
-            /* IF the current part of the message is still too large to    */
-            /*        fit without wrapping THEN                            */
-            /*     Find the last blank in the line and wrap there.         */
-            /* ENDIF                                                       */
+      if (*last_char != '\0')
+      {
+        for (c = last_char; ((c >= first_char) && (*c != ' ')); --c) ;
 
-            if (*last_char != '\0')
-            {
-                for (c = last_char; ((c >= first_char) && (*c != ' ')); --c) ;
-                           
-                if (c > first_char)
-                    last_char = c;
+        if (c > first_char)
+          last_char = c;
 
-            }  /*  End: "if (*last_char != '\0') ..."  */
+      }  /*  End: "if (*last_char != '\0') ..."  */
 
-            /* Append the current part of the message onto the new string  */
-            save_it = *last_char;
-            *last_char = '\0';
-            AppendString(new_text, first_char)
-            AppendString(new_text, "\n")
-            *last_char = save_it;
+      /* Append the current part of the message onto the new string  */
+      save_it = *last_char;
+      *last_char = '\0';
+      AppendString(new_text, first_char)
+          AppendString(new_text, "\n")
+          *last_char = save_it;
 
-            /* Bypass the last blank character.                            */
-            if (*last_char == ' ')
-                ++last_char;
+      /* Bypass the last blank character.                            */
+      if (*last_char == ' ')
+        ++last_char;
 
-        }  /*  End:  "for (first_char = text; ..."  */
+    }  /*  End:  "for (first_char = text; ..."  */
 
-        /* Deallocate local storage.                                       */
-        LemmeGo(blanks)
+    /* Deallocate local storage.                                       */
+    LemmeGo(blanks)
 
-    }  /*  End:  "if ((text != NULL) && ..."  */
-       
-    LemmeGo(text)
+  }  /*  End:  "if ((text != NULL) && ..."  */
 
-    return(new_text);
+  LemmeGo(text)
+
+      return(new_text);
 
 }  /*  End routine:  "OdlFormatMessage"  */
 
@@ -3475,68 +3477,68 @@ static char *OdlFormatMessage (char *text)
 
 void OdlPrintHierarchy (object, message_fname, message_fptr)
 
-OBJDESC *object;
-char *message_fname;
-FILE *message_fptr;
+  OBJDESC *object;
+  char *message_fname;
+  FILE *message_fptr;
 
 #else
 
-void OdlPrintHierarchy (OBJDESC *object, char *message_fname, 
+void OdlPrintHierarchy (OBJDESC *object, char *message_fname,
                         FILE *message_fptr)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    KEYWORD *kwd = {NULL};
-    FILE *m_ptr = {NULL};
-    char *format = {NULL};
-    char *no_name = {"<no name>"};
-    unsigned short scope = {ODL_TO_END};
-    char msgtext [TB_MAXLINE + 1];
+  OBJDESC *obj = {NULL};
+  KEYWORD *kwd = {NULL};
+  FILE *m_ptr = {NULL};
+  char *format = {NULL};
+  char *no_name = {(char *)"<no name>"};
+  char msgtext [TB_MAXLINE + 1];
 
-    m_ptr = (message_fptr != NULL) ? message_fptr :
-                                     (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+  m_ptr = (message_fptr != NULL) ? message_fptr :
+      (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
 
-    for (obj=object; obj != NULL; obj=(OBJDESC *) OdlTraverseTree(obj, object->level))
-    {
-        NewString(format, (TB_MAXLINE + 1))
+  for (obj=object; obj != NULL; obj=(OBJDESC *) OdlTraverseTree(obj, object->level))
+  {
+    NewString(format, (TB_MAXLINE + 1))
 
         kwd = (KEYWORD *)OdlFindKwd(obj, "NAME", NULL,1, ODL_THIS_OBJECT);
 
-        if ((kwd == NULL) || (kwd->value == NULL))
-        {
-            sprintf(format, " Line %-5d %%%dd %%%ds", 
-                    obj->line_number, (obj->level + 1),
-                    (2*(obj->level) + strlen(no_name)));
+    if ((kwd == NULL) || (kwd->value == NULL))
+    {
+      sprintf(format, " Line %-5ld %%%ldd %%%lds",
+              obj->line_number, 
+              (obj->level + 1),
+              (2*(obj->level) + strlen(no_name)));
 
-            sprintf(msgtext, format, obj->level, no_name);
-            OdlPrintLine(message_fname, m_ptr, msgtext);
-        }
-        else
-        {
-            sprintf(format, " Line %-5d %%%dd %%%ds", 
-                    obj->line_number, (obj->level + 1),
-                    (2*(obj->level) + strlen(kwd->value)));
-            sprintf(msgtext, format, obj->level, kwd->value);
-            OdlPrintLine(message_fname, m_ptr, msgtext);
-        }
+      sprintf(msgtext, format, obj->level, no_name);
+      OdlPrintLine(message_fname, m_ptr, msgtext);
+    }
+    else
+    {
+      sprintf(format, " Line %-5ld %%%ldd %%%lds",
+              obj->line_number, (obj->level + 1),
+              (2*(obj->level) + strlen(kwd->value)));
+      sprintf(msgtext, format, obj->level, kwd->value);
+      OdlPrintLine(message_fname, m_ptr, msgtext);
+    }
 
-        if (obj->obj_class == NULL)
-            OdlPrintLine(message_fname, m_ptr, "  --  <no class>\n");
-        else {
-            sprintf(msgtext, "  --  %s\n", obj->obj_class);
-            OdlPrintLine(message_fname, m_ptr, msgtext);
-        }
+    if (obj->obj_class == NULL)
+      OdlPrintLine(message_fname, m_ptr, "  --  <no class>\n");
+    else {
+      sprintf(msgtext, "  --  %s\n", obj->obj_class);
+      OdlPrintLine(message_fname, m_ptr, msgtext);
+    }
 
-        LemmeGo(format)
+    LemmeGo(format)
 
-    }  /*  End:  "for (obj=object; ..."  */
+  }  /*  End:  "for (obj=object; ..."  */
 
-    /*  if we opened the message file in this routine then close it  */
-    if ((m_ptr != stdout) && (message_fptr == NULL))
-        CloseMe(m_ptr)
-    
-    return;
+  /*  if we opened the message file in this routine then close it  */
+  if ((m_ptr != stdout) && (message_fptr == NULL))
+    CloseMe(m_ptr)
+
+        return;
 
 }  /*  End routine:  "OdlPrintHierarchy"  */
 
@@ -3574,98 +3576,98 @@ void OdlPrintHierarchy (OBJDESC *object, char *message_fname,
 
 void OdlPrintLabel (object, message_fname, message_fptr, root_level)
 
-OBJDESC *object;
-char *message_fname;
-FILE *message_fptr;
-unsigned long root_level;
+  OBJDESC *object;
+  char *message_fname;
+  FILE *message_fptr;
+  unsigned long root_level;
 
 #else
 
-void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr, 
+void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
                     unsigned long root_level)
 
 #endif
 {
-    FILE *m_ptr = {NULL};
-    char *blanks = {NULL};
-    int i;
-    char msgtext [TB_MAXLINE + 1];
+  FILE *m_ptr = {NULL};
+  char *blanks = {NULL};
+  int i;
+  char msgtext [TB_MAXLINE + 1];
 
-    if (! odl_suppress_messages)
+  if (! odl_suppress_messages)
+  {
+    m_ptr = (message_fptr != NULL) ? message_fptr :
+        (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+    if (object != NULL)
     {
-        m_ptr = (message_fptr != NULL) ? message_fptr :
-                                         (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
-        if (object != NULL)
-        {
-            NewString(blanks, (4*object->level))
-            for (i=1; i < object->level; ++i) strcat(blanks, "  ");
-    
-            if (object->pre_comment != NULL)
-                OdlPrintLine(message_fname, m_ptr, object->pre_comment);
-    
-            if (object->parent != NULL)
-            {
-                if (object->obj_class == NULL) {
-                    sprintf(msgtext, "%sOBJECT", blanks);
-                    OdlPrintLine(message_fname, m_ptr, msgtext);
-                }
-                else {
-                    sprintf(msgtext, "%sOBJECT = %s", blanks, object->obj_class);
-                    OdlPrintLine(message_fname, m_ptr, msgtext);
-                }
-    
-                if (object->line_comment != NULL) {
-                    OdlPrintLine(message_fname, m_ptr, " ");
-                    OdlPrintLine(message_fname, m_ptr, object->line_comment);
-                }
-    
-                OdlPrintLine(message_fname, m_ptr, "\n");
-    
-            }  /*  End:  "if (object->parent != NULL) ..."  */
-    
-            OdlPrintKeywords(object, NULL, m_ptr);
-            OdlPrintLabel(object->first_child, NULL, m_ptr, root_level);
-    
-            if (object->post_comment != NULL)
-                OdlPrintLine(message_fname, m_ptr, object->post_comment);
-    
-            if (object->parent != NULL)
-            {
-                if (object->obj_class == NULL) {
-                    sprintf(msgtext, "%sEND_OBJECT", blanks);
-                    OdlPrintLine(message_fname, m_ptr, msgtext);
-                }
-                else {
-                    sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->obj_class);
-                    OdlPrintLine(message_fname, m_ptr, msgtext);
-                }
-    
-                if (object->end_comment != NULL) {
-                    OdlPrintLine(message_fname, m_ptr, " ");
-                    OdlPrintLine(message_fname, m_ptr, object->end_comment);
-                }
-    
-                OdlPrintLine(message_fname, m_ptr, "\n");
-    
-            }  /*  End:  "if (object->parent != NULL) ..."  */
-    
-            if (object->level > root_level)
-                OdlPrintLabel(object->right_sibling, 0, m_ptr, root_level);
-    
-            LemmeGo(blanks)
-    
-            if (object->parent == NULL)
-                OdlPrintLine(message_fname, m_ptr, "END\n");
-    
-        }  /*  End:  "if (object != NULL) ..."  */
-    
-        /*  if we opened the message file in this routine then close it  */
-        if ((m_ptr != stdout) && (message_fptr == NULL))
-            CloseMe(m_ptr)
-    
-    }  /*  End:  "if (! odl_suppress_messages) ..."  */
+      NewString(blanks, (4*object->level))
+          for (i=1; i < object->level; ++i) strcat(blanks, "  ");
 
-    return;
+      if (object->pre_comment != NULL)
+        OdlPrintLine(message_fname, m_ptr, object->pre_comment);
+
+      if (object->parent != NULL)
+      {
+        if (object->obj_class == NULL) {
+          sprintf(msgtext, "%sOBJECT", blanks);
+          OdlPrintLine(message_fname, m_ptr, msgtext);
+        }
+        else {
+          sprintf(msgtext, "%sOBJECT = %s", blanks, object->obj_class);
+          OdlPrintLine(message_fname, m_ptr, msgtext);
+        }
+
+        if (object->line_comment != NULL) {
+          OdlPrintLine(message_fname, m_ptr, " ");
+          OdlPrintLine(message_fname, m_ptr, object->line_comment);
+        }
+
+        OdlPrintLine(message_fname, m_ptr, "\n");
+
+      }  /*  End:  "if (object->parent != NULL) ..."  */
+
+      OdlPrintKeywords(object, NULL, m_ptr);
+      OdlPrintLabel(object->first_child, NULL, m_ptr, root_level);
+
+      if (object->post_comment != NULL)
+        OdlPrintLine(message_fname, m_ptr, object->post_comment);
+
+      if (object->parent != NULL)
+      {
+        if (object->obj_class == NULL) {
+          sprintf(msgtext, "%sEND_OBJECT", blanks);
+          OdlPrintLine(message_fname, m_ptr, msgtext);
+        }
+        else {
+          sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->obj_class);
+          OdlPrintLine(message_fname, m_ptr, msgtext);
+        }
+
+        if (object->end_comment != NULL) {
+          OdlPrintLine(message_fname, m_ptr, " ");
+          OdlPrintLine(message_fname, m_ptr, object->end_comment);
+        }
+
+        OdlPrintLine(message_fname, m_ptr, "\n");
+
+      }  /*  End:  "if (object->parent != NULL) ..."  */
+
+      if (object->level > root_level)
+        OdlPrintLabel(object->right_sibling, 0, m_ptr, root_level);
+
+      LemmeGo(blanks)
+
+          if (object->parent == NULL)
+            OdlPrintLine(message_fname, m_ptr, "END\n");
+
+    }  /*  End:  "if (object != NULL) ..."  */
+
+    /*  if we opened the message file in this routine then close it  */
+    if ((m_ptr != stdout) && (message_fptr == NULL))
+      CloseMe(m_ptr)
+
+  }  /*  End:  "if (! odl_suppress_messages) ..."  */
+
+  return;
 
 }  /*  End routine:  "OdlPrintLabel"  */
 
@@ -3679,74 +3681,73 @@ void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
 
 static void OdlPrintKeywords (object, message_fname, message_fptr)
 
-OBJDESC *object;
-char *message_fname;
-FILE *message_fptr;
+  OBJDESC *object;
+  char *message_fname;
+  FILE *message_fptr;
 
 #else
 
-static void OdlPrintKeywords (OBJDESC *object, char *message_fname, 
+static void OdlPrintKeywords (OBJDESC *object, char *message_fname,
                               FILE *message_fptr)
 
 #endif
 {
-    KEYWORD *keyword = {NULL};
-    FILE *m_ptr = {NULL};
-    short sfdu_only = {FALSE};
-    char *blanks = {NULL};
-    int i;
-    char msgtext [TB_MAXLINE + 1];
+  KEYWORD *keyword = {NULL};
+  FILE *m_ptr = {NULL};
+  short sfdu_only = {FALSE};
+  char *blanks = {NULL};
+  int i;
 
-    m_ptr = (message_fptr != NULL) ? message_fptr :
-                                     (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+  m_ptr = (message_fptr != NULL) ? message_fptr :
+      (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
 
-    if (object != NULL)
-    {
-        NewString(blanks, (4*object->level))
+  if (object != NULL)
+  {
+    NewString(blanks, (4*object->level))
         if (object->level > 0)
-            for (i=0; i < object->level; ++i) strcat(blanks, "  ");
+          for (i=0; i < object->level; ++i) strcat(blanks, "  ");
 
-        for (keyword=object->first_keyword; keyword != NULL; 
-                 keyword = keyword->right_sibling)
-        {
-            if (keyword->pre_comment != NULL)
-                OdlPrintLine(message_fname, m_ptr, keyword->pre_comment);
- 
-            OdlPrintLine(message_fname, m_ptr, blanks);
+    for (keyword=object->first_keyword; keyword != NULL;
+         keyword = keyword->right_sibling)
+    {
+      if (keyword->pre_comment != NULL)
+        OdlPrintLine(message_fname, m_ptr, keyword->pre_comment);
 
-            sfdu_only = FALSE;
-            if (keyword->name == NULL)
-                OdlPrintLine(message_fname, m_ptr, "unknown_keyword");
-            else
-            { 
-                OdlPrintLine(message_fname, m_ptr, keyword->name);
-                sfdu_only = ((strncmp(keyword->name, "NJPL", 4) == 0) ||
-                                (strncmp(keyword->name, "CCSD", 4) == 0));
-            }
+      OdlPrintLine(message_fname, m_ptr, blanks);
 
-            if ((keyword->value != NULL) && (! sfdu_only)) {
-                OdlPrintLine(message_fname, m_ptr, " = ");
-                OdlPrintLine(message_fname, m_ptr, keyword->value);
-            }
+      sfdu_only = FALSE;
+      if (keyword->name == NULL)
+        OdlPrintLine(message_fname, m_ptr, "unknown_keyword");
+      else
+      {
+        OdlPrintLine(message_fname, m_ptr, keyword->name);
+        sfdu_only = ((strncmp(keyword->name, "NJPL", 4) == 0) ||
+                     (strncmp(keyword->name, "CCSD", 4) == 0));
+      }
 
-            if (keyword->line_comment != NULL) {
-                OdlPrintLine(message_fname, m_ptr, " ");
-                OdlPrintLine(message_fname, m_ptr, keyword->line_comment);
-            }
+      if ((keyword->value != NULL) && (! sfdu_only)) {
+        OdlPrintLine(message_fname, m_ptr, " = ");
+        OdlPrintLine(message_fname, m_ptr, keyword->value);
+      }
 
-            OdlPrintLine(message_fname, m_ptr, "\n");
+      if (keyword->line_comment != NULL) {
+        OdlPrintLine(message_fname, m_ptr, " ");
+        OdlPrintLine(message_fname, m_ptr, keyword->line_comment);
+      }
 
-        }  /*  End:  "for (keyword=object ..."  */
+      OdlPrintLine(message_fname, m_ptr, "\n");
 
-        LemmeGo(blanks)
+    }  /*  End:  "for (keyword=object ..."  */
 
-    }  /*  End:  "if (object != NULL) ..."  */
+    LemmeGo(blanks)
 
-    /*  if we opened the message file in this routine then close it  */
-    if ((m_ptr != stdout) && (message_fptr == NULL))
-        CloseMe(m_ptr)
-    
-    return;
+  }  /*  End:  "if (object != NULL) ..."  */
+
+  /*  if we opened the message file in this routine then close it  */
+  if ((m_ptr != stdout) && (message_fptr == NULL))
+    CloseMe(m_ptr)
+
+        return;
 
 }  /*  End routine:  "OdlPrintKeywords"  */
 
@@ -3790,8 +3791,8 @@ static void OdlPrintKeywords (OBJDESC *object, char *message_fname,
 #ifdef _NO_PROTO
 
 OBJDESC *OdlParseFile(label_fname, label_fptr, message_fname, message_fptr,
-                     suppress_messages, suppress_metrics, suppress_hierarchy,
-                     ignore_missing_end)
+                      suppress_messages, suppress_metrics, suppress_hierarchy,
+                      ignore_missing_end)
 
 char *label_fname;
 FILE *label_fptr;
@@ -3804,176 +3805,170 @@ unsigned short ignore_missing_end;
 
 #else
 
-OBJDESC *OdlParseFile( char *label_fname, FILE *label_fptr, 
-                      char *message_fname, FILE *message_fptr,
-                      unsigned short suppress_messages, 
-                      unsigned short suppress_metrics, 
-                      unsigned short suppress_hierarchy,
-                      unsigned short ignore_missing_end)
+OBJDESC *OdlParseFile( char *label_fname, FILE *label_fptr,
+                       char *message_fname, FILE *message_fptr,
+                       unsigned short suppress_messages,
+                       unsigned short suppress_metrics,
+                       unsigned short suppress_hierarchy,
+                       unsigned short ignore_missing_end)
 
-#endif        
+#endif
 
 {
-    OBJDESC *root = {NULL};
-    OBJDESC *curr_object = {NULL};
-    KEYWORD *curr_keyword = {NULL};
-    FILE *m_ptr = {NULL};
-    FILE *l_ptr = {NULL};
-    char *left_part = {NULL};
-    char *equals = {NULL};
-    char *right_part = {NULL};
-    char *comment = {NULL};
-    char *c = {NULL};
-    char *tc = {NULL};
-    char *tintext = {NULL};
-    char *text = {NULL};
-    char line_comment [TB_MAXLINE + 1];
-    char intext [TB_MAXLINE + 1];
-    char msgtext [TB_MAXLINE + 1];
-    long line_number = {0};
-    long value_list_line_number = {0};
-    long object_count = {0};
-    long end_object_count = {0};
-    long keyword_count = {0};
-    long comment_count = {0};
-    long brace_nesting = {0};
-    long paren_nesting = {0};
-    short end_found = {FALSE};
-    short quoted_value = {FALSE};
-    short value_list = {FALSE};
-    short equals_found = {FALSE};
-    short val_found = {FALSE};
-    short balanced = {FALSE};
-    short oddquotes = {FALSE};
+  OBJDESC *root = {NULL};
+  OBJDESC *curr_object = {NULL};
+  KEYWORD *curr_keyword = {NULL};
+  FILE *m_ptr = {NULL};
+  FILE *l_ptr = {NULL};
+  char *left_part = {NULL};
+  char *equals = {NULL};
+  char *right_part = {NULL};
+  char *comment = {NULL};
+  char *c = {NULL};
+  char *tc = {NULL};
+  char *tintext = {NULL};
+  char *text = {NULL};
+  char line_comment [TB_MAXLINE + 1];
+  char intext [TB_MAXLINE + 1];
+  char msgtext [TB_MAXLINE + 1];
+  long line_number = {0};
+  long value_list_line_number = {0};
+  long object_count = {0};
+  long end_object_count = {0};
+  long keyword_count = {0};
+  long comment_count = {0};
+  long brace_nesting = {0};
+  long paren_nesting = {0};
+  short end_found = {FALSE};
+  short quoted_value = {FALSE};
+  short value_list = {FALSE};
+  short equals_found = {FALSE};
+  short val_found = {FALSE};
+  short balanced = {FALSE};
+  short oddquotes = {FALSE};
 
-    odl_message_count = 0;
-    odl_suppress_messages = suppress_messages;
+  odl_message_count = 0;
+  odl_suppress_messages = suppress_messages;
 
-    /*  either use the file pointer passed in or open the message file  */
-    m_ptr = (message_fptr != NULL) ? message_fptr :
-                                     (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
-    /*  opening remarks  */
-    if (label_fname == NULL)
-        sprintf(msgtext, "Parsing File:  (no file name provided)");
-    else
-        sprintf(msgtext, "Parsing File:  %s", label_fname);
+  /*  either use the file pointer passed in or open the message file  */
+  m_ptr = (message_fptr != NULL) ? message_fptr :
+      (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+  /*  opening remarks  */
+  if (label_fname == NULL)
+    sprintf(msgtext, "Parsing File:  (no file name provided)");
+  else
+    sprintf(msgtext, "Parsing File:  %s", label_fname);
 
-    OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n");
-    OdlPrintLine(message_fname, m_ptr, msgtext);
-    OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n\n");
+  OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n");
+  OdlPrintLine(message_fname, m_ptr, msgtext);
+  OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n\n");
 
-    /*  either use the file pointer passed in or open the label file  */
-    l_ptr = (label_fptr != NULL) ? label_fptr :
-                                   (label_fname == NULL) ? NULL :
-                                                           (FILE *) fopen(label_fname,"r");
-    if (l_ptr == NULL)
-    {
-        OdlPrintMessage(message_fname, m_ptr, 0,
-            "Unable to open the label file.  Parsing cannot continue");
-    }
-    else
-    {
-        NewString(comment, 1)
+  /*  either use the file pointer passed in or open the label file  */
+  l_ptr = (label_fptr != NULL) ? label_fptr :
+      (label_fname == NULL) ? NULL :
+      (FILE *) fopen(label_fname,"r");
+  if (l_ptr == NULL)
+  {
+    OdlPrintMessage(message_fname, m_ptr, 0,
+                    "Unable to open the label file.  Parsing cannot continue");
+  }
+  else
+  {
+    NewString(comment, 1)
 
         /*  Initialize a ROOT object to start the tree  */
         curr_object = root = OdlNewObjDesc("ROOT",0,0,0,0,label_fname,0,0);
 
-        /*  read the label file  */
-        while (! end_found && fgets(intext, TB_MAXLINE, l_ptr))
-        {
-            if (strchr(intext, '\n') == NULL) {
-                /**
-                 ** Line is too long.  Probably not an ODL file (nsg)
-                 **/
-                break;
+    /*  read the label file  */
+    while (! end_found && fgets(intext, TB_MAXLINE, l_ptr))
+    {
+      if (strchr(intext, '\n') == NULL) {
+        /**
+         ** Line is too long.  Probably not an ODL file (nsg)
+         **/
+        break;
+      }
+      ++line_number;
+
+      StripUnprintables(intext)  /*  removes linefeeds and such  */
+          ReplaceChar(intext, '\t', ' ')  /*  turns TABs into blanks  */
+          StripTrailing(intext, ' ') /*  removes trailing blanks     */
+
+          /* locate and skip SFDU */
+
+          if (line_number == 1L)
+          {
+            if (! strncmp(intext, "CCSD", 4))
+              continue;
+          }
+
+      /*  locate, save, and remove comment text from the line  */
+      *line_comment = '\0';
+      tintext = intext;
+      oddquotes = FALSE;
+      while ((c = strstr(tintext, "/*")) != NULL)
+      {
+        for (tc = tintext; tc < c; tc++)
+          if (*tc == '"') {
+            if (oddquotes) {
+              oddquotes = FALSE;
+            } else {
+              oddquotes = TRUE;
             }
-            ++line_number;
+          }
+        if (! oddquotes)  {
+          oddquotes = FALSE;
+          ++comment_count;
+          strcpy(line_comment, c);
+          *c = '\0';
+          StripTrailing(tintext, ' ');
+          break;
+        } else {
+          tintext = c+1;
+        }
+      }
 
-            StripUnprintables(intext)  /*  removes linefeeds and such  */
-            ReplaceChar(intext, '\t', ' ')  /*  turns TABs into blanks  */
-            StripTrailing(intext, ' ') /*  removes trailing blanks     */
+      c = OdlFirstWord(intext);
 
-            /* locate and skip SFDU */
+      if (text != NULL || *c != '\0') {
+        AppendString(text, intext)
 
-            if (line_number == 1L)
-            {
-               if (! strncmp(intext, "CCSD", 4))
-                   continue;
-            }
+            c = OdlFirstWord(text);
 
-            /*  locate, save, and remove comment text from the line  */
-            *line_comment = '\0';
-            tintext = intext;
-            oddquotes = FALSE;
-            while ((c = strstr(tintext, "/*")) != NULL)
-            {
-                for (tc = tintext; tc < c; tc++)
-                        if (*tc == '"')
-                                if (oddquotes) oddquotes = FALSE;
-                                else oddquotes = TRUE;
-                if (! oddquotes)  
-                {
-                        oddquotes = FALSE;
-                        ++comment_count;
-                        strcpy(line_comment, c);
-                        *c = '\0';
-                        StripTrailing(tintext, ' ');
-                        break;
-                }
-                else
-                        tintext = c+1;
-            }
+        if (strcmp(c, "END") == 0) {
+          balanced = TRUE;
+          end_found = TRUE;
+          break;
+        } else if (strcmp(c, "END_OBJECT") == 0) {
+          balanced = TRUE;
+        } else {
+          if (! equals_found)
+            equals_found = (strchr(text, '=') != NULL);
 
-            c = OdlFirstWord(intext);
+          if (! val_found && equals_found) {
+            c = (char *) LastChar(text);
+            val_found = (*c != '=');
+          }
 
-            if (text != NULL || *c != '\0')
-            {
-                AppendString(text, intext)                
+          if (val_found && equals_found)
+            balanced = CheckBalance(text);
 
-                c = OdlFirstWord(text);
+          if (! balanced)
+            AppendString(text, "\n")
+        }
+      }
 
-                if (strcmp(c, "END") == 0)
-                {
-                    balanced = TRUE;
-                    end_found = TRUE;
-                    break;
-                }
-                else
-                if (strcmp(c, "END_OBJECT") == 0)
-                {
-                    balanced = TRUE;
-                }
-                else
-                {
-                    if (! equals_found)
-                        equals_found = (strchr(text, '=') != NULL);
-    
-                    if (! val_found && equals_found)
-                    {
-                        c = (char *) LastChar(text);
-                        val_found = (*c != '=');
-                    }
+      if (balanced)
+      {
+        /*  locate the keyword, the equals sign, and the value  */
+        left_part = OdlFirstWord(text);
 
-                    if (val_found && equals_found)
-                        balanced = CheckBalance(text);
-
-                    if (! balanced)
-                        AppendString(text, "\n")                
-                }
-            }
-
-            if (balanced)
-            {
-                /*  locate the keyword, the equals sign, and the value  */
-                left_part = OdlFirstWord(text);
-
-                if ((equals = (char *)strchr(left_part, '=')) != NULL)
-                    right_part = OdlFirstWord(equals+1);
-                else
-                {
-                    equals = text + strlen(text);
-                    right_part = equals;
-                }
+        if ((equals = (char *)strchr(left_part, '=')) != NULL) {
+          right_part = OdlFirstWord(equals+1);
+        } else {
+          equals = text + strlen(text);
+          right_part = equals;
+        }
 
         /*------------------------------------------------------------------*/
         /*  Here's where the parsing begins.  First, we take care of three  */
@@ -3983,191 +3978,191 @@ OBJDESC *OdlParseFile( char *label_fname, FILE *label_fptr,
         /*  statement, the END of the label, or a new KEYWORD.              */
         /*------------------------------------------------------------------*/
 
-                /*  we've discovered the beginning of a new object  */
-                if ((strncmp(left_part, "OBJECT ", 7) == 0) || 
-                     (strcmp(left_part, "OBJECT") == 0))
-                {
-                    ++object_count;
-                    ++(curr_object->child_count);
-    
-                    /*  validate the new object's class identifier  */
-                    OdlValidObjDesc(curr_object, equals, right_part,
-                                             message_fname, m_ptr, line_number);
-    
-                    /*  make the new object a child of the current object  */
-                    curr_object = OdlPasteObjDesc(OdlNewObjDesc(right_part,
-                                                  comment,line_comment,0,0,
-                                                  label_fname,0,line_number),
-                                                curr_object);
-    
-                    /*  reset the comment text string  */
-                    LemmeGo(comment)
-                    NewString(comment, 1)
-                }
-                else
-        /*------------------------------------------------------------------*/
-                /*  we've discovered the end of the current object  */
-                if ((strncmp(left_part, "END_OBJECT ", 11) == 0) ||
-                     (strcmp(left_part, "END_OBJECT") == 0))
-                {
-                    ++end_object_count;
-    
-                    /*  validate the end_object's class identifier  */
-                    OdlValidEndObjDesc(curr_object, equals, right_part,
-                                   message_fname, m_ptr, line_number);
-    
-                    /*  set the current object's remaining comment fields  */
-                    CopyString(curr_object->post_comment, comment)
-                    CopyString(curr_object->end_comment, line_comment)
-    
-                    /*  make curr object's parent the new current object  */
-                    if (curr_object->parent != NULL)
-                        curr_object = curr_object->parent;
-    
-                    /*  reset the comment text string  */
-                    LemmeGo(comment)
-                    NewString(comment, 1)
-                }
-                else
-        /*------------------------------------------------------------------*/
-                /*  we've reached the end of the label  */
-                if ((strncmp(left_part, "END ", 4) == 0) || 
-                     (strcmp(left_part, "END") == 0))
-                {
-                    end_found = TRUE;
-                    CopyString(curr_object->post_comment, comment)
-                }
-                else
-        /*------------------------------------------------------------------*/
-                /*  We've discovered a keyword and its value  */
-                {
-                    ++keyword_count;
-    
-                    /*  validate the keyword and its values  */
-                    OdlValidKwd(curr_object, left_part, equals, 
-                                 right_part, message_fname, m_ptr, line_number);
-    
-                    /*  Add the keyword to the current object  */
-                    curr_keyword = OdlPasteKwd(OdlNewKwd(left_part, right_part,
-                                                     comment, line_comment, 
-                                                     label_fname, line_number),
-                                                  curr_object);
-    
-                    /*  we've got a potential multi-line value list if the 
-                        first character of the value is either an open 
-                        brace, '{', or an open paren, '('
-                    */
-
-                    if ((value_list = curr_keyword->is_a_list) == TRUE)
-                    {
-                        /*  validate that the braces and parens are correct  */
-                        OdlValidBraces(curr_keyword->value,
-                                    brace_nesting, paren_nesting,
-                                        message_fname, m_ptr, 
-                                        value_list_line_number);
-
-
-                    /*  reset the comment text string  */
-                    LemmeGo(comment)
-                    NewString(comment, 1)
-    
-                }  /*  End:  "if ((strncmp(left_part, ... else ... else ..." */
-    /*------------------------------------------------------------------*/
-                }  /*  End:  "if (quoted_value) ... else ... else ..."  */
-
-                equals_found = FALSE;
-                val_found = FALSE;
-                balanced = FALSE;
-                LemmeGo(text)
-
-            }
-    /*------------------------------------------------------------------*/
-        }  /*  End:  "while (fgets(text, ..."  */
-
-        /* if we're not sitting at the root then not enough END_OBJECTs found */
-        if (curr_object->parent != NULL)
+        /*  we've discovered the beginning of a new object  */
+        if ((strncmp(left_part, "OBJECT ", 7) == 0) ||
+            (strcmp(left_part, "OBJECT") == 0))
         {
-            OdlPrintMessage(message_fname, m_ptr, line_number,
-                "Not enough END_OBJECT statements.  Some objects may be incomplete");
+          ++object_count;
+          ++(curr_object->child_count);
+
+          /*  validate the new object's class identifier  */
+          OdlValidObjDesc(curr_object, equals, right_part,
+                          message_fname, m_ptr, line_number);
+
+          /*  make the new object a child of the current object  */
+          curr_object = OdlPasteObjDesc(OdlNewObjDesc(right_part,
+                                                      comment,line_comment,0,0,
+                                                      label_fname,0,line_number),
+                                        curr_object);
+
+          /*  reset the comment text string  */
+          LemmeGo(comment)
+              NewString(comment, 1)
         }
-
-        /*  hey, we didn't find an end statement!  */
-        if ((! end_found) && (! ignore_missing_end))
-        {
-            OdlPrintMessage(message_fname, m_ptr, line_number,
-                "END statement is missing");
-        }
-
-        /*  oops, there was nothing in the label file to parse  */
-        if (line_number == 0) 
-            root = OdlFreeTree(root);
-
-        LemmeGo(comment)
-
-    }  /*  End:  "if (l_ptr == NULL) ... else ..."  */
-
-    /*  how'd we do?  */
-    if (! suppress_metrics && ! suppress_messages) 
-    {
-        OdlPrintLine(message_fname, m_ptr, "\n");
-        OdlPrintLine(message_fname, m_ptr, "           |-------------------------------|\n");
-        OdlPrintLine(message_fname, m_ptr, "           | Parsing Metrics:              |\n");
-        OdlPrintLine(message_fname, m_ptr, "           |                               |\n");
-        sprintf(msgtext, "           | %7d Syntax Messages       |\n", odl_message_count);
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        OdlPrintLine(message_fname, m_ptr, "           |                               |\n");
-        sprintf(msgtext, "           | %7d OBJECT Statements     |\n", object_count);
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        sprintf(msgtext, "           | %7d END_OBJECT Statements |\n", end_object_count);
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        sprintf(msgtext, "           | %7d Keywords              |\n", keyword_count);
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        sprintf(msgtext, "           | %7d Comments              |\n", comment_count);
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        OdlPrintLine(message_fname, m_ptr, "           |-------------------------------|\n\n");
-
-    }  /*  End:  "if (! suppress_metrics) ..."  */
-
-    /*  display the object hierarchy  */
-    if (! suppress_hierarchy && ! suppress_messages)
-    {
-        if (label_fname == NULL)
-            sprintf(msgtext, "Object Hierarchy in File:  (no file name provided)");
         else
-            sprintf(msgtext, "Object Hierarchy in File:  %s", label_fname);
+          /*------------------------------------------------------------------*/
+          /*  we've discovered the end of the current object  */
+          if ((strncmp(left_part, "END_OBJECT ", 11) == 0) ||
+              (strcmp(left_part, "END_OBJECT") == 0))
+          {
+            ++end_object_count;
 
-        OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n");
-        OdlPrintLine(message_fname, m_ptr, msgtext);
-        OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n\n");
+            /*  validate the end_object's class identifier  */
+            OdlValidEndObjDesc(curr_object, equals, right_part,
+                               message_fname, m_ptr, line_number);
 
-        OdlPrintHierarchy(root, message_fname, m_ptr);
+            /*  set the current object's remaining comment fields  */
+            CopyString(curr_object->post_comment, comment)
+                CopyString(curr_object->end_comment, line_comment)
 
-    }  /*  End:  "if (suppress_hierarchy) ..."  */
+                /*  make curr object's parent the new current object  */
+                if (curr_object->parent != NULL)
+                  curr_object = curr_object->parent;
 
-    /*  closing remarks  */
+            /*  reset the comment text string  */
+            LemmeGo(comment)
+                NewString(comment, 1)
+          }
+          else
+            /*------------------------------------------------------------------*/
+            /*  we've reached the end of the label  */
+            if ((strncmp(left_part, "END ", 4) == 0) ||
+                (strcmp(left_part, "END") == 0))
+            {
+              end_found = TRUE;
+              CopyString(curr_object->post_comment, comment)
+            }
+            else
+              /*------------------------------------------------------------------*/
+              /*  We've discovered a keyword and its value  */
+            {
+              ++keyword_count;
+
+              /*  validate the keyword and its values  */
+              OdlValidKwd(curr_object, left_part, equals,
+                          right_part, message_fname, m_ptr, line_number);
+
+              /*  Add the keyword to the current object  */
+              curr_keyword = OdlPasteKwd(OdlNewKwd(left_part, right_part,
+                                                   comment, line_comment,
+                                                   label_fname, line_number),
+                                         curr_object);
+
+              /*  we've got a potential multi-line value list if the
+                  first character of the value is either an open
+                  brace, '{', or an open paren, '('
+                  */
+
+              if ((value_list = curr_keyword->is_a_list) == TRUE)
+              {
+                /*  validate that the braces and parens are correct  */
+                OdlValidBraces(curr_keyword->value,
+                               brace_nesting, paren_nesting,
+                               message_fname, m_ptr,
+                               value_list_line_number);
 
 
+                /*  reset the comment text string  */
+                LemmeGo(comment)
+                    NewString(comment, 1)
 
+              }  /*  End:  "if ((strncmp(left_part, ... else ... else ..." */
+              /*------------------------------------------------------------------*/
+            }  /*  End:  "if (quoted_value) ... else ... else ..."  */
+
+        equals_found = FALSE;
+        val_found = FALSE;
+        balanced = FALSE;
+        LemmeGo(text)
+
+      }
+      /*------------------------------------------------------------------*/
+    }  /*  End:  "while (fgets(text, ..."  */
+
+    /* if we're not sitting at the root then not enough END_OBJECTs found */
+    if (curr_object->parent != NULL)
+    {
+      OdlPrintMessage(message_fname, m_ptr, line_number,
+                      "Not enough END_OBJECT statements.  Some objects may be incomplete");
+    }
+
+    /*  hey, we didn't find an end statement!  */
+    if ((! end_found) && (! ignore_missing_end))
+    {
+      OdlPrintMessage(message_fname, m_ptr, line_number,
+                      "END statement is missing");
+    }
+
+    /*  oops, there was nothing in the label file to parse  */
+    if (line_number == 0)
+      root = OdlFreeTree(root);
+
+    LemmeGo(comment)
+
+  }  /*  End:  "if (l_ptr == NULL) ... else ..."  */
+
+  /*  how'd we do?  */
+  if (! suppress_metrics && ! suppress_messages)
+  {
+    OdlPrintLine(message_fname, m_ptr, "\n");
+    OdlPrintLine(message_fname, m_ptr, "           |-------------------------------|\n");
+    OdlPrintLine(message_fname, m_ptr, "           | Parsing Metrics:              |\n");
+    OdlPrintLine(message_fname, m_ptr, "           |                               |\n");
+    sprintf(msgtext, "           | %7ld Syntax Messages       |\n", odl_message_count);
+    OdlPrintLine(message_fname, m_ptr, msgtext);
+    OdlPrintLine(message_fname, m_ptr, "           |                               |\n");
+    sprintf(msgtext, "           | %7ld OBJECT Statements     |\n", object_count);
+    OdlPrintLine(message_fname, m_ptr, msgtext);
+    sprintf(msgtext, "           | %7ld END_OBJECT Statements |\n", end_object_count);
+    OdlPrintLine(message_fname, m_ptr, msgtext);
+    sprintf(msgtext, "           | %7ld Keywords              |\n", keyword_count);
+    OdlPrintLine(message_fname, m_ptr, msgtext);
+    sprintf(msgtext, "           | %7ld Comments              |\n", comment_count);
+    OdlPrintLine(message_fname, m_ptr, msgtext);
+    OdlPrintLine(message_fname, m_ptr, "           |-------------------------------|\n\n");
+
+  }  /*  End:  "if (! suppress_metrics) ..."  */
+
+  /*  display the object hierarchy  */
+  if (! suppress_hierarchy && ! suppress_messages)
+  {
     if (label_fname == NULL)
-        sprintf(msgtext, "End of Parsing File:  (no file name provided)");
+      sprintf(msgtext, "Object Hierarchy in File:  (no file name provided)");
     else
-        sprintf(msgtext, "End of Parsing File:  %s", label_fname);
+      sprintf(msgtext, "Object Hierarchy in File:  %s", label_fname);
 
     OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n");
     OdlPrintLine(message_fname, m_ptr, msgtext);
     OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n\n");
 
-    /*  if we opened the label file in this routine then close it  */
-    if (label_fptr == NULL)
-        CloseMe(l_ptr)
+    OdlPrintHierarchy(root, message_fname, m_ptr);
 
-    /*  if we opened the message file in this routine then close it  */
-    if ((m_ptr != stdout) && (message_fptr == NULL))
-        CloseMe(m_ptr)
-    
-    LemmeGo(text)
+  }  /*  End:  "if (suppress_hierarchy) ..."  */
 
-    return (root);
+  /*  closing remarks  */
+
+
+
+  if (label_fname == NULL)
+    sprintf(msgtext, "End of Parsing File:  (no file name provided)");
+  else
+    sprintf(msgtext, "End of Parsing File:  %s", label_fname);
+
+  OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n");
+  OdlPrintLine(message_fname, m_ptr, msgtext);
+  OdlPrintLine(message_fname, m_ptr, "\n--------------------------------------------------------------------------\n\n");
+
+  /*  if we opened the label file in this routine then close it  */
+  if (label_fptr == NULL)
+    CloseMe(l_ptr)
+
+        /*  if we opened the message file in this routine then close it  */
+        if ((m_ptr != stdout) && (message_fptr == NULL))
+          CloseMe(m_ptr)
+
+              LemmeGo(text)
+
+              return (root);
 
 }  /*  End routine:  OdlParseFile  */
 
@@ -4179,35 +4174,35 @@ OBJDESC *OdlParseFile( char *label_fname, FILE *label_fptr,
 #ifdef _NO_PROTO
 
 static short OdlNestingLevel (text, brace_nesting, paren_nesting)
-char *text;
-long *brace_nesting;
-long *paren_nesting;
+  char *text;
+  long *brace_nesting;
+  long *paren_nesting;
 
 #else
 
-static short OdlNestingLevel (char *text, long *brace_nesting, 
+static short OdlNestingLevel (char *text, long *brace_nesting,
                               long *paren_nesting)
 
 #endif
 {
-    char *c = {NULL};
+  char *c = {NULL};
 
-    for (c=text; *c != '\0'; ++c)
-    {
-        if (*c == '{') 
-            ++(*brace_nesting);
+  for (c=text; *c != '\0'; ++c)
+  {
+    if (*c == '{')
+      ++(*brace_nesting);
+    else
+      if (*c == '}')
+        --(*brace_nesting);
+      else
+        if (*c == '(')
+          ++(*paren_nesting);
         else
-        if (*c == '}') 
-            --(*brace_nesting);
-        else
-        if (*c == '(') 
-            ++(*paren_nesting);
-        else
-        if (*c == ')') 
+          if (*c == ')')
             --(*paren_nesting);
-    }
+  }
 
-    return((*brace_nesting == 0) && (*paren_nesting == 0));
+  return((*brace_nesting == 0) && (*paren_nesting == 0));
 
 }  /*  End routine:  "OdlNestingLevel"  */
 
@@ -4219,7 +4214,7 @@ static short OdlNestingLevel (char *text, long *brace_nesting,
 #ifdef _NO_PROTO
 
 static short OdlValidBraces (text, brace_nesting, paren_nesting,
-                          message_fname, message_fptr, line_number)
+                             message_fname, message_fptr, line_number)
 
 char *text;
 long brace_nesting;
@@ -4230,81 +4225,81 @@ long line_number;
 
 #else
 
-static short OdlValidBraces (char *text, long brace_nesting, 
-                             long paren_nesting, char *message_fname, 
+static short OdlValidBraces (char *text, long brace_nesting,
+                             long paren_nesting, char *message_fname,
                              FILE *message_fptr, long line_number)
 
 #endif
 {
-    char *c = {NULL};
-    char *sp = {NULL};
-    char *nesting_stack = {NULL};
-    short status = {TRUE};
+  char *c = {NULL};
+  char *sp = {NULL};
+  char *nesting_stack = {NULL};
+  short status = {TRUE};
 
-    /*  allocate storage for the nesting stack  */
-    NewString(nesting_stack, strlen(text))
+  /*  allocate storage for the nesting stack  */
+  NewString(nesting_stack, strlen(text))
 
-    /*  validate that all braces and parens are correctly nested  */
-    for (c=text,sp=(nesting_stack-1); ((*c != '\0') && (status == TRUE)); ++c)
-    {
+      /*  validate that all braces and parens are correctly nested  */
+      for (c=text,sp=(nesting_stack-1); ((*c != '\0') && (status == TRUE)); ++c)
+      {
         /*  push brace or paren onto the nesting stack  */
         if ((*c == '{') || (*c == '('))
-            *(++sp) = *c;
+          *(++sp) = *c;
         else
-        /*  nesting is ok so far, pop the nesting stack  */
-        if (((*c == '}') && (*sp == '{')) || ((*c == ')') && (*sp == '(')))
+          /*  nesting is ok so far, pop the nesting stack  */
+          if (((*c == '}') && (*sp == '{')) || ((*c == ')') && (*sp == '(')))
             --sp;
-        else
-        /*  found a right brace that doesn't have a matching left one  */
-        if ((*c == '}') && (*sp != '{'))
-        {
-            status = OdlPrintMessage(message_fname,message_fptr,line_number, 
-                         "Bad nesting in VALUE LIST.  Expected a right parenthesis and found a brace instead.");
-        }
-        else
-        /*  found a right paren that doesn't have a matching left one  */
-        if ((*c == ')') && (*sp != '('))
-        {
-            status = OdlPrintMessage(message_fname,message_fptr,line_number, 
-                         "Bad nesting in VALUE LIST.  Expected a right brace and found a parenthesis instead.");
-        }
+          else
+            /*  found a right brace that doesn't have a matching left one  */
+            if ((*c == '}') && (*sp != '{'))
+            {
+              status = OdlPrintMessage(message_fname,message_fptr,line_number,
+                                       "Bad nesting in VALUE LIST.  Expected a right parenthesis and found a brace instead.");
+            }
+            else
+              /*  found a right paren that doesn't have a matching left one  */
+              if ((*c == ')') && (*sp != '('))
+              {
+                status = OdlPrintMessage(message_fname,message_fptr,line_number,
+                                         "Bad nesting in VALUE LIST.  Expected a right brace and found a parenthesis instead.");
+              }
 
         /*  we've reached nesting level zero before reaching the end  */
         if ((sp < nesting_stack) && (*(c+1) != '\0'))
         {
-            status = OdlPrintMessage(message_fname,message_fptr,line_number, 
-                         "VALUE LIST not properly enclosed in braces or parentheses");
+          status = OdlPrintMessage(message_fname,message_fptr,line_number,
+                                   "VALUE LIST not properly enclosed in braces or parentheses");
         }
 
-    }  /*  End:  "for (c=text,sp=(nesting_stack-1); ..."  */
+      }  /*  End:  "for (c=text,sp=(nesting_stack-1); ..."  */
 
-    LemmeGo(nesting_stack)
+  LemmeGo(nesting_stack)
 
-    if (brace_nesting < 0)
-    {
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "Too many right braces in VALUE LIST");
-    }
-    else
-    if (brace_nesting > 0)
-    {
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "Too many left braces in VALUE LIST");
-    }
+      if (brace_nesting < 0)
+      {
+        status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                                 "Too many right braces in VALUE LIST");
+      }
+      else
+        if (brace_nesting > 0)
+        {
+          status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                                   "Too many left braces in VALUE LIST");
+        }
 
-    if (paren_nesting < 0)
-    {
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "Too many right parentheses in VALUE LIST");
-    }
-    else
+  if (paren_nesting < 0)
+  {
+    status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                             "Too many right parentheses in VALUE LIST");
+  }
+  else
     if (paren_nesting > 0)
     {
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "Too many left parentheses in VALUE LIST");
+      status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                               "Too many left parentheses in VALUE LIST");
     }
 
-    return(status);
+  return(status);
 
 }  /*  End routine:  "OdlValidBraces"  */
 
@@ -4315,8 +4310,8 @@ static short OdlValidBraces (char *text, long brace_nesting,
 
 #ifdef _NO_PROTO
 
-static short OdlValidElement (_text, message_fname, message_fptr, line_number, 
-                           element_number)
+static short OdlValidElement (_text, message_fname, message_fptr, line_number,
+                              element_number)
 char *_text;
 char *message_fname;
 FILE *message_fptr;
@@ -4325,197 +4320,195 @@ long element_number;
 
 #else
 
-static short OdlValidElement (char *_text, char *message_fname, 
-                              FILE *message_fptr, long line_number, 
+static short OdlValidElement (char *_text, char *message_fname,
+                              FILE *message_fptr, long line_number,
                               long element_number)
 
 #endif
 {
-    char *message = NULL;
-    char element_prompt[TB_MAXLINE + 1];
-    char *save_units = 0;
-    char *first_blank = {NULL};
-    char *first_char = {NULL};
-    char *last_char = {NULL};
-    char *units_start = {NULL};
-    char *units_end = {NULL};
-    char *single_quote = {NULL};
-    char *double_quote = {NULL};
-    char *c = {NULL};
-    int i;
-    short status = {TRUE};
-	char *text = {NULL};
+  char *message = NULL;
+  char element_prompt[TB_MAXLINE + 1];
+  char *save_units = 0;
+  char *first_blank = {NULL};
+  char *first_char = {NULL};
+  char *last_char = {NULL};
+  char *units_start = {NULL};
+  char *units_end = {NULL};
+  char *single_quote = {NULL};
+  char *double_quote = {NULL};
+  short status = {TRUE};
+  char *text = {NULL};
 
-    if (element_number <= 0)
-       strcpy(element_prompt, "");
-    else
-       sprintf(element_prompt, " LIST element %d", element_number);
+  if (element_number <= 0)
+    strcpy(element_prompt, "");
+  else
+    sprintf(element_prompt, " LIST element %ld", element_number);
 
-	NewString(text, strlen(_text)+5);
-	strcpy(text, _text);
+  NewString(text, strlen(_text)+5);
+  strcpy(text, _text);
 
-    single_quote = (char *) strchr(text+1, (int) '\'');
-    double_quote = (char *) strchr(text+1, (int) '"');
-    first_blank  = (char *) strchr(text+1, (int) ' ');
-    first_char = text;
-    last_char = (char *) LastChar(text);
+  single_quote = (char *) strchr(text+1, (int) '\'');
+  double_quote = (char *) strchr(text+1, (int) '"');
+  first_blank  = (char *) strchr(text+1, (int) ' ');
+  first_char = text;
+  last_char = (char *) LastChar(text);
 
-    NewString(message, TB_MAXLINE+strlen(text))
+  NewString(message, TB_MAXLINE+strlen(text))
 
-    /*  double quote found in the middle of the value  */
-    if ((double_quote > first_char) && (double_quote < last_char))
-    {
+      /*  double quote found in the middle of the value  */
+      if ((double_quote > first_char) && (double_quote < last_char))
+      {
         sprintf(message, "Embedded double quote in VALUE%s", element_prompt);
         status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-    }
-    else
-    /*  value is double quoted - everything is okay  */
-    if (*first_char == '"')
-    {
-        status = TRUE;
-    }
-    else
-    /*  single quote found in the middle of the value  */
-    if ((single_quote > first_char) && (single_quote < last_char))
-    {
-        sprintf(message, "Embedded single quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  value is single quoted - fine if not just a quote  */
-    if ((*first_char == '\'') && (*last_char == '\''))
-    {
-        if (first_char == last_char)
+      }
+      else
+        /*  value is double quoted - everything is okay  */
+        if (*first_char == '"')
         {
-            sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
-            status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+          status = TRUE;
         }
-    }
-    else
-    /*  value is missing a closing single quote  */
-    if ((*first_char == '\'') && (*last_char != '\''))
-    {
-        sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  value is missing an opening single quote  */
-    if ((*first_char != '\'') && (*last_char == '\''))
-    {
-        sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  value is missing an opening double quote  */
-    if ((*first_char != '"') && (*last_char == '"'))
-    {
-        sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  current value list element is just a double quote  */
-    if ((element_number > 0) && 
-        (first_char == (last_char-1)) && (*first_char == '"'))
-    {
-        sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  current value list element is missing a closing double quote  */
-    if ((element_number > 0) && 
-        (*first_char == '"') && (*(last_char-1) != '"'))
-    {
-        sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
-        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-    }
-    else
-    /*  value is unquoted  */
-    if ((*first_char != '\'') && (*last_char != '\''))
-    {
-        /*  check the value only if it isn't N/A  */
-        if ((strcmp(first_char, "n/a") != 0) && (strcmp(first_char, "N/A") != 0))
-        {
-            /*  we can't have multiple underscores in an unquoted value  */
-            if (strstr(first_char, "__") != NULL)
+        else
+          /*  single quote found in the middle of the value  */
+          if ((single_quote > first_char) && (single_quote < last_char))
+          {
+            sprintf(message, "Embedded single quote in VALUE%s", element_prompt);
+            status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+          }
+          else
+            /*  value is single quoted - fine if not just a quote  */
+            if ((*first_char == '\'') && (*last_char == '\''))
             {
-                sprintf(message, "Multiple underscores in VALUE%s", element_prompt);
+              if (first_char == last_char)
+              {
+                sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
                 status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+              }
             }
-    
-            /*  an unquoted value cannot begin with an underscore  */
-            if (*first_char == '_')
-            {
-                sprintf(message, "First character is an underscore in VALUE%s", element_prompt);
+            else
+              /*  value is missing a closing single quote  */
+              if ((*first_char == '\'') && (*last_char != '\''))
+              {
+                sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
                 status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-            }
-    
-            /*  an unquoted value cannot end with an underscore  */
-            if (*last_char == '_')
-            {
-                sprintf(message, "Last character is an underscore in VALUE%s", element_prompt);
-                status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
-            }
-
-            /*  the value may have a units expression  */
-            if ((units_start = (char *) strchr(text, (int) '<')) != NULL)
-            {
-                CopyString(save_units, units_start)
-                *units_start = '\0';
-                StripTrailing(text, ' ')
-            }
-            
-            if (OdlDataType(text) == ODL_UNKNOWN)
-            {
-                sprintf(message, "Unable to determine the data type of VALUE%s: \"%s\"", 
-                                 element_prompt, first_char);
-                status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-            }
-
-            /*  validate the units expression, if any  */
-            if (units_start != NULL)
-            {
-                /*  only one '<' char allowed in a units expression  */
-                if (strchr(units_start+1, (int) '<') != NULL)
+              }
+              else
+                /*  value is missing an opening single quote  */
+                if ((*first_char != '\'') && (*last_char == '\''))
                 {
-                    sprintf(message, "Embedded '<' character found in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"", 
-                                     units_start+1, element_prompt, first_char);
-                    status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-                }
-
-                /*  find the closing char for the units expression  */
-                units_end = (char *) strchr(units_start+1, (int) '>');
-
-                /*  missing the closing '>' char in the units expression  */
-                if (units_end == NULL)
-                {
-                    sprintf(message, "Missing the closing '>' character in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"", 
-                                     units_start+1, element_prompt, first_char);
-                    status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+                  sprintf(message, "Unpaired single quote in VALUE%s", element_prompt);
+                  status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
                 }
                 else
-                /*  characters found after the closing '>' in the units exp  */
-                if (units_end != last_char)
-                {
-                    sprintf(message, "Extraneous characters found after the closing '>' character in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"", 
-                                     units_start+1, element_prompt, first_char);
-                    status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-                }
-  
-                /*  restore the value  */
-                strcat(text, " ");
-                strcat(text, save_units);
-                LemmeGo(save_units)
+                  /*  value is missing an opening double quote  */
+                  if ((*first_char != '"') && (*last_char == '"'))
+                  {
+                    sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
+                    status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                  }
+                  else
+                    /*  current value list element is just a double quote  */
+                    if ((element_number > 0) &&
+                        (first_char == (last_char-1)) && (*first_char == '"'))
+                    {
+                      sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
+                      status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                    }
+                    else
+                      /*  current value list element is missing a closing double quote  */
+                      if ((element_number > 0) &&
+                          (*first_char == '"') && (*(last_char-1) != '"'))
+                      {
+                        sprintf(message, "Unpaired double quote in VALUE%s", element_prompt);
+                        status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                      }
+                      else
+                        /*  value is unquoted  */
+                        if ((*first_char != '\'') && (*last_char != '\''))
+                        {
+                          /*  check the value only if it isn't N/A  */
+                          if ((strcmp(first_char, "n/a") != 0) && (strcmp(first_char, "N/A") != 0))
+                          {
+                            /*  we can't have multiple underscores in an unquoted value  */
+                            if (strstr(first_char, "__") != NULL)
+                            {
+                              sprintf(message, "Multiple underscores in VALUE%s", element_prompt);
+                              status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                            }
 
-            }  /*  End:  "if (units_start != NULL) ..."  */
+                            /*  an unquoted value cannot begin with an underscore  */
+                            if (*first_char == '_')
+                            {
+                              sprintf(message, "First character is an underscore in VALUE%s", element_prompt);
+                              status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                            }
 
-        }  /*  End:  "if ((strcmp(first_char, "n/a") != 0) && ..."  */
+                            /*  an unquoted value cannot end with an underscore  */
+                            if (*last_char == '_')
+                            {
+                              sprintf(message, "Last character is an underscore in VALUE%s", element_prompt);
+                              status = OdlPrintMessage(message_fname,message_fptr, line_number, message);
+                            }
 
-    }  /*  End:  "if ((double_quote > ... else ... else ..."  */
-    
-    LemmeGo(message)
-	LemmeGo(text);
+                            /*  the value may have a units expression  */
+                            if ((units_start = (char *) strchr(text, (int) '<')) != NULL)
+                            {
+                              CopyString(save_units, units_start)
+                                  *units_start = '\0';
+                              StripTrailing(text, ' ')
+                            }
 
-    return(status);
+                            if (OdlDataType(text) == ODL_UNKNOWN)
+                            {
+                              sprintf(message, "Unable to determine the data type of VALUE%s: \"%s\"",
+                                      element_prompt, first_char);
+                              status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+                            }
+
+                            /*  validate the units expression, if any  */
+                            if (units_start != NULL)
+                            {
+                              /*  only one '<' char allowed in a units expression  */
+                              if (strchr(units_start+1, (int) '<') != NULL)
+                              {
+                                sprintf(message, "Embedded '<' character found in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"",
+                                        units_start+1, element_prompt, first_char);
+                                status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+                              }
+
+                              /*  find the closing char for the units expression  */
+                              units_end = (char *) strchr(units_start+1, (int) '>');
+
+                              /*  missing the closing '>' char in the units expression  */
+                              if (units_end == NULL)
+                              {
+                                sprintf(message, "Missing the closing '>' character in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"",
+                                        units_start+1, element_prompt, first_char);
+                                status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+                              }
+                              else
+                                /*  characters found after the closing '>' in the units exp  */
+                                if (units_end != last_char)
+                                {
+                                  sprintf(message, "Extraneous characters found after the closing '>' character in the UNITS expression: \"<%s\", for VALUE%s:  \"%s\"",
+                                          units_start+1, element_prompt, first_char);
+                                  status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+                                }
+
+                              /*  restore the value  */
+                              strcat(text, " ");
+                              strcat(text, save_units);
+                              LemmeGo(save_units)
+
+                            }  /*  End:  "if (units_start != NULL) ..."  */
+
+                          }  /*  End:  "if ((strcmp(first_char, "n/a") != 0) && ..."  */
+
+                        }  /*  End:  "if ((double_quote > ... else ... else ..."  */
+
+  LemmeGo(message)
+      LemmeGo(text);
+
+  return(status);
 
 }  /*  End routine:  "OdlValidElement"  */
 
@@ -4526,8 +4519,8 @@ static short OdlValidElement (char *_text, char *message_fname,
 
 #ifdef _NO_PROTO
 
-static short OdlValidEndObjDesc (curr_object, equals, right_part, 
-                             message_fname, message_fptr, line_number)
+static short OdlValidEndObjDesc (curr_object, equals, right_part,
+                                 message_fname, message_fptr, line_number)
 OBJDESC *curr_object;
 char *equals;
 char *right_part;
@@ -4537,37 +4530,37 @@ long line_number;
 
 #else
 
-static short OdlValidEndObjDesc (OBJDESC *curr_object, char *equals, 
-                                 char *right_part, char *message_fname, 
+static short OdlValidEndObjDesc (OBJDESC *curr_object, char *equals,
+                                 char *right_part, char *message_fname,
                                  FILE *message_fptr, long line_number)
 
 #endif
 {
-    short status = {TRUE};
+  short status = {TRUE};
 
-    if (curr_object->parent == NULL)
+  if (curr_object->parent == NULL)
+  {
+    status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                             "Extra END_OBJECT encountered");
+  }
+
+  if (*equals != '\0')
+  {
+    if (*right_part != '\0')
     {
+      if (strcmp(curr_object->obj_class, right_part) != 0)
+      {
         status = OdlPrintMessage(message_fname, message_fptr, line_number,
-                     "Extra END_OBJECT encountered");
+                                 "OBJECT and END_OBJECT class identifiers do not match");
+      }
     }
 
-    if (*equals != '\0')
-    {
-        if (*right_part != '\0')
-        {
-            if (strcmp(curr_object->obj_class, right_part) != 0)
-            {
-                status = OdlPrintMessage(message_fname, message_fptr, line_number,
-                            "OBJECT and END_OBJECT class identifiers do not match");
-            }
-        }
+    status = OdlValidIdentifier(right_part, "END_OBJECT class",
+                                message_fname, message_fptr,line_number) && status;
 
-        status = OdlValidIdentifier(right_part, "END_OBJECT class", 
-                     message_fname, message_fptr,line_number) && status;
+  }  /*  End:  "if (*equals != '\0') ..."  */
 
-    }  /*  End:  "if (*equals != '\0') ..."  */
-
-    return(status);
+  return(status);
 
 }  /*  End routine:  "OdlValidEndObjDesc"  */
 
@@ -4580,72 +4573,72 @@ static short OdlValidEndObjDesc (OBJDESC *curr_object, char *equals,
 
 static short OdlValidIdentifier (id_name, id_type, message_fname, message_fptr, line_number)
 
-char *id_name;
-char *id_type;
-char *message_fname;
-FILE *message_fptr;
-long line_number;
+  char *id_name;
+  char *id_type;
+  char *message_fname;
+  FILE *message_fptr;
+  long line_number;
 
 #else
 
-static short OdlValidIdentifier (char *id_name, char *id_type, 
-                                 char *message_fname, FILE *message_fptr, 
+static short OdlValidIdentifier (char *id_name, char *id_type,
+                                 char *message_fname, FILE *message_fptr,
                                  long line_number)
 
 #endif
 {
-    char *message = NULL;
-    char *c = {NULL};
-    int i;
-    short status = {TRUE};
+  char *message = NULL;
+  char *c = {NULL};
+  int i;
+  short status = {TRUE};
 
-    NewString(message, TB_MAXLINE+strlen(id_name)+strlen(id_type))
+  NewString(message, TB_MAXLINE+strlen(id_name)+strlen(id_type))
 
-    if (id_name == NULL)
-    {
+      if (id_name == NULL)
+      {
         sprintf(message, "%s identifier is missing", id_type);
         status = OdlPrintMessage(message_fname, message_fptr, line_number,message);
-    }
-    else
-    {
+      }
+      else
+      {
         StripUnprintables(id_name)
 
-        if (*id_name == '\0')
-        {
-            sprintf(message, "%s identifier is missing", id_type);
-            status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-        }
-        else
-        {
-            if (! isalpha(*id_name))
+            if (*id_name == '\0')
             {
-                sprintf(message, 
+              sprintf(message, "%s identifier is missing", id_type);
+              status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+            }
+            else
+            {
+              if (! isalpha(*id_name))
+              {
+                sprintf(message,
                         "%s identifier:  \"%s\"  does not begin with a letter",
                         id_type, id_name);
                 status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-            }
-        
-            for (c=id_name,i=0; *c != '\0'; ++c)
-            {
+              }
+
+              for (c=id_name,i=0; *c != '\0'; ++c)
+              {
                 if ((*c != '_') && (! isalnum(*c))) ++i;
-            }
-        
-            if (i > 0)
-            {
-                sprintf(message, 
-                        "%s identifier:  \"%s\"  contains %d embedded non-alphanumeric or \"_\" character", 
+              }
+
+              if (i > 0)
+              {
+                sprintf(message,
+                        "%s identifier:  \"%s\"  contains %d embedded non-alphanumeric or \"_\" character",
                         id_type, id_name, i);
                 if (i > 1) strcat(message, "s");
                 status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-            }
+              }
 
-        }  /*  End:  "if (*id_name == '\0') ... else ..."  */
+            }  /*  End:  "if (*id_name == '\0') ... else ..."  */
 
-    }  /*  End:  "if (id_name == NULL) ... else ..."  */
-    
-    LemmeGo(message)
+      }  /*  End:  "if (id_name == NULL) ... else ..."  */
 
-    return(status);
+  LemmeGo(message)
+
+      return(status);
 
 }  /*  End routine:  "OdlValidIdentifier"  */
 
@@ -4656,8 +4649,8 @@ static short OdlValidIdentifier (char *id_name, char *id_type,
 
 #ifdef _NO_PROTO
 
-static short OdlValidKwd (curr_object, left_part, equals, right_part, 
-                           message_fname, message_fptr, line_number)
+static short OdlValidKwd (curr_object, left_part, equals, right_part,
+                          message_fname, message_fptr, line_number)
 OBJDESC *curr_object;
 char *left_part;
 char *equals;
@@ -4669,98 +4662,98 @@ long line_number;
 #else
 
 static short OdlValidKwd (OBJDESC *curr_object, char *left_part, char *equals,
-                          char *right_part, char *message_fname, 
+                          char *right_part, char *message_fname,
                           FILE *message_fptr, long line_number)
 
 #endif
 {
-    KEYWORD *keyword = {NULL};
-    char *key = {NULL};
-    char *message = NULL;
-    char c;
-    short status = {TRUE};
-    short sfdu_only = {FALSE};
-    short found_keyword = {FALSE};
+  KEYWORD *keyword = {NULL};
+  char *key = {NULL};
+  char *message = NULL;
+  char c;
+  short status = {TRUE};
+  short sfdu_only = {FALSE};
+  short found_keyword = {FALSE};
 
-    NewString(message, TB_MAXLINE+strlen(left_part)+strlen(right_part))
+  NewString(message, TB_MAXLINE+strlen(left_part)+strlen(right_part))
 
-    if (*left_part == '=')
-    {
+      if (*left_part == '=')
+      {
         *left_part = '\0';
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "KEYWORD identifier is missing");
-    }
-    else
-    {
+        status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                                 "KEYWORD identifier is missing");
+      }
+      else
+      {
         if (*equals == '\0')
         {
-            sfdu_only = ((strncmp(left_part, "NJPL", 4) == 0) ||
-                            (strncmp(left_part, "CCSD", 4) == 0));
+          sfdu_only = ((strncmp(left_part, "NJPL", 4) == 0) ||
+                       (strncmp(left_part, "CCSD", 4) == 0));
 
-            if (! sfdu_only)
-            {
-                sprintf(message, 
+          if (! sfdu_only)
+          {
+            sprintf(message,
                     "Missing equals sign after KEYWORD identifier:  \"%s\"", left_part);
-                status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
-            }
+            status = OdlPrintMessage(message_fname, message_fptr, line_number, message);
+          }
         }
         else
         {
-            *equals = '\0';
-            StripTrailing(left_part, ' ')
+          *equals = '\0';
+          StripTrailing(left_part, ' ')
         }
 
         /*  ignore the first character if the keyword is a pointer  */
         key = (*left_part != '^') ? left_part : left_part + 1;
 
-        status = OdlValidIdentifier(key, "KEYWORD", message_fname, 
+        status = OdlValidIdentifier(key, "KEYWORD", message_fname,
                                     message_fptr, line_number) && status;
 
         for (keyword=curr_object->first_keyword;
-                ((keyword != NULL) && (! found_keyword));
-                    keyword=keyword->right_sibling)
+             ((keyword != NULL) && (! found_keyword));
+             keyword=keyword->right_sibling)
         {
-            if (keyword->name != NULL)
-                found_keyword = (strcmp(keyword->name, left_part) == 0);
+          if (keyword->name != NULL)
+            found_keyword = (strcmp(keyword->name, left_part) == 0);
         }
 
         if (found_keyword)
         {
-            sprintf(message, 
-                    "Duplicate KEYWORD identifier:  \"%s\"", left_part);
-            status = OdlPrintMessage(message_fname, message_fptr, line_number,message);
+          sprintf(message,
+                  "Duplicate KEYWORD identifier:  \"%s\"", left_part);
+          status = OdlPrintMessage(message_fname, message_fptr, line_number,message);
         }
-        
-    }  /*  End:  "if (*left_part == '=') ... else ..."  */
 
-    if (*right_part != '\0')
+      }  /*  End:  "if (*left_part == '=') ... else ..."  */
+
+  if (*right_part != '\0')
+  {
+    /*  what sort of value do we have?  */
+    if ((*right_part != '{') && (*right_part != '('))
     {
-        /*  what sort of value do we have?  */
-        if ((*right_part != '{') && (*right_part != '('))
-        {
-            /*  we have a single element */
-            status = OdlValidElement(right_part, message_fname, message_fptr, 
-                                  line_number, 0) && status;
-        }
-        else
-        {
-            /*  we have a value list  */
-            status = OdlValidValueList(right_part, message_fname, message_fptr,
-                                    line_number) && status;
-        }
+      /*  we have a single element */
+      status = OdlValidElement(right_part, message_fname, message_fptr,
+                               line_number, 0) && status;
     }
     else
+    {
+      /*  we have a value list  */
+      status = OdlValidValueList(right_part, message_fname, message_fptr,
+                                 line_number) && status;
+    }
+  }
+  else
     if (! sfdu_only)
     {
-        sprintf(message, 
-                "KEYWORD identifier:  \"%s\"  is missing a VALUE",
-                left_part);
-        status = OdlPrintMessage(message_fname, message_fptr, line_number,message);
+      sprintf(message,
+              "KEYWORD identifier:  \"%s\"  is missing a VALUE",
+              left_part);
+      status = OdlPrintMessage(message_fname, message_fptr, line_number,message);
     }
 
-    LemmeGo(message)
+  LemmeGo(message)
 
-    return(status);
+      return(status);
 
 }  /*  End routine:  "OdlValidKwd"  */
 
@@ -4771,8 +4764,8 @@ static short OdlValidKwd (OBJDESC *curr_object, char *left_part, char *equals,
 
 #ifdef _NO_PROTO
 
-static short OdlValidObjDesc (curr_object, equals, right_part, 
-                          message_fname, message_fptr, line_number)
+static short OdlValidObjDesc (curr_object, equals, right_part,
+                              message_fname, message_fptr, line_number)
 
 OBJDESC *curr_object;
 char *equals;
@@ -4783,26 +4776,26 @@ long line_number;
 
 #else
 
-static short OdlValidObjDesc (OBJDESC *curr_object, char *equals, 
-                              char *right_part, char *message_fname, 
+static short OdlValidObjDesc (OBJDESC *curr_object, char *equals,
+                              char *right_part, char *message_fname,
                               FILE *message_fptr, long line_number)
 
 #endif
 {
-    short status = {TRUE};
+  short status = {TRUE};
 
-    if (*equals == '\0')
-    {
-        status = OdlPrintMessage(message_fname, message_fptr, line_number, 
-                     "Missing equals sign after OBJECT statement");
-    }
+  if (*equals == '\0')
+  {
+    status = OdlPrintMessage(message_fname, message_fptr, line_number,
+                             "Missing equals sign after OBJECT statement");
+  }
 
-    StripTrailing(right_part, ' ')
+  StripTrailing(right_part, ' ')
 
-    status = OdlValidIdentifier(right_part, "OBJECT class", 
-                 message_fname, message_fptr,line_number) && status;
+      status = OdlValidIdentifier(right_part, "OBJECT class",
+                                  message_fname, message_fptr,line_number) && status;
 
-    return(status);
+  return(status);
 
 }  /*  End routine:  "OdlValidObjDesc"  */
 
@@ -4816,47 +4809,47 @@ static short OdlValidObjDesc (OBJDESC *curr_object, char *equals,
 
 static short OdlValidValueList (text, message_fname, message_fptr, line_number)
 
-char *text;
-char *message_fname;
-FILE *message_fptr;
-long line_number;
+  char *text;
+  char *message_fname;
+  FILE *message_fptr;
+  long line_number;
 
 #else
 
-static short OdlValidValueList (char *text, char *message_fname, 
+static short OdlValidValueList (char *text, char *message_fname,
                                 FILE *message_fptr, long line_number)
 
 #endif
 {
-    char *first_char = {NULL};
-    char *last_char = {NULL};
-    char save_c;
-    int i;
-    short status = {TRUE};
+  char *first_char = {NULL};
+  char *last_char = {NULL};
+  char save_c;
+  int i;
+  short status = {TRUE};
 
-    for (i=1,first_char=OdlValueStart(text); *first_char != '\0'; ++i)
-    {
-        /*  find the end of the current element  */
-        last_char = OdlValueEnd(first_char);
+  for (i=1,first_char=OdlValueStart(text); *first_char != '\0'; ++i)
+  {
+    /*  find the end of the current element  */
+    last_char = OdlValueEnd(first_char);
 
-        /*  save the next character and terminate the string  */
-		if (!last_char) return(FALSE);
+    /*  save the next character and terminate the string  */
+    if (!last_char) return(FALSE);
 
-        save_c = *(++last_char);
-        *last_char = '\0';
+    save_c = *(++last_char);
+    *last_char = '\0';
 
-        /*  validate the current element  */
-        OdlValidElement(first_char,message_fname,message_fptr,line_number,i);
+    /*  validate the current element  */
+    OdlValidElement(first_char,message_fname,message_fptr,line_number,i);
 
-        /*  restore the character that was overwritten by the terminator  */
-        *last_char = save_c;
+    /*  restore the character that was overwritten by the terminator  */
+    *last_char = save_c;
 
-        /*  find the start of the next element  */
-        first_char = OdlValueStart(last_char);
+    /*  find the start of the next element  */
+    first_char = OdlValueStart(last_char);
 
-    }  /*  End:  "for (i=1, ..."  */
+  }  /*  End:  "for (i=1, ..."  */
 
-    return(status);
+  return(status);
 
 }  /*  End routine:  "OdlValidValueList"  */
 
@@ -4901,106 +4894,107 @@ static short OdlValidValueList (char *text, char *message_fname,
 
 unsigned short OdlWildCardCompare (wildcard_text, plain_text)
 
-char *wildcard_text;
-char *plain_text;
+  const char *wildcard_text;
+  const char *plain_text;
 
 #else
 
-unsigned short OdlWildCardCompare (char *wildcard_text, char *plain_text)
+unsigned short OdlWildCardCompare (const char *wildcard_text,
+                                   const char *plain_text)
 
 #endif
 {
-    char *c = {NULL};
-    char *substr = {NULL};
-    char *tmp_str = {NULL};
-    char *tmp_str2 = {NULL};
-    char *text_start = {NULL};
-    char save_it;
-    unsigned long len; 
-    unsigned short allrightythen = {FALSE};
+  char *c = {NULL};
+  char *substr = {NULL};
+  char *tmp_str = {NULL};
+  char *tmp_str2 = {NULL};
+  char *text_start = {NULL};
+  char save_it;
+  unsigned long len;
+  unsigned short allrightythen = {FALSE};
 
-    /*  see if we have anything to compare  */
-    if ((wildcard_text != NULL) && (plain_text != NULL))
-    {
-        /*  all righty then, let's initialize some local variables  */
-        allrightythen = TRUE;
+  /*  see if we have anything to compare  */
+  if ((wildcard_text != NULL) && (plain_text != NULL))
+  {
+    /*  all righty then, let's initialize some local variables  */
+    allrightythen = TRUE;
 
-        /*  copy the wildcard text  */
-        CopyString(tmp_str, wildcard_text)
+    /*  copy the wildcard text  */
+    CopyString(tmp_str, wildcard_text)
 
         /*  strip off leading and trailing quotes  */
         save_it = *tmp_str;
-        if ((save_it == '\'') || (save_it == '"'))
-        {
-            StripLeading(tmp_str, save_it)
-            StripTrailing(tmp_str, save_it)
-            StripLeading(tmp_str, ' ')
-            StripTrailing(tmp_str, ' ')
-        }
+    if ((save_it == '\'') || (save_it == '"'))
+    {
+      StripLeading(tmp_str, save_it)
+          StripTrailing(tmp_str, save_it)
+          StripLeading(tmp_str, ' ')
+          StripTrailing(tmp_str, ' ')
+    }
 
-        /*  copy the plain text  */
-        CopyString(tmp_str2, plain_text)
+    /*  copy the plain text  */
+    CopyString(tmp_str2, plain_text)
 
         /*  strip off leading and trailing quotes  */
         save_it = *tmp_str2;
-        if ((save_it == '\'') || (save_it == '"'))
+    if ((save_it == '\'') || (save_it == '"'))
+    {
+      StripLeading(tmp_str2, save_it)
+          StripTrailing(tmp_str2, save_it)
+          StripLeading(tmp_str2, ' ')
+          StripTrailing(tmp_str2, ' ')
+    }
+
+    substr = tmp_str;
+    text_start = tmp_str2;
+
+    if (strchr(substr, '*') == NULL)
+      allrightythen = (strcmp(text_start, substr) == 0);
+    else
+    {
+
+      /*  we're going to break out the chunks of text between the */
+      /*  wildcard caracters and try to find them one-by-one in   */
+      /*  the plain text string.                                      */
+      do
+      {
+        /*  locate the start of next substring  */
+        for ( ; *substr == '*'; ++substr) ;
+        if (*substr == '\0') break;
+
+        /*  locate the end of the substring and save that address  */
+        for (c=substr; ((*c != '*') && (*c != '\0')); ++c) ;
+        save_it = *c;
+        *c = '\0';
+
+        /*  look for the substring in the un-wildcarded text  */
+        if ((c = (char *)strstr(text_start, substr)) == NULL)
         {
-            StripLeading(tmp_str2, save_it)
-            StripTrailing(tmp_str2, save_it)
-            StripLeading(tmp_str2, ' ')
-            StripTrailing(tmp_str2, ' ')
+          allrightythen = FALSE;
+          break;
         }
 
-        substr = tmp_str;
-        text_start = tmp_str2;
-
-        if (strchr(substr, '*') == NULL)
-            allrightythen = (strcmp(text_start, substr) == 0);
-        else
+        /*  prepare for the next search  */
+        len = strlen(substr);
+        substr += len;
+        *substr = save_it;
+        text_start = c + len;
+        if ((*substr == '\0') && (*text_start != '\0'))
         {
+          allrightythen = FALSE;
+          break;
+        }
 
-            /*  we're going to break out the chunks of text between the */
-            /*  wildcard caracters and try to find them one-by-one in   */
-            /*  the plain text string.                                      */
-            do
-            {
-                /*  locate the start of next substring  */
-                for ( ; *substr == '*'; ++substr) ;
-                if (*substr == '\0') break;
+      } while(TRUE);
 
-                /*  locate the end of the substring and save that address  */
-                for (c=substr; ((*c != '*') && (*c != '\0')); ++c) ;
-                save_it = *c;
-                *c = '\0';
-    
-                /*  look for the substring in the un-wildcarded text  */
-                if ((c = (char *)strstr(text_start, substr)) == NULL)
-                {
-                    allrightythen = FALSE;
-                    break;
-                }
+    }  /*  End:  "if (strchr(substr, '*') == NULL) ... else ..."  */
 
-                /*  prepare for the next search  */
-                len = strlen(substr);
-                substr += len;
-                *substr = save_it;
-                text_start = c + len;
-                if ((*substr == '\0') && (*text_start != '\0'))
-                {
-                    allrightythen = FALSE;
-                    break;
-                }
-
-            } while(TRUE);
-
-        }  /*  End:  "if (strchr(substr, '*') == NULL) ... else ..."  */
-
-        LemmeGo(tmp_str)
+    LemmeGo(tmp_str)
         LemmeGo(tmp_str2)
 
-    }  /*  End:  "if ((wildcard_text != NULL) && ..."  */
+  }  /*  End:  "if ((wildcard_text != NULL) && ..."  */
 
-    return(allrightythen);
+  return(allrightythen);
 
 }  /*  End:  "OdlWildCardCompare"  */
 
@@ -5039,8 +5033,8 @@ unsigned short OdlWildCardCompare (char *wildcard_text, char *plain_text)
 
 OBJDESC *OdlTraverseTree (curr_object, root_level)
 
-OBJDESC *curr_object;
-unsigned long root_level;
+  OBJDESC *curr_object;
+  unsigned long root_level;
 
 #else
 
@@ -5048,39 +5042,39 @@ OBJDESC *OdlTraverseTree (OBJDESC *curr_object, unsigned long root_level)
 
 #endif
 {
-    OBJDESC *obj = {NULL};
-    OBJDESC *next_object = {NULL};
+  OBJDESC *obj = {NULL};
+  OBJDESC *next_object = {NULL};
 
-    if (curr_object != NULL)
-    {
-        /*  start search with current object's children  */
-        if (curr_object->first_child != NULL)
-            next_object = curr_object->first_child;
-        else
-        /*  start search with current object's right sibling  */
-        if (curr_object->right_sibling != NULL)
-            next_object = curr_object->right_sibling;
-        else
+  if (curr_object != NULL)
+  {
+    /*  start search with current object's children  */
+    if (curr_object->first_child != NULL)
+      next_object = curr_object->first_child;
+    else
+      /*  start search with current object's right sibling  */
+      if (curr_object->right_sibling != NULL)
+        next_object = curr_object->right_sibling;
+      else
         /*  move up parent list until we find one with a right sibling  */
+      {
+        for (next_object=NULL,obj=curr_object->parent;
+             (obj != NULL); obj=obj->parent)
         {
-            for (next_object=NULL,obj=curr_object->parent; 
-                    (obj != NULL); obj=obj->parent)
+          if (obj->level <= root_level)
+            break;
+          else
+            if (obj->right_sibling != NULL)
             {
-                if (obj->level <= root_level) 
-                    break;
-                else
-                if (obj->right_sibling != NULL)
-                {
-                    next_object = obj->right_sibling;
-                    break;    
-                }
+              next_object = obj->right_sibling;
+              break;
             }
+        }
 
-        }  /*  End:  "if (curr_object->first_child ... else ..."  */
+      }  /*  End:  "if (curr_object->first_child ... else ..."  */
 
-    }  /*  End:  "if (curr_object != NULL) ..."  */
+  }  /*  End:  "if (curr_object != NULL) ..."  */
 
-    return(next_object);
+  return(next_object);
 
 }  /*  End routine:  "OdlTraverseTree"  */
 
@@ -5118,7 +5112,7 @@ OBJDESC *OdlTraverseTree (OBJDESC *curr_object, unsigned long root_level)
 
 char *OdlFirstWord(text)
 
-char *text;
+  char *text;
 
 #else
 
@@ -5126,15 +5120,15 @@ char *OdlFirstWord(char *text)
 
 #endif
 {
-    char *c = {NULL};
-    for (c=text; 
-          ((c != NULL) && ((*c <= ' ') || (*c > '~')) && (*c != '\0')); ++c) ;
-    return(c);
+  char *c = {NULL};
+  for (c=text;
+       ((c != NULL) && ((*c <= ' ') || (*c > '~')) && (*c != '\0')); ++c) ;
+  return(c);
 
 }  /*  End routine:  "OdlFirstWord"  */
 
 
-        
+
 /************************************************************************/
 /*                                                                      */
 /*  Component:                                                          */
@@ -5168,7 +5162,7 @@ char *OdlFirstWord(char *text)
 
 char *OdlNextWord(text)
 
-char *text;
+  char *text;
 
 #else
 
@@ -5176,10 +5170,10 @@ char *OdlNextWord( char *text)
 
 #endif
 {
-    char *c = {NULL};
-    for (c=text; 
-          ((c != NULL) && (*c > ' ') && (*c <= '~') && (*c != '\0')); ++c) ;
-    return(OdlFirstWord(c));
+  char *c = {NULL};
+  for (c=text;
+       ((c != NULL) && (*c > ' ') && (*c <= '~') && (*c != '\0')); ++c) ;
+  return(OdlFirstWord(c));
 
 }  /*  End routine:  "OdlNextWord"  */
 
@@ -5216,7 +5210,7 @@ char *OdlNextWord( char *text)
 
 char *OdlValueStart(text)
 
-char *text;
+  char *text;
 
 #else
 
@@ -5224,8 +5218,8 @@ char *OdlValueStart(char *text)
 
 #endif
 {
-    /*  find a character that is not a brace, paren, comma, or blank  */
-    return(text + strspn(text, "{}(), \n"));
+  /*  find a character that is not a brace, paren, comma, or blank  */
+  return(text + strspn(text, "{}(), \n"));
 
 }  /*  End routine:  "OdlValueStart"  */
 
@@ -5263,7 +5257,7 @@ char *OdlValueStart(char *text)
 
 char *OdlValueEnd(text)
 
-char *text;
+  char *text;
 
 #else
 
@@ -5271,22 +5265,22 @@ char *OdlValueEnd( char *text)
 
 #endif
 {
-    char *c = {NULL};
+  char *c = {NULL};
 
-	if (*text == '"') {
-		/* go until we find another '"' */
-		for (c = text+1 ; *c && *c != '"' ; c++);
-	} else {
-		/*  find a character that is a brace, paren, or comma  */
-		c = strpbrk(text, "{}(),");
-		if (c) {
-			/*  backup over any trailing blanks  */
-			for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
-		} else {
-			c = text+strlen(text)-1;
-		}
-	}
-    return(c);
+  if (*text == '"') {
+    /* go until we find another '"' */
+    for (c = text+1 ; *c && *c != '"' ; c++);
+  } else {
+    /*  find a character that is a brace, paren, or comma  */
+    c = strpbrk(text, "{}(),");
+    if (c) {
+      /*  backup over any trailing blanks  */
+      for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
+    } else {
+      c = text+strlen(text)-1;
+    }
+  }
+  return(c);
 
 }  /*  End routine:  "OdlValueEnd"  */
 
@@ -5323,7 +5317,7 @@ char *OdlValueEnd( char *text)
 #ifdef _NO_PROTO
 
 char *OdlValueRowStart(text)
-char *text;
+  char *text;
 
 #else
 
@@ -5331,8 +5325,8 @@ char *OdlValueRowStart( char *text)
 
 #endif
 {
-    /*  find a character that is not a brace or paren  */
-    return(text + strspn(text, "{}()\n"));
+  /*  find a character that is not a brace or paren  */
+  return(text + strspn(text, "{}()\n"));
 
 }  /*  End routine:  "OdlValueRowStart"  */
 
@@ -5369,7 +5363,7 @@ char *OdlValueRowStart( char *text)
 #ifdef _NO_PROTO
 
 char *OdlValueRowEnd(text)
-char *text;     
+  char *text;
 
 #else
 
@@ -5377,15 +5371,15 @@ char *OdlValueRowEnd( char *text)
 
 #endif
 {
-    char *c = {NULL};
+  char *c = {NULL};
 
-    /*  find a character that is a brace or paren  */
-    c = strpbrk(text, "{}()\n");
+  /*  find a character that is a brace or paren  */
+  c = strpbrk(text, "{}()\n");
 
-    /*  backup over any trailing blanks or commas  */
-    for (--c; ((c > text) && ((*c == ' ') || (*c == ',') || (*c == '\0'))); --c) ;
+  /*  backup over any trailing blanks or commas  */
+  for (--c; ((c > text) && ((*c == ' ') || (*c == ',') || (*c == '\0'))); --c) ;
 
-    return(c);
+  return(c);
 
 }  /*  End routine:  "OdlValueRowEnd"  */
 
@@ -5421,7 +5415,7 @@ char *OdlValueRowEnd( char *text)
 
 unsigned short OdlDataType (text)
 
-char *text;
+  char *text;
 
 #else
 
@@ -5429,296 +5423,296 @@ unsigned short OdlDataType (char *text)
 
 #endif
 {
-    char *c = {NULL};
-    char *u = {NULL};
-    char *tempstr = {NULL};
-    char *last_pound = {NULL};
-    int base;
-    unsigned long decimal_count = {0};
-    unsigned long hyphen_count = {0};
-    unsigned long colon_count = {0};
-    unsigned long t_count = {0};
-    unsigned short has_sign = {FALSE};
-    unsigned short type = {ODL_UNKNOWN};
-    unsigned short exponent_type = {ODL_UNKNOWN};
-    static char *valid_chars[17] = {
-        "",   /* base 0 */
-        "0",   /* base 1 */
-        "01",   /* base 2 */
-        "012",   /* base 3 */
-        "0123",   /* base 4 */
-        "01234",   /* base 5 */
-        "012345",   /* base 6 */
-        "0123456",   /* base 7 */
-        "01234567",   /* base 8 */
-        "012345678",   /* base 9 */
-        "0123456789",   /* base 10 */
-        "0123456789A",   /* base 11 */
-        "0123456789AB",   /* base 12 */
-        "0123456789ABC",   /* base 13 */
-        "0123456789ABCD",   /* base 14 */
-        "0123456789ABCDE",   /* base 15 */
-        "0123456789ABCDEF"};  /* base 16 */
+  char *c = {NULL};
+  char *u = {NULL};
+  char *tempstr = {NULL};
+  char *last_pound = {NULL};
+  int base;
+  unsigned long decimal_count = {0};
+  unsigned long hyphen_count = {0};
+  unsigned long colon_count = {0};
+  unsigned long t_count = {0};
+  unsigned short has_sign = {FALSE};
+  unsigned short type = {ODL_UNKNOWN};
+  unsigned short exponent_type = {ODL_UNKNOWN};
+  static const char *valid_chars[17] = {
+    "",   /* base 0 */
+    "0",   /* base 1 */
+    "01",   /* base 2 */
+    "012",   /* base 3 */
+    "0123",   /* base 4 */
+    "01234",   /* base 5 */
+    "012345",   /* base 6 */
+    "0123456",   /* base 7 */
+    "01234567",   /* base 8 */
+    "012345678",   /* base 9 */
+    "0123456789",   /* base 10 */
+    "0123456789A",   /* base 11 */
+    "0123456789AB",   /* base 12 */
+    "0123456789ABC",   /* base 13 */
+    "0123456789ABCD",   /* base 14 */
+    "0123456789ABCDE",   /* base 15 */
+    "0123456789ABCDEF"};  /* base 16 */
 
-    if (text != NULL)
-    {
-        /*  make a copy of the string  */
-        CopyString(tempstr, text)
+  if (text != NULL)
+  {
+    /*  make a copy of the string  */
+    CopyString(tempstr, text)
 
         /*  remove any units  */
         if ((u = (char *)strchr(tempstr, '<')) != NULL) *u = '\0';
 
-        /*  clean up blanks and convert to upper case  */
-        StripLeading(tempstr, ' ')
+    /*  clean up blanks and convert to upper case  */
+    StripLeading(tempstr, ' ')
         StripTrailing(tempstr, ' ')
         UpperCase(tempstr)
 
         c = tempstr;
 
-        type = ODL_SYMBOL;
+    type = ODL_SYMBOL;
 
-        /*  See if we have a double quoted text value  */
-        if (*c == '"')
-            type = ODL_TEXT;
-        else
-        /*  See if we have a single quoted text value  */
-        if (*c == '\'')
-            type = ODL_SYMBOL;
-        else
+    /*  See if we have a double quoted text value  */
+    if (*c == '"')
+      type = ODL_TEXT;
+    else
+      /*  See if we have a single quoted text value  */
+      if (*c == '\'')
+        type = ODL_SYMBOL;
+      else
         /*  See if we have a sequence of values  */
         if (*c == '{')
-            type = ODL_SEQUENCE;
+          type = ODL_SEQUENCE;
         else
-        /*  See if we have a set of values  */
-        if (*c == '(')
+          /*  See if we have a set of values  */
+          if (*c == '(')
             type = ODL_SET;
-        else
-        /*  See if we have any embedded blanks  */
-        if (strchr(c, ' ') != NULL)
-            type = ODL_UNKNOWN;
-        else
-        /*  See if we have an integer, real, date, or date-time value  */
-        {
-            /*  we're going to check each character  */
-            for ( ; *c != '\0'; ++c)
+          else
+            /*  See if we have any embedded blanks  */
+            if (strchr(c, ' ') != NULL)
+              type = ODL_UNKNOWN;
+            else
+              /*  See if we have an integer, real, date, or date-time value  */
             {
+              /*  we're going to check each character  */
+              for ( ; *c != '\0'; ++c)
+              {
                 /*  may have a number  */
                 if (isdigit(*c))
                 {
-                    if (c == tempstr)
-                        type = ODL_INTEGER;
-                    else
+                  if (c == tempstr)
+                    type = ODL_INTEGER;
+                  else
                     if (has_sign && (c == (tempstr + 1)))
-                        type = ODL_INTEGER;
+                      type = ODL_INTEGER;
                 }
                 else
-                /*  we may have a real number or a date-time  */
-                if (*c == '.')
-                {
+                  /*  we may have a real number or a date-time  */
+                  if (*c == '.')
+                  {
                     /*  we may have a real number  */
                     if (type == ODL_INTEGER)
-                        type = ODL_REAL;
+                      type = ODL_REAL;
                     else
-                    /*  date-times can only have one decimal point  */
-                    if (type == ODL_DATE_TIME)
-                    {
+                      /*  date-times can only have one decimal point  */
+                      if (type == ODL_DATE_TIME)
+                      {
                         if ((++decimal_count) > 1)
+                          type = ODL_UNKNOWN;
+                      }
+                      else
+                        /*  we may have a real number  */
+                        if (c == tempstr)
+                          type = ODL_REAL;
+                        else
+                          /*  we may have a signed real number  */
+                          if (has_sign && (c == (tempstr + 1)))
+                            type = ODL_REAL;
+                          else
                             type = ODL_UNKNOWN;
-                    }
-                    else
-                    /*  we may have a real number  */
-                    if (c == tempstr)
-                        type = ODL_REAL;
-                    else
-                    /*  we may have a signed real number  */
-                    if (has_sign && (c == (tempstr + 1)))
-                        type = ODL_REAL;
-                    else
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a real number in scientific notation */
-                if (*c == 'E')
-                {
-                    /*  only valid if we thought we had an int or real  */
-                    if ((type == ODL_INTEGER) || (type == ODL_REAL))
+                  }
+                  else
+                    /*  we may have a real number in scientific notation */
+                    if (*c == 'E')
                     {
+                      /*  only valid if we thought we had an int or real  */
+                      if ((type == ODL_INTEGER) || (type == ODL_REAL))
+                      {
                         /*  check out the exponent  */
                         exponent_type = (unsigned short) OdlDataType((c+1));
 
                         /*  we have a real number only if the exponent  */
                         /*  is real or int                              */
                         if ((exponent_type == ODL_REAL) || (exponent_type == ODL_INTEGER))
-                            type = ODL_REAL;
+                          type = ODL_REAL;
                         else
-                            type = ODL_UNKNOWN;
+                          type = ODL_UNKNOWN;
 
                         break;
-                    }
-                    else
+                      }
+                      else
                         if (type != ODL_SYMBOL)
-                            type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a signed number  */
-                if (*c == '+')
-                {
-                    /*  this had better be the first character  */
-                    if (c != tempstr)
-                        type = ODL_UNKNOWN;
-                    else
-                        has_sign = TRUE;
-                }
-                else
-                /*  we may have a date or a signed number */
-                if (*c == '-')
-                {
-                    /*  this had better be the first character  */
-                    if (c == tempstr)
-                        has_sign = TRUE;
-                    else
-                    /*  a date can have at most two hyphens  */
-                    if ((++hyphen_count) > 2)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  we thought we had an integer  */
-                    if (type == ODL_INTEGER)
-                        type = ODL_DATE;
-                    else
-                    /*  if it wasn't an int and it wasn't a date ...  */
-                    if (type != ODL_DATE)
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a date-time  */
-                if (*c == 'T')
-                {
-                    /*  we thought we had a date  */
-                    if (type == ODL_DATE)
-                        type = ODL_DATE_TIME;
-                    else
-                    /*  a date-time may only have one 'T'  */
-                    if (type == ODL_DATE_TIME)
-                    {
-                        if ((++t_count) > 1)
-                            type = ODL_UNKNOWN;
+                          type = ODL_UNKNOWN;
                     }
                     else
-                    /*  must be a symbol  */
-                    if (type != ODL_SYMBOL)
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a date-time  */
-                if (*c == 'Z')
-                {
-                    /*  only a date time may contain a 'Z'  */
-                    if (type == ODL_DATE_TIME)
-                    {
-                        /*  it had better be the last char in the string  */
-                        if (*(c + 1) != '\0')
-                            type = ODL_UNKNOWN;
-                    }
-                    else
-                    if (type != ODL_SYMBOL)
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a date-time  */
-                if (*c == ':')
-                {
-                    /*  only a date-time may contain colons  */
-                    if (type != ODL_DATE_TIME)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  there can't be more than two of them  */
-                    if ((++colon_count) > 2)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  characters on either side must be digits  */
-                    if ((! isdigit(*(c-1))) || (! isdigit(*(c+1))))
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  decimal points can't occur before the last colon  */
-                    if (decimal_count > 0)
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we may have a non-decimal integer  */
-                if (*c == '#')
-                {
-                    /*  we didn't think it WAS an integer  */
-                    if (type != ODL_INTEGER)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  the base can't be signed  */
-                    if (has_sign)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  missing the closing '#' character  */
-                    if ((last_pound = (char *)strchr(c+1, '#')) == NULL)
-                        type = ODL_UNKNOWN;
-                    else
-                    /*  closing '#' char is not at the end  */
-                    if (*(last_pound + 1) != '\0')
-                        type = ODL_UNKNOWN;
-                    else
-                    {
-                        /*  looks good so far, but we have to make sure  */
-                        /*  stuff between the '#' characters is valid    */
-                        /*  with the specified base                      */
-
-                        /*  isolate the base  */
-                        *c = '\0'; 
-                        base = atoi(tempstr);
-
-                        /*  ignore the integer's sign  */
-                        ++c;
-                        if ((*c == '+') || (*c == '-')) ++c;
-
-                        /*  isolate the number part  */
-                        *last_pound = '\0';
-
-                        /*  valid bases are 2 through 16, inclusive  */
-                        if ((base < 2) || (base > 16))
-                            type = ODL_UNKNOWN;
+                      /*  we may have a signed number  */
+                      if (*c == '+')
+                      {
+                        /*  this had better be the first character  */
+                        if (c != tempstr)
+                          type = ODL_UNKNOWN;
                         else
-                        /*  look for invalid digits for the specified base  */
-                        if (c[strspn(c, valid_chars[base])] != '\0')
-                            type = ODL_UNKNOWN;
-                    }
+                          has_sign = TRUE;
+                      }
+                      else
+                        /*  we may have a date or a signed number */
+                        if (*c == '-')
+                        {
+                          /*  this had better be the first character  */
+                          if (c == tempstr)
+                            has_sign = TRUE;
+                          else
+                            /*  a date can have at most two hyphens  */
+                            if ((++hyphen_count) > 2)
+                              type = ODL_UNKNOWN;
+                            else
+                              /*  we thought we had an integer  */
+                              if (type == ODL_INTEGER)
+                                type = ODL_DATE;
+                              else
+                                /*  if it wasn't an int and it wasn't a date ...  */
+                                if (type != ODL_DATE)
+                                  type = ODL_UNKNOWN;
+                        }
+                        else
+                          /*  we may have a date-time  */
+                          if (*c == 'T')
+                          {
+                            /*  we thought we had a date  */
+                            if (type == ODL_DATE)
+                              type = ODL_DATE_TIME;
+                            else
+                              /*  a date-time may only have one 'T'  */
+                              if (type == ODL_DATE_TIME)
+                              {
+                                if ((++t_count) > 1)
+                                  type = ODL_UNKNOWN;
+                              }
+                              else
+                                /*  must be a symbol  */
+                                if (type != ODL_SYMBOL)
+                                  type = ODL_UNKNOWN;
+                          }
+                          else
+                            /*  we may have a date-time  */
+                            if (*c == 'Z')
+                            {
+                              /*  only a date time may contain a 'Z'  */
+                              if (type == ODL_DATE_TIME)
+                              {
+                                /*  it had better be the last char in the string  */
+                                if (*(c + 1) != '\0')
+                                  type = ODL_UNKNOWN;
+                              }
+                              else
+                                if (type != ODL_SYMBOL)
+                                  type = ODL_UNKNOWN;
+                            }
+                            else
+                              /*  we may have a date-time  */
+                              if (*c == ':')
+                              {
+                                /*  only a date-time may contain colons  */
+                                if (type != ODL_DATE_TIME)
+                                  type = ODL_UNKNOWN;
+                                else
+                                  /*  there can't be more than two of them  */
+                                  if ((++colon_count) > 2)
+                                    type = ODL_UNKNOWN;
+                                  else
+                                    /*  characters on either side must be digits  */
+                                    if ((! isdigit(*(c-1))) || (! isdigit(*(c+1))))
+                                      type = ODL_UNKNOWN;
+                                    else
+                                      /*  decimal points can't occur before the last colon  */
+                                      if (decimal_count > 0)
+                                        type = ODL_UNKNOWN;
+                              }
+                              else
+                                /*  we may have a non-decimal integer  */
+                                if (*c == '#')
+                                {
+                                  /*  we didn't think it WAS an integer  */
+                                  if (type != ODL_INTEGER)
+                                    type = ODL_UNKNOWN;
+                                  else
+                                    /*  the base can't be signed  */
+                                    if (has_sign)
+                                      type = ODL_UNKNOWN;
+                                    else
+                                      /*  missing the closing '#' character  */
+                                      if ((last_pound = (char *)strchr(c+1, '#')) == NULL)
+                                        type = ODL_UNKNOWN;
+                                      else
+                                        /*  closing '#' char is not at the end  */
+                                        if (*(last_pound + 1) != '\0')
+                                          type = ODL_UNKNOWN;
+                                        else
+                                        {
+                                          /*  looks good so far, but we have to make sure  */
+                                          /*  stuff between the '#' characters is valid    */
+                                          /*  with the specified base                      */
 
-                    if (type != ODL_UNKNOWN) 
-                    {
-                        type = ODL_INTEGER;
-                        break;
-                    }
-                }
-                else
-                /*  we may have an unquoted symbol  */
-                if (isalpha(*c) || (*c == '_'))
-                {
-                    if (type != ODL_SYMBOL)
-                        type = ODL_UNKNOWN;
-                }
-                else
-                /*  we havn't got a clue  */
-                    type = ODL_UNKNOWN;
+                                          /*  isolate the base  */
+                                          *c = '\0';
+                                          base = atoi(tempstr);
+
+                                          /*  ignore the integer's sign  */
+                                          ++c;
+                                          if ((*c == '+') || (*c == '-')) ++c;
+
+                                          /*  isolate the number part  */
+                                          *last_pound = '\0';
+
+                                          /*  valid bases are 2 through 16, inclusive  */
+                                          if ((base < 2) || (base > 16))
+                                            type = ODL_UNKNOWN;
+                                          else
+                                            /*  look for invalid digits for the specified base  */
+                                            if (c[strspn(c, valid_chars[base])] != '\0')
+                                              type = ODL_UNKNOWN;
+                                        }
+
+                                  if (type != ODL_UNKNOWN)
+                                  {
+                                    type = ODL_INTEGER;
+                                    break;
+                                  }
+                                }
+                                else
+                                  /*  we may have an unquoted symbol  */
+                                  if (isalpha(*c) || (*c == '_'))
+                                  {
+                                    if (type != ODL_SYMBOL)
+                                      type = ODL_UNKNOWN;
+                                  }
+                                  else
+                                    /*  we havn't got a clue  */
+                                    type = ODL_UNKNOWN;
 
                 if (type == ODL_UNKNOWN) break;
 
-            }  /*  End:  "for ( ; ..."  */
+              }  /*  End:  "for ( ; ..."  */
 
-            if (has_sign && (type != ODL_INTEGER) && (type != ODL_REAL))
+              if (has_sign && (type != ODL_INTEGER) && (type != ODL_REAL))
                 type = ODL_UNKNOWN;
 
-        }  /*  End:  "if (*c == '(') ... else ..."  */
+            }  /*  End:  "if (*c == '(') ... else ..."  */
 
-        LemmeGo(tempstr)
+    LemmeGo(tempstr)
 
-    }  /*  End:  "if (text != NULL) ..."  */
+  }  /*  End:  "if (text != NULL) ..."  */
 
-    return(type);
+  return(type);
 
 }  /*  End:  "OdlDataType"  */
 
@@ -5753,8 +5747,8 @@ unsigned short OdlDataType (char *text)
 
 char *OdlTypeString (type, type_string)
 
-unsigned short type;
-char *type_string;
+  unsigned short type;
+  char *type_string;
 
 #else
 
@@ -5762,42 +5756,42 @@ char *OdlTypeString (unsigned short type, char *type_string)
 
 #endif
 {
-    static char local_type_string [TB_MAXLINE];
+  static char local_type_string [TB_MAXLINE];
 
-    switch (type)
-    {
-        case ODL_INTEGER   : strcpy(local_type_string, "INTEGER");
-                             break;
+  switch (type)
+  {
+    case ODL_INTEGER   : strcpy(local_type_string, "INTEGER");
+                         break;
 
-        case ODL_REAL      : strcpy(local_type_string, "REAL");
-                             break;
+    case ODL_REAL      : strcpy(local_type_string, "REAL");
+                         break;
 
-        case ODL_SYMBOL    : strcpy(local_type_string, "SYMBOL");
-                             break;
+    case ODL_SYMBOL    : strcpy(local_type_string, "SYMBOL");
+                         break;
 
-        case ODL_TEXT      : strcpy(local_type_string, "TEXT");
-                             break;
+    case ODL_TEXT      : strcpy(local_type_string, "TEXT");
+                         break;
 
-        case ODL_DATE      : strcpy(local_type_string, "DATE");
-                             break;
+    case ODL_DATE      : strcpy(local_type_string, "DATE");
+                         break;
 
-        case ODL_DATE_TIME : strcpy(local_type_string, "DATE-TIME");
-                             break;
+    case ODL_DATE_TIME : strcpy(local_type_string, "DATE-TIME");
+                         break;
 
-        case ODL_SEQUENCE  : strcpy(local_type_string, "SEQUENCE");
-                             break;
+    case ODL_SEQUENCE  : strcpy(local_type_string, "SEQUENCE");
+                         break;
 
-        case ODL_SET       : strcpy(local_type_string, "SET");
-                             break;
+    case ODL_SET       : strcpy(local_type_string, "SET");
+                         break;
 
-        default            : strcpy(local_type_string, "UNKNOWN");
-                             break;
+    default            : strcpy(local_type_string, "UNKNOWN");
+                         break;
 
-    }  /*  End:  "switch (type) ..."  */
+  }  /*  End:  "switch (type) ..."  */
 
-    if (type_string != NULL) strcpy(type_string, local_type_string);
+  if (type_string != NULL) strcpy(type_string, local_type_string);
 
-    return(local_type_string);
+  return(local_type_string);
 
 }  /*  End:  "OdlTypeString"  */
 
@@ -5832,52 +5826,52 @@ char *OdlTypeString (unsigned short type, char *type_string)
 
 char *OdlTempFname()
 {
-        int fd;
-		char pathbuf[256];
-        char *tmpdir = getenv("TMPDIR");
+  int fd;
+  char pathbuf[256];
+  char *tmpdir = getenv("TMPDIR");
 
-        if (tmpdir == NULL) tmpdir = "/tmp";
+  if (tmpdir == NULL) tmpdir = (char *)"/tmp";
 
-        sprintf(pathbuf, "%s/XXXXXX", tmpdir);
-        fd = mkstemp(pathbuf);
-        if (fd == -1) {
-                return(NULL);
-        }
-        close(fd);
-        return(strdup(pathbuf));
+  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+  fd = mkstemp(pathbuf);
+  if (fd == -1) {
+    return(NULL);
+  }
+  close(fd);
+  return(strdup(pathbuf));
 }  /*  End:  "OdlTempFname"  */
 
 
 short CheckBalance(text)
-char *text;
+  char *text;
 {
-    long quote_nesting = 0;
-    long brace_nesting = 0;
-    long paren_nesting = 0;
-    char *c = {NULL};
-    char *c1 = {NULL};
+  long quote_nesting = 0;
+  long brace_nesting = 0;
+  long paren_nesting = 0;
+  char *c = {NULL};
+  char *c1 = {NULL};
 
-    c1 = (char *) strchr(text, '=');
-    c = OdlFirstWord(c1 + 1);
+  c1 = (char *) strchr(text, '=');
+  c = OdlFirstWord(c1 + 1);
 
-    if ((*c == '(') || (*c == '{'))
-        OdlNestingLevel(c,&brace_nesting,&paren_nesting);
-    else
+  if ((*c == '(') || (*c == '{'))
+    OdlNestingLevel(c,&brace_nesting,&paren_nesting);
+  else
+    if (*c == '"')
+    {
+      for (; *c != '\0'; ++c)
+      {
         if (*c == '"')
         {
-            for (; *c != '\0'; ++c)
-            {
-                if (*c == '"') 
-                {
-                    if (quote_nesting == 0)
-                        quote_nesting = 1;
-                    else
-                        quote_nesting = 0;
-                }
-            }
+          if (quote_nesting == 0)
+            quote_nesting = 1;
+          else
+            quote_nesting = 0;
         }
+      }
+    }
 
-    return((brace_nesting + paren_nesting + quote_nesting) == 0);
+  return((brace_nesting + paren_nesting + quote_nesting) == 0);
 }
 
 /*========================================================================*/
@@ -5888,23 +5882,23 @@ char *text;
 
 int ListToArray(TB_STRING_LIST *list, char ***array)
 {
-    TB_STRING_LIST *t, *t2;
-    int count=0;
-	int i = 0;
+  TB_STRING_LIST *t, *t2;
+  int count=0;
+  int i = 0;
 
-    for (t = list ; t != NULL ; t=t->next) {
-        count++;
-    }
-    *array = calloc(count, sizeof(char *));
+  for (t = list ; t != NULL ; t=t->next) {
+    count++;
+  }
+  *array = calloc(count, sizeof(char *));
 
-	t = list;
-	while(t != NULL) {
-        (*array)[i++] = t->text;
-        t2 = t->next;
-        LemmeGo(t);
-        t = t2;
-    }
-	return(i);
+  t = list;
+  while(t != NULL) {
+    (*array)[i++] = t->text;
+    t2 = t->next;
+    LemmeGo(t);
+    t = t2;
+  }
+  return(i);
 }
 
 #if 0
@@ -5912,134 +5906,133 @@ int ListToArray(TB_STRING_LIST *list, char ***array)
  * helper functions
  *
  */
-char *
+  char *
 basename(const char *name)
 {
-	const char *base = name;
+  const char *base = name;
 
-	while (*name) {
-		if (*name++ == '/') {
-			base = name;
-		}
-	}
-	return (char *) base;
+  while (*name) {
+    if (*name++ == '/') {
+      base = name;
+    }
+  }
+  return (char *) base;
 }
 
 #endif
 
 #if 0
-char *
+  char *
 dirname(char *path)
 {
-	char *newpath;
-	char *slash;
-	int length;		/* Length of result, not including NUL.  */
+  char *newpath;
+  char *slash;
+  int length;		/* Length of result, not including NUL.  */
 
-	slash = strrchr(path, '/');
-	if (slash == 0) {
-		/* File is in the current directory.  */
-		path = ".";
-		length = 1;
-	} else {
-		/* Remove any trailing slashes from the result.  */
-		while (slash > path && *slash == '/')
-			--slash;
+  slash = strrchr(path, '/');
+  if (slash == 0) {
+    /* File is in the current directory.  */
+    path = ".";
+    length = 1;
+  } else {
+    /* Remove any trailing slashes from the result.  */
+    while (slash > path && *slash == '/')
+      --slash;
 
-		length = slash - path + 1;
-	}
-	newpath = (char *) malloc(length + 1);
-	if (newpath == 0)
-		return 0;
-	strncpy(newpath, path, length);
-	newpath[length] = 0;
-	return newpath;
+    length = slash - path + 1;
+  }
+  newpath = (char *) malloc(length + 1);
+  if (newpath == 0)
+    return 0;
+  strncpy(newpath, path, length);
+  newpath[length] = 0;
+  return newpath;
 }
 #endif
 
 char *uppercase(char *s)
 {
-	char *p;
-	for (p = s ; p && *p ; p++) {
-		if (islower(*p)) *p = *p - 'a' + 'A';
-	}
-   return(s);
+  char *p;
+  for (p = s ; p && *p ; p++) {
+    if (islower(*p)) *p = *p - 'a' + 'A';
+  }
+  return(s);
 }
 char *lowercase(char *s)
 {
-	char *p;
-	for (p = s ; p && *p ; p++) {
-		if (isupper(*p)) *p = *p - 'A' + 'a';
-	}
-   return(s);
+  char *p;
+  for (p = s ; p && *p ; p++) {
+    if (isupper(*p)) *p = *p - 'A' + 'a';
+  }
+  return(s);
 }
-char *
+  char *
 find_file(char *fname)
 {
-	if (!access(fname, R_OK)) return(fname);
+  if (!access(fname, R_OK)) return(fname);
 
-	/**
-	 ** try some permutations
-	 **/
-    {
-		char buf[256], buf2[256], buf3[256], *p;
-		/**
-		 ** original path, trailing component lowercased
-		 **/
-		strcpy(buf, fname);
-		lowercase((char *)basename(buf));
-		if (!access(buf, R_OK)) return(strdup(buf));
+  /**
+   ** try some permutations
+   **/
+  {
+    char buf[256], buf2[256], buf3[256], *p;
+    /**
+     ** original path, trailing component lowercased
+     **/
+    strcpy(buf, fname);
+    lowercase((char *)basename(buf));
+    if (!access(buf, R_OK)) return(strdup(buf));
 
-		/**
-		 ** original path, trailing component uppercased
-		 **/
-		uppercase((char *)basename(buf));
-		if (!access(buf, R_OK)) return(strdup(buf));
+    /**
+     ** original path, trailing component uppercased
+     **/
+    uppercase((char *)basename(buf));
+    if (!access(buf, R_OK)) return(strdup(buf));
 
-		/**
-		 ** whole path lowercased
-		 **/
-		strcpy(buf, fname);
-		lowercase(buf);
-		if (!access(buf, R_OK)) return(strdup(buf));
+    /**
+     ** whole path lowercased
+     **/
+    strcpy(buf, fname);
+    lowercase(buf);
+    if (!access(buf, R_OK)) return(strdup(buf));
 
-		/**
-		 ** whole path uppercased
-		 **/
-		uppercase(buf);
-		if (!access(buf, R_OK)) return(strdup(buf));
+    /**
+     ** whole path uppercased
+     **/
+    uppercase(buf);
+    if (!access(buf, R_OK)) return(strdup(buf));
 
-		/**
-		 ** One last ditch attempt:  twiddle case on each piece
-		 **/
-		strcpy(buf, fname);
-		buf2[0] = 0;
-      
-		for (p = strtok(buf, "/") ; p != NULL ; p = strtok(NULL, "/")) {
-				if (buf2[0] != 0) {
-					sprintf(buf3, "%s/%s", buf2, p);
-				} else {
-					sprintf(buf3, "%s", p);
-				}
-				if (!access(buf3, F_OK)) {
-						strcpy(buf2, buf3);
-						continue;
-				}
+    /**
+     ** One last ditch attempt:  twiddle case on each piece
+     **/
+    strcpy(buf, fname);
+    buf2[0] = 0;
 
-				sprintf(buf3, "%s/%s", buf2, uppercase(p));
-				if (!access(buf3, F_OK)) {
-						strcpy(buf2, buf3);
-						continue;
-				}
+    for (p = strtok(buf, "/") ; p != NULL ; p = strtok(NULL, "/")) {
+      if (buf2[0] != 0) {
+        sprintf(buf3, "%s/%s", buf2, p);
+      } else {
+        sprintf(buf3, "%s", p);
+      }
+      if (!access(buf3, F_OK)) {
+        strcpy(buf2, buf3);
+        continue;
+      }
 
-				sprintf(buf3, "%s/%s", buf2, lowercase(p));
-				if (!access(buf3, F_OK)) {
-						strcpy(buf2, buf3);
-						continue;
-				}
-            fname = strdup(buf3);
-				break;
-		}
-	}
-	return(fname);
+      sprintf(buf3, "%s/%s", buf2, uppercase(p));
+      if (!access(buf3, F_OK)) {
+        strcpy(buf2, buf3);
+        continue;
+      }
+
+      sprintf(buf3, "%s/%s", buf2, lowercase(p));
+      if (!access(buf3, F_OK)) {
+        strcpy(buf2, buf3);
+        continue;
+      }
+      fname = strdup(buf3);
+      break;
+    }
+  }
+  return(fname);
 }
-

@@ -30,7 +30,7 @@
 
 /* Photometric names. */
 
-static const unsigned char * const Photometrics[] = {
+static const char * const Photometrics[] = {
   "MINISWHITE",
   "MINISBLACK",
   "RGB",
@@ -160,6 +160,7 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
         printf("Shifting 16-bit tiff down by 32768.\n");
       }
     }
+
   } else if (bits == 32) {
     // TODO(gorelick): Mon Jun 22 10:29:27 PDT 2009
     // We're currently assuming that this is a float.  We should 
@@ -185,8 +186,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
   tdata_t	buffer;
   size_t	row_stride;		/* Bytes per scanline. */
   unsigned char	*data;
-  unsigned short orient, z, bits_per_sample, planar_config, plane, fillorder, photometric;
-  int            eformat;
+  unsigned short z, bits_per_sample, planar_config, plane, photometric;
 
   rewind(fp);
 

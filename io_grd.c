@@ -67,7 +67,7 @@ iom_GetGRDHeader(
 {
     struct GRD *grd;
     char buf[256];
-    int size,size2;
+    int size;
 
 
     iom_init_iheader(h);

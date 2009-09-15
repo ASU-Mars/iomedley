@@ -338,7 +338,6 @@ iom_WritePNG(char *filename,
 
   png_structp	png_ptr;
   png_infop	info_ptr;
-  png_colorp	palette;
   png_bytep	*row_pointers = NULL;
 
   /* Check file accessibility. */

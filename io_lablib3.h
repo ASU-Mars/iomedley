@@ -173,7 +173,7 @@ OBJDESC *OdlParseLabelFile (char *, char *, MASK, unsigned short);
 OBJDESC *OdlParseLabelFptr (FILE *, char *, MASK, unsigned short);
 OBJDESC *OdlParseLabelString (char *, char *, MASK, unsigned short);
 OBJDESC *OdlExpandLabelFile (OBJDESC *, char *, char *, MASK, unsigned short);
-OBJDESC *OdlFindObjDesc(OBJDESC *, char *, char *, char *, 
+OBJDESC *OdlFindObjDesc(OBJDESC *, const char *, const char *, const char *,
                        unsigned long, unsigned short);
 OBJDESC *OdlNextObjDesc (OBJDESC *, unsigned long, unsigned short *);
 OBJDESC *OdlTraverseTree (OBJDESC *, unsigned long);
@@ -182,7 +182,8 @@ OBJDESC *OdlPasteObjDesc (OBJDESC *, OBJDESC *);
 OBJDESC *OdlPasteObjDescBefore (OBJDESC *, OBJDESC *);
 OBJDESC *OdlPasteObjDescAfter (OBJDESC *, OBJDESC *);
 OBJDESC *OdlCopyObjDesc (OBJDESC *);
-OBJDESC *OdlNewObjDesc (char *,char *,char *,char *,char *, char *, short, long);
+OBJDESC *OdlNewObjDesc (const char *,const char *,const char *,const char *,
+                        const char *, const char *, const short, const long);
 char *OdlGetLabelVersion (OBJDESC *);
 char *OdlGetObjDescClassName (OBJDESC *);
 int OdlGetObjDescChildCount (OBJDESC *);
@@ -213,10 +214,10 @@ KEYWORD *OdlFreeAllKwds (OBJDESC *);
 KEYWORD *OdlFreeKwd (KEYWORD *);
 FILE *OdlOpenMessageFile (char *, FILE *);
 FILE *OdlLocateStart(char *, unsigned long, unsigned short);
-short OdlPrintMessage (char *, FILE *, long, char *);
+short OdlPrintMessage (const char *, FILE *, long, const char *);
 void OdlPrintHierarchy (OBJDESC *, char *, FILE *);
 void OdlPrintLabel (OBJDESC *, char *, FILE *, unsigned long);
-OBJDESC *OdlParseFile (char *, FILE *, char *, FILE *, 
+OBJDESC *OdlParseFile (char *, FILE *, char *, FILE *,
                       unsigned short, unsigned short, unsigned short, unsigned short);
 char *OdlFirstWord (char *);
 char *OdlNextWord (char *);
@@ -229,14 +230,14 @@ char *OdlTypeString (unsigned short, char *);
 TB_STRING_LIST *OdlGetAllKwdValues(KEYWORD *);
 int OdlGetAllKwdValuesArray(KEYWORD *, char ***);
 char *OdlTempFname();
-unsigned short OdlWildCardCompare(char *, char *);
+unsigned short OdlWildCardCompare(const char *, const char *);
 short CheckBalance(char *);
 int ListToArray(TB_STRING_LIST *, char ***);
 OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned short suppress_messages);
 
 
 #endif  /* _NO_PROTO  */
-                              
+
 /**************************************************************************/
 /*                       End of lablib3.h stuff                          */
 /**************************************************************************/

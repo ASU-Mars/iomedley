@@ -58,10 +58,9 @@ iom_isENVI(FILE *fp)
 **   s2 is the string
 */
 static char *
-envi_get_value(char *s1, char *s2)
+envi_get_value(const char *s1, const char *s2)
 {
     char *p, *q;
-    int len;
 
 	p = strstr(s1, s2);
 	if (p) {
@@ -192,7 +191,7 @@ iom_GetENVIHeader(FILE *fp, char *fname, struct iom_iheader *h)
 }
 
 void
-stradd(char *ptr, char *fmt, ...) 
+stradd(char *ptr, const char *fmt, ...) 
 {
 	va_list ap;
 
@@ -274,7 +273,7 @@ iom_WriteENVI(
     }
 
 
-	sprintf(tbuf, "%d", strlen(ptr));
+	sprintf(tbuf, "%zd", strlen(ptr));
 /*	                     01234567890123456 */
 	strncpy(strstr(ptr, "header offset = 0")+16, tbuf, strlen(tbuf));
     fwrite(ptr, strlen(ptr), 1, fp);

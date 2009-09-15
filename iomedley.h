@@ -97,9 +97,9 @@ typedef enum {
 #define iom_GetBands(s,org)     (s)[((org) == iom_BIP ? 0 : ((org) == iom_BIL ? 1 : 2))]
 
 extern int iom_orders[3][3];
-extern char *iom_EFORMAT2STR[];
-extern char *iom_FORMAT2STR[];
-extern char *iom_ORG2STR[];
+extern const char *iom_EFORMAT2STR[];
+extern const char *iom_FORMAT2STR[];
+extern const char *iom_ORG2STR[];
 /* extern int iom_VERBOSE; */
 
 
@@ -138,7 +138,7 @@ struct iom_iheader {
 
     float gain, offset; /* data multiplier and additive offset     */
 
-    char *data;         /* non-NULL if all of the image is loaded  */
+    unsigned char *data;         /* non-NULL if all of the image is loaded  */
 
     char *ddfname;      /* detached data-file name (if any)        */
                         /* see io_isis.c                           */
@@ -153,37 +153,41 @@ struct iom_iheader {
 typedef char *iom_cptr;
 void iom_swp(iom_cptr pc1, iom_cptr pc2);
 
+// NOTE(gorelick): These macros used to return the transformed value.
+// They no longer do that.  If you assign this function-looking thing
+// to a value, you're (probably) only going to get the last byte.
+
 #ifdef WORDS_BIGENDIAN
 
-#define iom_MSB8(s) 	(s)
-#define iom_MSB4(s) 	(s)
-#define iom_MSB2(s) 	(s)
+#define iom_MSB8(s) 	
+#define iom_MSB4(s) 	
+#define iom_MSB2(s) 	
 
 #define iom_LSB8(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[7])), \
                          iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[6])), \
                          iom_swp(&(((iom_cptr)(s))[2]), &(((iom_cptr)(s))[5])), \
-                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])),(s))
+                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])))
 
 #define iom_LSB4(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[3])), \
-                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])),(s))
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])))
 
-#define iom_LSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])),(s))
+#define iom_LSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])))
 
 #else /* little endian */
 
 #define iom_MSB8(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[7])), \
                          iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[6])), \
                          iom_swp(&(((iom_cptr)(s))[2]), &(((iom_cptr)(s))[5])), \
-                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])),(s))
+                         iom_swp(&(((iom_cptr)(s))[3]), &(((iom_cptr)(s))[4])))
 
 #define iom_MSB4(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[3])), \
-                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])),(s))
+                         iom_swp(&(((iom_cptr)(s))[1]), &(((iom_cptr)(s))[2])))
 
-#define iom_MSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])),(s))
+#define iom_MSB2(s) 	(iom_swp(&(((iom_cptr)(s))[0]), &(((iom_cptr)(s))[1])))
 
-#define iom_LSB8(s) 	(s)
-#define iom_LSB4(s) 	(s)
-#define iom_LSB2(s) 	(s)
+#define iom_LSB8(s) 	
+#define iom_LSB4(s) 	
+#define iom_LSB2(s) 	
 
 #endif /* WORDS_BIGENDIAN */
 
