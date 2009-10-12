@@ -36,6 +36,7 @@
 #include "header.h"
 #include "io_lablib3.h"
 #include <fcntl.h>
+#include <libgen.h>
 #ifdef _WIN32
 #define mkstemp(p) open(_mktemp(p), _O_CREAT | _O_SHORT_LIVED | _O_EXCL)
 #endif
@@ -5980,13 +5981,13 @@ find_file(char *fname)
      ** original path, trailing component lowercased
      **/
     strcpy(buf, fname);
-    lowercase((char *)basename(buf));
+    lowercase(basename(buf));
     if (!access(buf, R_OK)) return(strdup(buf));
 
     /**
      ** original path, trailing component uppercased
      **/
-    uppercase((char *)basename(buf));
+    uppercase(basename(buf));
     if (!access(buf, R_OK)) return(strdup(buf));
 
     /**
