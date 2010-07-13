@@ -464,5 +464,6 @@ int iom__ConvertToBIP(unsigned char *,       /* Image data */
 int iom_isAVIRIS(FILE *);
 int iom_WriteENVI(char *, void *, struct iom_iheader *, int);
 iom_edf iom_ConvertISISType(char *, char *, char *);
+iom_edf iomConvertISISType(char *, int);
 
 #endif /* _IOMEDLEY_H_ */

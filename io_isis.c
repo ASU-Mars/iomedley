@@ -38,7 +38,6 @@ iom_isISIS(FILE *fp)
 }
 
 
-
 int
 iom_GetISISHeader(
     FILE *fp, 
@@ -549,8 +548,6 @@ iom_edf
 iom_ConvertISISType(char *type, char * bits, char *bytes)
 {
     int item_bytes = 0;
-    int format = iom_EDF_INVALID; /* Assume invalid format to start with */
-    char *q;
     
     if (bits){
         switch(atoi(bits)){
@@ -562,6 +559,16 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
     else if (bytes){
         item_bytes = atoi(bytes);
     }
+
+	return iomConvertISISType(type, item_bytes);
+}
+
+
+iom_edf
+iomConvertISISType(char *type, int item_bytes)
+{
+    int format = iom_EDF_INVALID; /* Assume invalid format to start with */
+    char *q;
     
     q = type;
     
