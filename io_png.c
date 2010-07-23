@@ -217,9 +217,6 @@ iom_ReadPNG(FILE *fp,
   color_type = png_get_color_type(png_ptr, info_ptr);
 #endif
 
-  z = png_get_channels(png_ptr, info_ptr);
-  row_stride = png_get_rowbytes(png_ptr, info_ptr);
-
   /* Extract packed pixels of bit depths 1,2,4 into full bytes. */
   png_set_packing(png_ptr);
 
@@ -248,6 +245,11 @@ iom_ReadPNG(FILE *fp,
 
   /* This might not be necessary with the conversions used, but won't hurt. */
   png_read_update_info(png_ptr, info_ptr);
+
+  z = png_get_channels(png_ptr, info_ptr);
+  row_stride = png_get_rowbytes(png_ptr, info_ptr);
+  bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+
 
 #if 0
   /* FIX: remove this block? */
