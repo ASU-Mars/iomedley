@@ -5951,7 +5951,7 @@ dirname(char *path)
 }
 #endif
 
-char *uppercase(char *s)
+static char *uppercase(char *s)
 {
   char *p;
   for (p = s ; p && *p ; p++) {
@@ -5959,7 +5959,7 @@ char *uppercase(char *s)
   }
   return(s);
 }
-char *lowercase(char *s)
+static char *lowercase(char *s)
 {
   char *p;
   for (p = s ; p && *p ; p++) {
