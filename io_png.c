@@ -82,6 +82,17 @@ iom_isPNG(FILE *fp)
 
 }
 
+static int *
+toInts(unsigned short *in, size_t n){
+	int *out = (int *)realloc(in, n*sizeof(int));
+
+	while(n-- > 0){
+		out[n] = (int)in[n] & 0x0000FFFF;
+	}
+
+	return out;
+}
+
 int
 iom_GetPNGHeader(FILE *fp, char *filename, struct iom_iheader *h)
 {
@@ -106,8 +117,12 @@ iom_GetPNGHeader(FILE *fp, char *filename, struct iom_iheader *h)
     h->eformat = iom_MSB_INT_1;
     h->format = iom_BYTE;
   } else if (bits == 16) {
-    h->eformat = iom_MSB_INT_2;
-    h->format = iom_SHORT;
+    /* h->eformat = iom_MSB_INT_2;
+    h->format = iom_SHORT; */
+    /* switch to next higher data width - since we don't have 16-bit unsigned shorts */
+    data = (unsigned char *)toInts((unsigned short *)data, (size_t)x*(size_t)y*(size_t)z);
+    h->eformat = iom_MSB_INT_4;
+    h->format = iom_INT;
   } else {
     if (iom_is_ok2print_unsupp_errors()) {
       fprintf(stderr, "ERROR: can't handle %d-bit PNG data\n", bits);
@@ -250,6 +265,11 @@ iom_ReadPNG(FILE *fp,
   row_stride = png_get_rowbytes(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
+#ifndef WORDS_BIGENDIAN
+  if (bit_depth > 8) {
+    png_set_swap(png_ptr);
+  }
+#endif
 
 #if 0
   /* FIX: remove this block? */
@@ -278,7 +298,7 @@ iom_ReadPNG(FILE *fp,
       fprintf(stderr, "ERROR: unable to allocate %ld bytes for row-pointers in iom_ReadPNG()\n",
               ((size_t)y) * sizeof(png_bytep));
     }
-	free(data);
+    free(data);
     return 0;
   }
   
