@@ -273,7 +273,7 @@ iom_WriteENVI(
     }
 
 
-	sprintf(tbuf, "%zd", strlen(ptr));
+	sprintf(tbuf, "%lu", strlen(ptr));
 /*	                     01234567890123456 */
 	strncpy(strstr(ptr, "header offset = 0")+16, tbuf, strlen(tbuf));
     fwrite(ptr, strlen(ptr), 1, fp);
