@@ -554,6 +554,7 @@ iom_ConvertISISType(char *type, char * bits, char *bytes)
             case 8: item_bytes = 1; break;
             case 16: item_bytes = 2; break;
             case 32: item_bytes = 4; break;
+            case 64: item_bytes = 8; break;
         }
     }
     else if (bytes){
@@ -615,19 +616,23 @@ iomConvertISISType(char *type, int item_bytes)
         switch(item_bytes){
 #ifdef WORDS_BIGENDIAN
             case 4: format = iom_MSB_IEEE_REAL_4; break;
+            case 8: format = iom_MSB_IEEE_REAL_8; break;
 #else /* little endian */
             case 4: format = iom_LSB_IEEE_REAL_4; break;
+            case 8: format = iom_LSB_IEEE_REAL_8; break;
 #endif /* WORDS_BIGENDIAN */
         }
     }
     else if (!strcmp(q, "SUN_REAL") || !strcmp(q, "IEEE_REAL")){
         switch(item_bytes){
             case 4: format = iom_MSB_IEEE_REAL_4; break;
+            case 8: format = iom_MSB_IEEE_REAL_8; break;
         }
     }
     else if (!strcmp(q, "PC_REAL") || !strcmp(q, "RIEEE_REAL")){
         switch(item_bytes){
             case 4: format = iom_LSB_IEEE_REAL_4; break;
+            case 8: format = iom_LSB_IEEE_REAL_8; break;
         }
     }
     else if (!strcmp(q, "VAX_REAL")) {
