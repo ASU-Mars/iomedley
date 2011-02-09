@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
 #ifndef _WIN32
 #include <unistd.h>
 #endif /* _WIN32 */
@@ -47,8 +48,14 @@ static const char * const Photometrics[] = {
 
 int	iom_isTIFF(FILE *);
 int	iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
-int	iom_ReadTIFF(FILE *, char *, int *, int *, int *, int *, unsigned char **, int *);
+int	iom_ReadTIFF(FILE *, char *, int *, int *, int *, int *, unsigned char **, int *, int*);
 int	iom_WriteTIFF(char *, unsigned char *, struct iom_iheader *, int);
+
+static int uchar_overflow(unsigned char* data, size_t size);
+static int int_overflow(unsigned char* data, size_t size);
+static int ushort_overflow(unsigned char* data, size_t size);
+
+
 
 /* Error handlers used by libtiff.
    They're also used directly by the code below. */
@@ -111,10 +118,11 @@ int
 iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 {
 
-  int		x, y, z, bits, org;
+  int		x, y, z, bits, org, type;
   unsigned char	*data;
+  size_t i, dsize;
 
-  if (!iom_ReadTIFF(fp, filename, &x, &y, &z, &bits, &data, &org))
+  if (!iom_ReadTIFF(fp, filename, &x, &y, &z, &bits, &data, &org, &type))
     return 0;
 
   iom_init_iheader(h);
@@ -132,44 +140,79 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
   }
 
   h->data = data;
+  dsize = ((size_t)x)*((size_t)y)*((size_t)z);
 
+ int byte_size = bits/8;
+
+  /* type == -1 means sampleformat tag was missing and we assume unsigned int type */
   if (bits == 8) {
-    h->format = iom_BYTE;
-    h->eformat = iom_NATIVE_INT_1; /* libtiff always reads in native format */
-  } else if (bits == 16) {
-    h->format = iom_SHORT;
-    h->eformat = iom_NATIVE_INT_2;
-    /*
-     ** TIFF 16-bit is unsigned.  We need to deal with that here.
-     **
-     ** Our two options are to shift down to signed 15-bits, or
-     ** promote all the way up to int.
-     */
-    {
-      unsigned short *us;
-      short *s;
-      size_t i, dsize = ((size_t)x)*((size_t)y)*((size_t)z);
+    if( type == SAMPLEFORMAT_INT && uchar_overflow(h->data, dsize) < dsize ) {    /* upgrade to shorts for davinci if necessary */
+    	  h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
+          short* temp_s = (short*)h->data;
+          for(i=dsize-1; i>=0; i--)
+            temp_s[i] = *((char*)(&h->data[i]));
 
-      us = (unsigned short *)data;
-      s = (short *)data;
-      for (i = 0 ; i < dsize ; i++) {
-        s[i] = ((int)(us[i]))-32768;
-      }
-      h->data = data;
-      if (iom_is_ok2print_progress()) {
-        printf("Shifting 16-bit tiff down by 32768.\n");
-      }
+          h->format = iom_SHORT;
+          h->eformat = iom_NATIVE_INT_2;
+
+    } else {        /* type is SAMPLEFORMAT_UINT or it will fit in an unsigned byte (we assume this if type == -1)*/
+        h->format = iom_BYTE;
+        h->eformat = iom_NATIVE_INT_1;
+    }
+
+  } else if (bits == 16) {
+    if( (type == SAMPLEFORMAT_UINT || type == -1) && ushort_overflow(h->data, dsize) < dsize ) { /* upgrade to ints if necessary */
+          h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
+          int* temp_i = (int*)h->data;
+          for(i=dsize-1; i>=0; i--)
+            temp_i[i] = *((unsigned short*)(&h->data[i*byte_size]));
+
+          h->format = iom_INT;
+    	  h->eformat = iom_NATIVE_INT_4;
+
+	} else {                    /*type == SAMPLEFORMAT_INT or it fits */
+      h->format = iom_SHORT;
+      h->eformat = iom_NATIVE_INT_2;
     }
 
   } else if (bits == 32) {
-    // TODO(gorelick): Mon Jun 22 10:29:27 PDT 2009
-    // We're currently assuming that this is a float.  We should 
-    // reall be checking TIFFTAG_SAMPLEFORMAT for SAMPLEFORMAT_IEEEFP,
-    // but iom_ReadTIFF doesn't do format yet.  (This wrapper function
-    // is kinda weak, really).
-    printf("Warning: Assuming 32-bit pixels are MSB_IEEE_FLOAT");
-    h->format = iom_FLOAT;
-    h->eformat = iom_MSB_IEEE_REAL_4;
+    if( type == SAMPLEFORMAT_UINT ) { 
+      if( int_overflow(h->data, dsize) < dsize) {      /* upgrade to doubles if necessary*/
+        h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
+        double* temp_d = (double*)h->data;
+        for(i=dsize-1; i>=0; i--)
+            temp_d[i] = *((unsigned int*)(&h->data[i*4]));
+        
+        h->format = iom_DOUBLE;
+        h->eformat = iom_MSB_IEEE_REAL_8;
+
+      } else {      /* we can store the data in signed int -no upgrade necessary */
+        h->format = iom_INT;
+        h->eformat = iom_NATIVE_INT_4;
+      }
+
+    } else if( type == SAMPLEFORMAT_INT ) {
+      h->format = iom_INT;
+      h->eformat = iom_NATIVE_INT_4;
+    } else {                    /* assume float: type == SAMPLEFORMAT_IEEEFP or type == -1 */
+      h->format = iom_FLOAT;
+      h->eformat = iom_MSB_IEEE_REAL_4;
+    }
+  } else if( bits == 64 ) {
+    double* temp_d = (double*)h->data;
+    if( type == SAMPLEFORMAT_INT ) {
+      for(i=0; i<dsize; i++) {
+        temp_d[i] = *((int *)&h->data[i*byte_size]); /*converting from int or unsigned int to double */
+      }
+    }
+    else if( type == SAMPLEFORMAT_UINT ) {
+      for(i=0; i<dsize; i++) {
+        temp_d[i] = *((unsigned int *)&h->data[i*byte_size]); /*converting from int or unsigned int to double */
+      }
+    }
+    /* 64 bits will always be double or converted to double (type == -1 or SAMPLEFORMAT_IEEEFP skip the conversion) */
+    h->format = iom_DOUBLE;
+	h->eformat = iom_MSB_IEEE_REAL_8;
   }
 
   return 1;
@@ -178,7 +221,7 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 
 int
 iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout, 
-             int *bits, unsigned char **dout, int *orgout)
+             int *bits, unsigned char **dout, int *orgout, int *type)
 {
 
   TIFF		*tifffp;
@@ -251,6 +294,12 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
     return 0;
   }
 
+  TIFFDataType tiff_type;
+  if( !TIFFGetField(tifffp, TIFFTAG_SAMPLEFORMAT, &tiff_type) ) {
+    tiff_type = -1;     /* will cause calling function to make assumptions/guesses */
+    fprintf(stdout, "SAMPLEFORMAT tag missing; assumptions will be made in data format determination\n"); 
+  }
+
   TIFFGetFieldDefaulted(tifffp, TIFFTAG_SAMPLESPERPIXEL, &z);			/* Not always set in file. */
 
   if (!TIFFGetField(tifffp, TIFFTAG_PLANARCONFIG, &planar_config)) {
@@ -281,28 +330,32 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
         if (data) {
           free(data);
         }
-	_TIFFfree(buffer);
-	TIFFClose(tifffp);
+	    _TIFFfree(buffer);
+	    TIFFClose(tifffp);
         return 0;
       } else
-	memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
+	    memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
     }
   } else {
-    for (plane = 0; plane < z; plane++)
+    for (plane = 0; plane < z; plane++) {
       for (row = 0; row < y; row++) {
-	if (TIFFReadScanline(tifffp, buffer, row, plane) == -1) {
+
+	    if(TIFFReadScanline(tifffp, buffer, row, plane) == -1) {
           if (buffer) {
             _TIFFfree(buffer);
           }
           if (data) {
             free(data);
           }
-	  _TIFFfree(buffer);
-	  TIFFClose(tifffp);
+
+	      _TIFFfree(buffer);
+	      TIFFClose(tifffp);
           return 0;
-	} else
-	  memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
+
+	    } else
+	      memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
       }
+    }
   }
 
   _TIFFfree(buffer);
@@ -317,6 +370,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
   *zout = z;
   *bits = bits_per_sample;
   *dout = data;
+  *type = tiff_type;
 
   if (z == 1)
     *orgout = iom_BSQ;
@@ -490,4 +544,37 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   return 1;
 
+}
+
+static int
+uchar_overflow(unsigned char* data, size_t size)
+{
+	int i;
+	for(i=0; i<size; i++) {
+		if(*((char*)&data[i]) < 0)
+			break;
+	}
+	return i;
+}
+
+static int
+int_overflow(unsigned char* data, size_t size)
+{
+	int i;
+	for(i=0; i<size; i++) {
+		if(*((unsigned int*)&data[i*4]) > INT_MAX)
+			break;
+	}
+	return i;
+}
+
+static int
+ushort_overflow(unsigned char* data, size_t size)
+{
+	size_t i;
+	for(i=0; i<size; i++) {
+		if(*((short*)&data[i*2]) < 0)
+			break;
+	}
+	return i;
 }
