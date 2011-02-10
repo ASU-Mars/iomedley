@@ -256,7 +256,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
 
   TIFFGetFieldDefaulted(tifffp, TIFFTAG_BITSPERSAMPLE, &bits_per_sample);	/* Not always set in file. */
 
-  if (bits_per_sample != 8 && bits_per_sample != 16 && bits_per_sample != 32) {
+  if (bits_per_sample != 8 && bits_per_sample != 16 && bits_per_sample != 32 && bits_per_sample != 64) {
     TIFFError(NULL, "File %s contains an unsupported (%d) bits-per-sample.", filename, bits_per_sample);
     TIFFClose(tifffp);
     return 0;
@@ -396,6 +396,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   unsigned char *data;
   unsigned short bits_per_sample;
   uint16         fillorder;
+  TIFFDataType   sample_fmt = -1;
 
   /* Check for file existance if force overwrite not set. */
 
@@ -406,17 +407,26 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
     return 0;
   }
 
-  /* Input data must be 8 or 16 bit. */
-
   if (h->format == iom_BYTE) {
     bits_per_sample = 8;
     fillorder = (h->eformat == iom_MSB_INT_1 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+    sample_fmt = SAMPLEFORMAT_UINT;
   } else if (h->format == iom_SHORT) {
     bits_per_sample = 16;
     fillorder = (h->eformat == iom_MSB_INT_2 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+    sample_fmt = SAMPLEFORMAT_INT;
+  } else if (h->format == iom_INT) {
+    bits_per_sample = 32;
+    fillorder = (h->eformat == iom_MSB_INT_4 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+    sample_fmt = SAMPLEFORMAT_INT;
   } else if (h->format == iom_FLOAT) {
     bits_per_sample = 32;
     fillorder = (h->eformat == iom_MSB_IEEE_REAL_4 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+    sample_fmt = SAMPLEFORMAT_IEEEFP;
+  } else if (h->format == iom_DOUBLE) {
+    bits_per_sample = 64;
+    fillorder = (h->eformat == iom_MSB_IEEE_REAL_8 ? FILLORDER_MSB2LSB : FILLORDER_LSB2MSB);
+    sample_fmt = SAMPLEFORMAT_IEEEFP;
   } else {
     if (iom_is_ok2print_errors()) {
       fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_FORMAT2STR[h->format]);
@@ -477,8 +487,8 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
               	max(1,(int)(8*1024 / TIFFScanlineSize(tifffp))));
   TIFFSetField(tifffp,  TIFFTAG_COMPRESSION, COMPRESSION_LZW);
 
-  if (bits_per_sample == 32) {
-    TIFFSetField(tifffp,  TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+  if (sample_fmt != -1){
+    TIFFSetField(tifffp,  TIFFTAG_SAMPLEFORMAT, sample_fmt);
   }
 
 #ifdef WORDS_BIGENDIAN
