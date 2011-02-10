@@ -488,13 +488,13 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);
 #endif
 
-  if (z == 3 || z == 4 ) {
+  if ((z == 3 || z == 4) && h->format == iom_BYTE ) {
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   } else {
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
   }
 
-  if (z == 2 || z == 4) {
+  if ((z == 2 || z == 4) && h->format == iom_BYTE) {
     // Identify that we have an alpha channel.
     // This is a goofy way to pass an extra value, but everyone seems to do it.
     unsigned short  sample_info[1];
