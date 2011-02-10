@@ -297,7 +297,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
   TIFFDataType tiff_type;
   if( !TIFFGetField(tifffp, TIFFTAG_SAMPLEFORMAT, &tiff_type) ) {
     tiff_type = -1;     /* will cause calling function to make assumptions/guesses */
-    fprintf(stdout, "SAMPLEFORMAT tag missing; assumptions will be made in data format determination\n"); 
+    fprintf(stderr, "SAMPLEFORMAT tag missing; assumptions will be made in data format determination\n"); 
   }
 
   TIFFGetFieldDefaulted(tifffp, TIFFTAG_SAMPLESPERPIXEL, &z);			/* Not always set in file. */
@@ -436,15 +436,6 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   z = iom_GetBands(h->size, h->org);
 
-  /* Make sure data is 1-band, 3-band (RGB) or 4-band (RGBA). */
-
-  if (z > 4) {
-    if (iom_is_ok2print_errors()) {
-      fprintf(stderr, "Cannot write TIFF files with depths greater than 4.\n");
-    }
-    return 0;
-  }
-
   /* Convert data to BIP if not already BIP. */
 
   if (h->org == iom_BIP) {
@@ -497,11 +488,10 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);
 #endif
 
-  if (z == 1 || z == 2) {
-    TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  } else if (z == 3 || z == 4) {
-    /* 3 or 4 */
+  if (z == 3 || z == 4 ) {
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+  } else {
+    TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
   }
 
   if (z == 2 || z == 4) {
