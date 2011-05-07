@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subdirs_all="$ac_subdirs_all libjpeg libgif libtiff"
+ac_subdirs_all="$ac_subdirs_all libjpeg libgif libtiff-3.9.5"
 ac_subdirs_all="$ac_subdirs_all libpng-1.2.3"
 ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT AWK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CPP SET_MAKE RANLIB ac_ct_RANLIB EGREP LIBOBJS ALLOCA libpng libpngdir subdirs LTLIBOBJS'
 ac_subst_files=''
@@ -5532,7 +5532,7 @@ fi
 
 
 
-subdirs="$subdirs libjpeg libgif libtiff"
+subdirs="$subdirs libjpeg libgif libtiff-3.9.5"
 
 if test "$found_libz" = "yes"; then
 

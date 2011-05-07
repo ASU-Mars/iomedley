@@ -91,7 +91,7 @@ AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
-AC_CONFIG_SUBDIRS(libjpeg libgif libtiff)
+AC_CONFIG_SUBDIRS(libjpeg libgif libtiff-3.9.5)
 if test "$found_libz" = "yes"; then
 	AC_CONFIG_SUBDIRS(libpng-1.2.3)
 fi
