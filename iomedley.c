@@ -703,14 +703,14 @@ iom_byte_swap_data(
 
 	case iom_MSB_IEEE_REAL_8:  /* MSB-IEEE-Doubles to Doubles */
 #ifndef WORDS_BIGENDIAN
-            for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((float *)data)[i]); }
+            for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((double *)data)[i]); }
 #endif /* WORDS_BIGENDIAN */
             format = iom_DOUBLE;
             break;
 	
 	case iom_LSB_IEEE_REAL_8:  /* LSB-IEEE-Doubles to Doubles */
 #ifdef WORDS_BIGENDIAN
-            for (i = 0 ; i < dsize ; i++) { iom_LSB8(&((float *)data)[i]); }
+            for (i = 0 ; i < dsize ; i++) { iom_LSB8(&((double *)data)[i]); }
 #endif /* WORDS_BIGENDIAN */
             format = iom_DOUBLE;
             break;
