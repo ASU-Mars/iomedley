@@ -330,7 +330,6 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
         if (data) {
           free(data);
         }
-	    _TIFFfree(buffer);
 	    TIFFClose(tifffp);
         return 0;
       } else
@@ -348,7 +347,6 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
             free(data);
           }
 
-	      _TIFFfree(buffer);
 	      TIFFClose(tifffp);
           return 0;
 
