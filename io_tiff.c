@@ -46,6 +46,9 @@ static const char * const Photometrics[] = {
 #define TIFF_MAGIC_BIGEND	"MM\x00\x2a"
 #define TIFF_MAGIC_LITTLEEND	"II\x2a\x00"
 
+#define MIN(x,y) ((x)<(y)? (x): (y))
+#define MAX(x,y) ((x)>(y)? (x): (y))
+
 int	iom_isTIFF(FILE *);
 int	iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
 int	iom_ReadTIFF(FILE *, char *, int *, int *, int *, int *, unsigned char **, int *, int*);
@@ -386,17 +389,18 @@ int
 iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int force)
 {
 
-  int		x, y, z;
-  int		row;
+  tstrile_t		x, y, z;
+  tstrile_t		row, bytes_remaining;
   tsize_t	row_stride;
-  TIFF		*tifffp;
-  unsigned char	*scanline;
-  unsigned char *data;
+  TIFF		*tifffp = NULL;
+  unsigned char *data = NULL;
   unsigned short bits_per_sample;
-  uint16         fillorder;
+  tsample_t         fillorder;
   TIFFDataType   sample_fmt = -1;
+  tstrip_t strip;
+  tsize_t strip_size, strips_per_image;
 
-  /* Check for file existance if force overwrite not set. */
+  /* Check for file existence if force overwrite not set. */
 
   if (!force && access(filename, F_OK) == 0) {
     if (iom_is_ok2print_errors()) {
@@ -467,25 +471,16 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   TIFFSetField(tifffp, TIFFTAG_IMAGEWIDTH, x);
   TIFFSetField(tifffp, TIFFTAG_IMAGELENGTH, y);
-  TIFFSetField(tifffp, TIFFTAG_SAMPLESPERPIXEL, z);
   TIFFSetField(tifffp, TIFFTAG_BITSPERSAMPLE, bits_per_sample);
-  TIFFSetField(tifffp, TIFFTAG_FILLORDER, fillorder);
+  TIFFSetField(tifffp, TIFFTAG_SAMPLESPERPIXEL, z);
   TIFFSetField(tifffp, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
   TIFFSetField(tifffp, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-  TIFFSetField(tifffp,  TIFFTAG_ROWSPERSTRIP,
-              	max(1,(int)(8*1024 / TIFFScanlineSize(tifffp))));
-  TIFFSetField(tifffp,  TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+  TIFFSetField(tifffp,  TIFFTAG_COMPRESSION, COMPRESSION_DEFLATE);
+  TIFFSetField(tifffp,  TIFFTAG_PREDICTOR, PREDICTOR_NONE);
 
   if (sample_fmt != -1){
     TIFFSetField(tifffp,  TIFFTAG_SAMPLEFORMAT, sample_fmt);
   }
-
-#ifdef WORDS_BIGENDIAN
-  TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
-#else
-  TIFFSetField(tifffp,  TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);
-#endif
-
   if ((z == 3 || z == 4) && h->format == iom_BYTE ) {
     TIFFSetField(tifffp, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   } else {
@@ -502,39 +497,28 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   row_stride = ((size_t)x) * ((size_t)z) * (bits_per_sample / 8);
 
-  /* Allocate memory for one scanline of output. */
 
-  scanline = (unsigned char *) _TIFFmalloc(row_stride);
+  strip_size = MAX(1, (int)ceil((8*1024)/(double)row_stride));
+  TIFFSetField(tifffp, TIFFTAG_ROWSPERSTRIP, strip_size);
+  strips_per_image = TIFFNumberOfStrips(tifffp);
 
-#if 0
-  if (TIFFScanlineSize(tifffp) > row_stride)
-    scanline = (unsigned char *) malloc(TIFFScanlineSize(tifffp));
-  else
-    scanline = (unsigned char *) malloc(row_stride);
-#endif
+  // Write the file out one strip at a time.
+  bytes_remaining = row_stride * y;
+  for(strip=0; strip < strips_per_image; strip++){
+	  tsize_t curr_strip_size = MIN(row_stride*strip_size, bytes_remaining);
+	if (TIFFWriteEncodedStrip(tifffp, strip, data+strip*row_stride*strip_size, curr_strip_size) < 0){
+        (void) TIFFClose(tifffp);
 
-  /* FIX: need this?  lib version problem..
-     TIFFSetField(tifffp, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(tifffp, row_stride));
-  */
+        if (h->org != iom_BIP) {
+          free(data);
+        }
 
-  /* Write the file out one line at a time. */
-
-  for (row = 0; row < y; row++) {
-    memcpy(scanline, data + (row * row_stride), row_stride);
-    if (TIFFWriteScanline(tifffp, scanline, row, 0) < 0) {
-      if (scanline) {
-        _TIFFfree(scanline);
-      }
-      (void) TIFFClose(tifffp);
-      return 0;
-    }
+		return 0;
+	}
+	bytes_remaining -= curr_strip_size;
   }
 
   (void) TIFFClose(tifffp);
-
-  if (scanline) {
-    _TIFFfree(scanline);
-  }
 
   if (h->org != iom_BIP) {
     free(data);
