@@ -1182,6 +1182,48 @@ iom__ConvertToBIP(unsigned char *data,
 
 }
 
+/**
+ ** return index of x,y,z in a 3-d array with size
+ ** specified in "size" and organization in "org".
+ ** The "size" is in the order of the "org", thus
+ ** for BSQ it is {x,y,z}, for BIL it is {z,x,y} etc.
+ **/
+size_t
+iom_Cpos(int x, int y, int z, int org, int size[3])
+{
+    switch(org) {
+    case iom_BSQ: return((size_t)x + size[0] * ((size_t)y + (size_t)z * size[1]));
+    case iom_BIP: return((size_t)z + size[0] * ((size_t)x + (size_t)y * size[1]));
+    case iom_BIL: return((size_t)x + size[0] * ((size_t)z + (size_t)y * size[1]));
+    default:
+        printf("iom_Cpos: whats this?\n");
+    }
+    return(0);
+}
+
+/**
+ ** return x,y,z indices, given a linear index into
+ ** a 3-d array. The array size is specified in "size"
+ ** and the array organization is in "org".
+ ** The "size" is in the order of the "org", thus
+ ** for BSQ it is {x,y,z}, for BIL it is {z,x,y} etc.
+ **/
+void
+iom_Xpos(size_t i, int org, int size[3], int *x, int *y, int *z)
+{
+    /**
+    ** Given i, where does it fall in V
+    **/
+    int d[3];
+
+    d[0] = i % (size[0]);
+    d[1] = (i / size[0]) % size[1];
+    d[2] = i / (size[0] * size[1]);
+
+    *x = d[iom_orders[org][0]];
+    *y = d[iom_orders[org][1]];
+    *z = d[iom_orders[org][2]];
+}
 
 void iom_swp(iom_cptr pc1, iom_cptr pc2)
 {

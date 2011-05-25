@@ -389,16 +389,16 @@ int
 iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int force)
 {
 
-  tstrile_t		x, y, z;
-  tstrile_t		row, bytes_remaining;
-  tsize_t	row_stride;
+  int		i, x, y, z, out_size[3];
+  tstrile_t		row, bytes_remaining, out_sample_idx, src_sample_idx;
+  tsize_t	row_stride, rows_per_strip, strips_per_image;
   TIFF		*tifffp = NULL;
   unsigned char *data = NULL;
-  unsigned short bits_per_sample;
+  unsigned short bits_per_sample, bytes_per_sample;
   tsample_t         fillorder;
   TIFFDataType   sample_fmt = -1;
   tstrip_t strip;
-  tsize_t strip_size, strips_per_image;
+  toff_t  offset, offset2;
 
   /* Check for file existence if force overwrite not set. */
 
@@ -438,17 +438,6 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   z = iom_GetBands(h->size, h->org);
 
-  /* Convert data to BIP if not already BIP. */
-
-  if (h->org == iom_BIP) {
-    data = indata;
-  } else {
-    /* iom__ConvertToBIP allocates memory, don't forget to free it! */
-    if (!iom__ConvertToBIP(indata, h, &data)) {
-      return 0;
-    }
-  }
-
   TIFFSetWarningHandler(tiff_warning_handler);
   TIFFSetErrorHandler(tiff_error_handler);
 
@@ -456,15 +445,10 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
     if (iom_is_ok2print_sys_errors()) {
       fprintf(stderr, "Unable to write file %s. Reason: %s.\n", filename, strerror(errno));
     }
-    if (h->org != iom_BIP) {
-      free(data);
-    }
     return 0;
   }
 
   /* Set TIFF image parameters. */
-
-#define max(a,b) (a>b?a:b)
 
   x = iom_GetSamples(h->size, h->org);
   y = iom_GetLines(h->size, h->org);
@@ -495,34 +479,55 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
     TIFFSetField(tifffp, TIFFTAG_EXTRASAMPLES, 1, &sample_info[0]);
   }
 
-  row_stride = ((size_t)x) * ((size_t)z) * (bits_per_sample / 8);
+  bytes_per_sample = bits_per_sample / 8;
 
+  row_stride = ((size_t)x) * ((size_t)z) * (bytes_per_sample);
 
-  strip_size = MAX(1, (int)ceil((8*1024)/(double)row_stride));
-  TIFFSetField(tifffp, TIFFTAG_ROWSPERSTRIP, strip_size);
+  rows_per_strip = MAX(1, (int)ceil((8*1024)/(double)row_stride));
+  TIFFSetField(tifffp, TIFFTAG_ROWSPERSTRIP, rows_per_strip);
   strips_per_image = TIFFNumberOfStrips(tifffp);
 
-  // Write the file out one strip at a time.
   bytes_remaining = row_stride * y;
+
+  /* we only allow BIP output */
+  out_size[0] = z;
+  out_size[1] = x;
+  out_size[2] = y;
+
+  data = (unsigned char *) calloc(((size_t)x)*((size_t)z)*rows_per_strip, bytes_per_sample);
+  if (data==NULL) {
+	  if (iom_is_ok2print_sys_errors()) {
+	      fprintf(stderr, "Unable to allocate memory in io_tiff.c/io_WriteTIFF().\n");
+	  }
+      return 0;
+  }
+
+  /* keep track of where we are in the output file */
+  out_sample_idx = 0;
+
+  // Write the file out one strip at a time.
   for(strip=0; strip < strips_per_image; strip++){
-	  tsize_t curr_strip_size = MIN(row_stride*strip_size, bytes_remaining);
-	if (TIFFWriteEncodedStrip(tifffp, strip, data+strip*row_stride*strip_size, curr_strip_size) < 0){
-        (void) TIFFClose(tifffp);
+	  tsize_t curr_strip_size = MIN(row_stride*rows_per_strip, bytes_remaining);
 
-        if (h->org != iom_BIP) {
-          free(data);
-        }
-
-		return 0;
+	for (i=0; i<curr_strip_size; i+=bytes_per_sample) {
+	  iom_Xpos(out_sample_idx, iom_BIP, out_size, &x, &y, &z); // get x,y,z location of output pixel
+	  src_sample_idx = iom_Cpos(x, y, z, h->org, h->size); // get linear offset of x,y,z in input org
+	  memcpy(&data[i], &indata[src_sample_idx*bytes_per_sample], bytes_per_sample);
+	  out_sample_idx++;
 	}
-	bytes_remaining -= curr_strip_size;
+    if (TIFFWriteEncodedStrip(tifffp, strip, data, curr_strip_size) < 0){
+      (void) TIFFClose(tifffp);
+
+      free(data);
+      return 0;
+    }
+    bytes_remaining -= curr_strip_size;
+    memset(data, 0, sizeof(row_stride*rows_per_strip));
   }
 
   (void) TIFFClose(tifffp);
 
-  if (h->org != iom_BIP) {
-    free(data);
-  }
+  free(data);
 
   return 1;
 
