@@ -152,8 +152,8 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
     if( type == SAMPLEFORMAT_INT && uchar_overflow(h->data, dsize) < dsize ) {    /* upgrade to shorts for davinci if necessary */
     	  h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
           short* temp_s = (short*)h->data;
-          for(i=dsize-1; i>=0; i--)
-            temp_s[i] = *((char*)(&h->data[i]));
+          for(i=dsize; i>0; i--)
+            temp_s[i-1] = *((char*)(&h->data[i-1]));
 
           h->format = iom_SHORT;
           h->eformat = iom_NATIVE_INT_2;
@@ -167,8 +167,8 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
     if( (type == SAMPLEFORMAT_UINT || type == -1) && ushort_overflow(h->data, dsize) < dsize ) { /* upgrade to ints if necessary */
           h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
           int* temp_i = (int*)h->data;
-          for(i=dsize-1; i>=0; i--)
-            temp_i[i] = *((unsigned short*)(&h->data[i*byte_size]));
+          for(i=dsize; i>0; i--)
+            temp_i[i-1] = *((unsigned short*)(&h->data[(i-1)*byte_size]));
 
           h->format = iom_INT;
     	  h->eformat = iom_NATIVE_INT_4;
@@ -183,8 +183,8 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
       if( int_overflow(h->data, dsize) < dsize) {      /* upgrade to doubles if necessary*/
         h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
         double* temp_d = (double*)h->data;
-        for(i=dsize-1; i>=0; i--)
-            temp_d[i] = *((unsigned int*)(&h->data[i*4]));
+        for(i=dsize; i>0; i--)
+            temp_d[i-1] = *((unsigned int*)(&h->data[(i-1)*byte_size]));
         
         h->format = iom_DOUBLE;
         h->eformat = iom_MSB_IEEE_REAL_8;
