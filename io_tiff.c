@@ -228,9 +228,13 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
 {
 
   TIFF		*tifffp;
+  uint16*   red;
+  uint16*   green;
+  uint16*   blue;
   uint32	x, y, row;
+  uint32*   raster;
   tdata_t	buffer;
-  size_t	row_stride;		/* Bytes per scanline. */
+  size_t	row_stride, npixels;		/* Bytes per scanline. */
   unsigned char	*data;
   unsigned short z, bits_per_sample, planar_config, plane, photometric;
 
@@ -317,6 +321,7 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
     return 0;
   }
 
+  /* read in gray scale image */
   row_stride = TIFFScanlineSize(tifffp); /* Bytes per scanline. */
 
   buffer = (tdata_t) _TIFFmalloc(row_stride);
@@ -325,41 +330,56 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
   /* FIX: deal with endian issues? */
 
   if (planar_config == PLANARCONFIG_CONTIG) {
-    for (row = 0; row < y; row++) {
-      if (TIFFReadScanline(tifffp, buffer, row, 0) == -1) {	/* 4th arg ignored in this planar config. */
-        if (buffer) {
-          _TIFFfree(buffer);
-        }
-        if (data) {
-          free(data);
-        }
-	    TIFFClose(tifffp);
-        return 0;
-      } else
-	    memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
-    }
+	for (row = 0; row < y; row++) {
+	  if (TIFFReadScanline(tifffp, buffer, row, 0) == -1) {	/* 4th arg ignored in this planar config. */
+		if (buffer) {
+		  _TIFFfree(buffer);
+		}
+		if (data) {
+		  free(data);
+		}
+		TIFFClose(tifffp);
+		return 0;
+	  } else
+		memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
+	}
   } else {
-    for (plane = 0; plane < z; plane++) {
-      for (row = 0; row < y; row++) {
+	for (plane = 0; plane < z; plane++) {
+	  for (row = 0; row < y; row++) {
 
-	    if(TIFFReadScanline(tifffp, buffer, row, plane) == -1) {
-          if (buffer) {
-            _TIFFfree(buffer);
-          }
-          if (data) {
-            free(data);
-          }
+		if(TIFFReadScanline(tifffp, buffer, row, plane) == -1) {
+		  if (buffer) {
+			_TIFFfree(buffer);
+		  }
+		  if (data) {
+			free(data);
+		  }
 
-	      TIFFClose(tifffp);
-          return 0;
+		  TIFFClose(tifffp);
+		  return 0;
 
-	    } else
-	      memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
-      }
-    }
+		} else
+		  memcpy(data + ((size_t)row) * row_stride, buffer, row_stride);
+	  }
+	}
+  }
+  _TIFFfree(buffer);
+
+  if (photometric == PHOTOMETRIC_PALETTE) {
+	    TIFFError(NULL, "TIFF file %s contains an unsupported color data format %s.\n", filename, Photometrics[photometric]);
+	    TIFFClose(tifffp);
+	    return 0;
+
+/*
+	  if (!TIFFGetField(tifffp, TIFFTAG_COLORMAP, &red, &green, &blue)) {
+		TIFFError(NULL, "TIFF ColorMap tag missing.");
+		TIFFClose(tifffp);
+		return 0;
+	  }
+*/
+	  // get size of color map data
   }
 
-  _TIFFfree(buffer);
   TIFFClose(tifffp);
 
   if (iom_is_ok2print_progress()) {
@@ -370,7 +390,9 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
   *yout = y;
   *zout = z;
   *bits = bits_per_sample;
-  *dout = data;
+  if (photometric != PHOTOMETRIC_PALETTE) {
+    *dout = data;
+  }
   *type = tiff_type;
 
   if (z == 1)
