@@ -309,11 +309,9 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
 
   TIFFGetFieldDefaulted(tifffp, TIFFTAG_SAMPLESPERPIXEL, &z);			/* Not always set in file. */
 
-  if (!TIFFGetField(tifffp, TIFFTAG_PLANARCONFIG, &planar_config)) {
-    TIFFError(NULL, "TIFF planar config tag missing.");
-    TIFFClose(tifffp);
-    return 0;
-  }
+  /* http://libtiff.maptools.org/man/TIFFGetField.3tiff.html */
+  /* http://www.awaresystems.be/imaging/tiff/tifftags/planarconfiguration.html */
+  TIFFGetFieldDefaulted(tifffp, TIFFTAG_PLANARCONFIG, &planar_config); /* Not always set in file. */
 
   if (!TIFFGetField(tifffp, TIFFTAG_PHOTOMETRIC, &photometric)) {
     TIFFError(NULL, "TIFF photometric tag missing.");
