@@ -132,15 +132,36 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
 
   h->org = org;
 
+  switch(h->org){
+  case iom_BSQ:
+	  h->size[0] = x;
+	  h->size[1] = y;
+	  h->size[2] = z;
+	 break;
+  case iom_BIP:
+	  h->size[0] = z;
+	  h->size[1] = x;
+	  h->size[2] = y;
+	 break;
+  default:
+  case iom_BIL:
+	  // this is most likely incorrect
+	  h->size[0] = z;
+	  h->size[1] = y;
+	  h->size[2] = x;
+	 break;
+  }
+  /*
   if (z == 1) {
     h->size[0] = x;
     h->size[1] = y;
     h->size[2] = z;
-  } else {		/* z == 3 */
-    h->size[0] = z;
+  } else { */		/* z == 3 */
+/*    h->size[0] = z;
     h->size[1] = x;
     h->size[2] = y;
   }
+*/
 
   h->data = data;
   dsize = ((size_t)x)*((size_t)y)*((size_t)z);
@@ -228,15 +249,17 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
 {
 
   TIFF		*tifffp;
-  uint16*   red;
-  uint16*   green;
-  uint16*   blue;
-  uint32	x, y, row;
-  uint32*   raster;
+  uint32	x, y, org_x, org_y, row, tile_width, tile_length, tile_x, tile_y, tile_z, x_pos, y_pos, i;
+  uint32	actual_tile_length, actual_image_width;
   tdata_t	buffer;
-  size_t	row_stride, npixels;		/* Bytes per scanline. */
+  size_t	row_stride, src_offset, image_width_all_tiles, dest_offset;
+  tsize_t   tile_size;                  /* Bytes per tile. */
+  tsize_t   curr_tile_size;             /* Bytes per currently retrieved tile. */
+  tsize_t   tile_row_size, actual_tile_row_size;
+  ttile_t   tile_count, tiles_read;
   unsigned char	*data;
-  unsigned short z, bits_per_sample, planar_config, plane, photometric;
+  unsigned short z, bits_per_sample, planar_config, plane, photometric, orient, bytes_per_pixel;
+  int x_tile_idx, y_tile_idx, z_tile_idx, x_tiles, y_tiles;
 
   rewind(fp);
 
@@ -267,6 +290,13 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
     TIFFError(NULL, "File %s contains an unsupported (%d) bits-per-sample.", filename, bits_per_sample);
     TIFFClose(tifffp);
     return 0;
+  }
+
+  TIFFGetFieldDefaulted(tifffp, TIFFTAG_ORIENTATION, &orient);
+  if (orient != ORIENTATION_TOPLEFT) {
+    TIFFError(NULL, "TIFF images with orientation other than ORIENTATION_TOPLEFT are not currently supported.");
+	TIFFClose(tifffp);
+	return 0;
   }
 
 #if 0
@@ -319,6 +349,156 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
     return 0;
   }
 
+  if (photometric == PHOTOMETRIC_PALETTE) {
+	    TIFFError(NULL, "TIFF file %s contains an unsupported color data format %s.\n", filename, Photometrics[photometric]);
+	    TIFFClose(tifffp);
+	    return 0;
+
+/*
+	  if (!TIFFGetField(tifffp, TIFFTAG_COLORMAP, &red, &green, &blue)) {
+		TIFFError(NULL, "TIFF ColorMap tag missing.");
+		TIFFClose(tifffp);
+		return 0;
+	  }
+*/
+	  // get size of color map data
+  }
+
+  // read in an entire tiled image
+  if (TIFFGetField(tifffp, TIFFTAG_TILEWIDTH, &tile_width) && TIFFGetField(tifffp, TIFFTAG_TILELENGTH, &tile_length)) {
+	  tile_size = TIFFTileSize(tifffp);
+	  tile_count = TIFFNumberOfTiles(tifffp);
+	  tile_row_size = TIFFTileRowSize(tifffp);
+	  x_tiles = (int)ceil(x/(double)tile_width); // number of tiles in x-direction
+	  y_tiles = (int)ceil(y/(double)tile_length);
+	  image_width_all_tiles = x_tiles * tile_row_size; // image width x-direction for all x-tiles
+	  y_pos = 0;
+	  actual_tile_length = 0;
+	  org_x = x;
+	  org_y = y;
+	  buffer = (tdata_t) _TIFFmalloc(tile_size);
+	  data = (unsigned char *) malloc((size_t)tile_count * (size_t)tile_size);
+	  if (data==NULL || buffer==NULL) {
+		  if (iom_is_ok2print_sys_errors()) {
+		      fprintf(stderr, "Unable to allocate memory in io_tiff.c/io_ReadTIFF().\n");
+		  }
+	      return 0;
+	  }
+      for (tile_y = 0; tile_y < y; tile_y += tile_length) {
+    	  y_pos += tile_length;
+          if (y_pos > org_y) { // we are about to go past the end of the actual image in the y direction
+		    actual_tile_length = tile_length - (y_pos - org_y); // make the correction
+		  } else {
+		    actual_tile_length = tile_length; // otherwise press onward
+		  }
+          x_pos = 0;
+          for (tile_x = 0; tile_x < x; tile_x += tile_width) {
+        	  x_pos += tile_width;
+        	  x_tile_idx = tile_x / tile_width;
+        	  y_tile_idx = tile_y / tile_length;
+
+			  if (planar_config==PLANARCONFIG_CONTIG) { // single plane data = BIP
+				  bytes_per_pixel = bits_per_sample * z / 8;
+				  actual_image_width = org_x * bytes_per_pixel;
+        		  curr_tile_size = TIFFReadTile(tifffp, buffer, tile_x, tile_y,  /* slice */ 0, /* sample */ z);
+
+        		  if (curr_tile_size == -1) {
+        			  if (buffer) {
+        				  _TIFFfree(buffer);
+        			  }
+        			  if (data) {
+        				  free(data);
+        			  }
+        			  TIFFClose(tifffp);
+        			  return 0;
+        		  } else {
+        	          if (x_pos > org_x) { // we are about to go past the end of the actual image in the x direction
+        			    actual_tile_row_size = tile_row_size - (image_width_all_tiles - actual_image_width); // make the correction
+        			  } else {
+        			    actual_tile_row_size = tile_row_size; // otherwise press onward
+        			  }
+      			    for (i = 0; i < actual_tile_length; i++) {
+      				  src_offset = i * tile_row_size;
+
+      				  dest_offset = (actual_image_width * tile_y) + (x_tile_idx * tile_row_size)
+      						  + (i * actual_image_width);
+
+      				  memcpy(data + dest_offset, buffer + src_offset, actual_tile_row_size);
+      			    }
+        		  }
+			  } else { // multi-plane data = BSQ
+				  // since this is BSQ, bytes_per_pixel only applies to a single band
+				  bytes_per_pixel = bits_per_sample / 8;
+				  actual_image_width = org_x * bytes_per_pixel;
+
+    	          if (x_pos > org_x) { // we are about to go past the end of the actual image in the x direction
+    			    actual_tile_row_size = tile_row_size - (image_width_all_tiles - actual_image_width); // make the correction
+    			  } else {
+    			    actual_tile_row_size = tile_row_size; // otherwise press onward
+    			  }
+
+            	  for(tile_z = 0; tile_z < z; tile_z++){
+            		  curr_tile_size = TIFFReadTile(tifffp, buffer, tile_x, tile_y,  /* slice */ 0, /* sample */ tile_z);
+
+            		  if (curr_tile_size == -1) {
+        	    		  if (buffer) {
+        		    		  _TIFFfree(buffer);
+        			      }
+        			      if (data) {
+        				      free(data);
+        			      }
+        			      TIFFClose(tifffp);
+        			      return 0;
+        		      } else {
+            			  for (i = 0; i < actual_tile_length; i++) {
+            				src_offset = i * tile_row_size;
+
+            				dest_offset = (actual_image_width * tile_y) + (x_tile_idx * tile_row_size) + (i * actual_image_width)
+            				  + (tile_z * org_y * actual_image_width);
+
+            				memcpy(data + dest_offset, buffer + src_offset, actual_tile_row_size);
+            			  }
+        		      }
+        	     }
+			  }
+          }
+          x = x_tiles * tile_width;
+          y = y_tiles * tile_length;
+      }
+      if (buffer) {
+        _TIFFfree(buffer);
+      }
+      TIFFClose(tifffp);
+
+      *xout = org_x;
+      *yout = org_y;
+      *zout = z;
+      *bits = bits_per_sample;
+
+      if (photometric != PHOTOMETRIC_PALETTE) {
+        *dout = data;
+      }
+      *type = tiff_type;
+
+      if (planar_config == PLANARCONFIG_CONTIG) {
+        *orgout = iom_BIP;
+      }
+      else if (planar_config == PLANARCONFIG_SEPARATE) {
+            *orgout = iom_BSQ;
+      }
+      else {
+          TIFFError(NULL, "TIFF Input file %s is organized in Band-Interleaved-by-Line format. \
+        		  This organization is not currently supported for this tiled file type.", filename);
+          TIFFClose(tifffp);
+	      if (data) {
+		      free(data);
+	      }
+          return 0;
+      }
+
+      return 1;
+  }
+
   /* read in gray scale image */
   row_stride = TIFFScanlineSize(tifffp); /* Bytes per scanline. */
 
@@ -362,21 +542,6 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
 	}
   }
   _TIFFfree(buffer);
-
-  if (photometric == PHOTOMETRIC_PALETTE) {
-	    TIFFError(NULL, "TIFF file %s contains an unsupported color data format %s.\n", filename, Photometrics[photometric]);
-	    TIFFClose(tifffp);
-	    return 0;
-
-/*
-	  if (!TIFFGetField(tifffp, TIFFTAG_COLORMAP, &red, &green, &blue)) {
-		TIFFError(NULL, "TIFF ColorMap tag missing.");
-		TIFFClose(tifffp);
-		return 0;
-	  }
-*/
-	  // get size of color map data
-  }
 
   TIFFClose(tifffp);
 
