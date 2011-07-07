@@ -67,7 +67,7 @@ static void
 tiff_warning_handler(const char *module, const char *fmt, va_list ap) {
 
   if (iom_is_ok2print_warnings()) {
-    fprintf(stderr, fmt, ap);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
   }
 
@@ -77,7 +77,7 @@ static void
 tiff_error_handler(const char *module, const char *fmt, va_list ap) {
 
   if (iom_is_ok2print_errors()) {
-    fprintf(stderr, fmt, ap);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
   }
 
