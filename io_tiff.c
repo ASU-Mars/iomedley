@@ -505,8 +505,9 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 {
 
   int        i, x, y, z, out_size[3];
-  tstrile_t        row, bytes_remaining, out_sample_idx, src_sample_idx;
+  tstrile_t        row, out_sample_idx, src_sample_idx;
   tsize_t    row_stride, rows_per_strip, strips_per_image;
+  size_t     bytes_remaining;
   TIFF        *tifffp = NULL;
   unsigned char *data = NULL;
   unsigned short bits_per_sample, bytes_per_sample;
@@ -602,14 +603,14 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetField(tifffp, TIFFTAG_ROWSPERSTRIP, rows_per_strip);
   strips_per_image = TIFFNumberOfStrips(tifffp);
 
-  bytes_remaining = row_stride * y;
+  bytes_remaining = ((size_t)row_stride) * y;
 
   /* we only allow BIP output */
   out_size[0] = z;
   out_size[1] = x;
   out_size[2] = y;
 
-  data = (unsigned char *) calloc(((size_t)x)*((size_t)z)*rows_per_strip, bytes_per_sample);
+  data = (unsigned char *) calloc(row_stride, rows_per_strip);
   if (data==NULL) {
       if (iom_is_ok2print_sys_errors()) {
           fprintf(stderr, "Unable to allocate memory in io_tiff.c/io_WriteTIFF().\n");
@@ -622,7 +623,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 
   // Write the file out one strip at a time.
   for(strip=0; strip < strips_per_image; strip++){
-      tsize_t curr_strip_size = MIN(row_stride*rows_per_strip, bytes_remaining);
+    tsize_t curr_strip_size = MIN(((size_t)row_stride)*rows_per_strip, bytes_remaining);
 
     for (i=0; i<curr_strip_size; i+=bytes_per_sample) {
       iom_Xpos(out_sample_idx, iom_BIP, out_size, &x, &y, &z); // get x,y,z location of output pixel
@@ -637,7 +638,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
       return 0;
     }
     bytes_remaining -= curr_strip_size;
-    memset(data, 0, sizeof(row_stride*rows_per_strip));
+    memset(data, 0, ((size_t)row_stride)*rows_per_strip);
   }
 
   (void) TIFFClose(tifffp);
