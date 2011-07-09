@@ -505,9 +505,9 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
 {
 
   int        i, x, y, z, out_size[3];
-  tstrile_t        row, out_sample_idx, src_sample_idx;
+  tstrile_t        row;
   tsize_t    row_stride, rows_per_strip, strips_per_image;
-  size_t     bytes_remaining;
+  size_t     bytes_remaining, src_sample_idx, out_sample_idx;
   TIFF        *tifffp = NULL;
   unsigned char *data = NULL;
   unsigned short bits_per_sample, bytes_per_sample;
@@ -628,7 +628,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
     for (i=0; i<curr_strip_size; i+=bytes_per_sample) {
       iom_Xpos(out_sample_idx, iom_BIP, out_size, &x, &y, &z); // get x,y,z location of output pixel
       src_sample_idx = iom_Cpos(x, y, z, h->org, h->size); // get linear offset of x,y,z in input org
-      memcpy(&data[i], &indata[src_sample_idx*bytes_per_sample], bytes_per_sample);
+      memcpy(&data[i], indata+(src_sample_idx*bytes_per_sample), bytes_per_sample);
       out_sample_idx++;
     }
     if (TIFFWriteEncodedStrip(tifffp, strip, data, curr_strip_size) < 0){
