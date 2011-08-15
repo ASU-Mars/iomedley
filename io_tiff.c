@@ -173,7 +173,7 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
     }
 
   } else if (bits == 16) {
-    if( (type == SAMPLEFORMAT_UINT || type == -1) && ushort_overflow(h->data, dsize) < dsize ) { /* upgrade to ints if necessary */
+    if( (type == SAMPLEFORMAT_UINT || type == 0) && ushort_overflow(h->data, dsize) < dsize ) { /* upgrade to ints if necessary */
           h->data =(unsigned char*)realloc(h->data, dsize*byte_size*2);
           int* temp_i = (int*)h->data;
           for(i=dsize; i>0; i--)
@@ -206,7 +206,7 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
     } else if( type == SAMPLEFORMAT_INT ) {
       h->format = iom_INT;
       h->eformat = iom_NATIVE_INT_4;
-    } else {                    /* assume float: type == SAMPLEFORMAT_IEEEFP or type == -1 */
+    } else {                    /* assume float: type == SAMPLEFORMAT_IEEEFP or type == 0 */
       h->format = iom_FLOAT;
       h->eformat = iom_MSB_IEEE_REAL_4;
     }
@@ -222,7 +222,7 @@ iom_GetTIFFHeader(FILE *fp, char *filename, struct iom_iheader *h)
         temp_d[i] = *((unsigned int *)&h->data[i*byte_size]); /*converting from int or unsigned int to double */
       }
     }
-    /* 64 bits will always be double or converted to double (type == -1 or SAMPLEFORMAT_IEEEFP skip the conversion) */
+    /* 64 bits will always be double or converted to double (type == 0 or SAMPLEFORMAT_IEEEFP skip the conversion) */
     h->format = iom_DOUBLE;
     h->eformat = iom_MSB_IEEE_REAL_8;
   }
@@ -318,9 +318,8 @@ iom_ReadTIFF(FILE *fp, char *filename, int *xout, int *yout, int *zout,
     return 0;
   }
 
-  TIFFDataType tiff_type;
+  uint16 tiff_type = 0;
   if( !TIFFGetField(tifffp, TIFFTAG_SAMPLEFORMAT, &tiff_type) ) {
-    tiff_type = -1;     /* will cause calling function to make assumptions/guesses */
     fprintf(stderr, "SAMPLEFORMAT tag missing; assumptions will be made in data format determination\n"); 
   }
 
