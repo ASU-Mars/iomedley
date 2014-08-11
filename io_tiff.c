@@ -45,9 +45,13 @@ static const char * const Photometrics[] = {
 
 #define TIFF_MAGIC_BIGEND    "MM\x00\x2a"
 #define TIFF_MAGIC_LITTLEEND    "II\x2a\x00"
+#define BIG_TIFF_MAGIC_BIGEND    "MM\x00\x2b"
+#define BIG_TIFF_MAGIC_LITTLEEND    "II\x2b\x00"
 
 #define MIN(x,y) ((x)<(y)? (x): (y))
 #define MAX(x,y) ((x)>(y)? (x): (y))
+
+#define FOUR_GIG 4294967296UL
 
 int    iom_isTIFF(FILE *);
 int    iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
@@ -109,6 +113,10 @@ iom_isTIFF(FILE *fp)
   if (!strncmp(magic, TIFF_MAGIC_BIGEND, 4))
     return 1;
   else if (!strncmp(magic, TIFF_MAGIC_LITTLEEND, 4))
+    return 1;
+  if (!strncmp(magic, BIG_TIFF_MAGIC_BIGEND, 4))
+    return 1;
+  else if (!strncmp(magic, BIG_TIFF_MAGIC_LITTLEEND, 4))
     return 1;
   else
     return 0;
@@ -514,6 +522,7 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFDataType   sample_fmt = -1;
   tstrip_t strip;
   toff_t  offset, offset2;
+  char writeMode[4] = "w";
 
   /* Check for file existence if force overwrite not set. */
 
@@ -556,7 +565,12 @@ iom_WriteTIFF(char *filename, unsigned char *indata, struct iom_iheader *h, int 
   TIFFSetWarningHandler(tiff_warning_handler);
   TIFFSetErrorHandler(tiff_error_handler);
 
-  if ((tifffp = TIFFOpen(filename, "w")) == NULL) {
+  /* write BigTiff if the data size is large */
+  if ((iom_iheaderDataSize(h) * iom_iheaderItemBytesI(h)) > FOUR_GIG){
+     strcat(writeMode, "8");
+  }
+
+  if ((tifffp = TIFFOpen(filename, writeMode)) == NULL) {
     if (iom_is_ok2print_sys_errors()) {
       fprintf(stderr, "Unable to write file %s. Reason: %s.\n", filename, strerror(errno));
     }
