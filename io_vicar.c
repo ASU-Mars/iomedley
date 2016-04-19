@@ -23,7 +23,7 @@
 /**
  ** Vicar I/O routines
  **
- ** is_Vicar()  - detect VICAR magic cookie 
+ ** is_Vicar()  - detect VICAR magic cookie
  ** GetVicarHeader() - read and parse a vicar header
  ** LoadVicar() - Load VICAR data file
  **/
@@ -62,7 +62,7 @@ vicar_get_value(const char *s1, const char *s2)
     int len;
 
     len = strlen(s2);
-    for (p = s1 ; p && *p ; p++) {
+    for (p = (char*)s1 ; p && *p ; p++) {
         if (!strncasecmp(p, s2, len)) {
             return(p+len);
         }
@@ -88,7 +88,7 @@ typedef enum {
 /**
  ** GetVicarHeader() - read and parse a vicar header
  **
- ** This routine returns 
+ ** This routine returns
  **         0 if the specified file is not a Vicar file.
  **         1 on success
  **/
@@ -99,7 +99,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
     char *p, *q;
     int s = 0;
     int i;
-    
+
     int org=-1;
     int format=-1;
 
@@ -133,7 +133,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
 
     fread(p+64, 1, s-64, fp);
     p[s] = '\0';
-    
+
     r = atoi(vicar_get_value(p, "RECSIZE="));
 
     size[0] =   atoi(vicar_get_value(p, "NS=")); /* width */
@@ -180,7 +180,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         free(p);
         return 0;
     }
-    
+
     realfmt = VICAR_REALFMT_INVALID;
     if ((q = vicar_get_value(p, "REALFMT=")) != NULL){
         if (strncmp(q, "'VAX'", 5) == 0) realfmt = VICAR_REALFMT_VAX;
@@ -203,7 +203,7 @@ iom_GetVicarHeader(FILE *fp, char *fname, struct iom_iheader *h)
         free(p);
         return 0;
     }
-    
+
     format = iom_EDF_INVALID;
     if ((q = vicar_get_value(p, "FORMAT=")) != NULL) {
         if (!strncmp(q, "'BYTE'", 6)){
@@ -310,7 +310,7 @@ iom_WriteVicar(
                 filename, strerror(errno));
         return 0;
     }
-    
+
     memset(ptr, 0, sizeof(ptr));
 
     org = h->org;
@@ -333,14 +333,14 @@ iom_WriteVicar(
     ** Write high-endian output.
     ** This ensures no output endian-translation.
     */
-    
+
     sprintf(ptr+strlen(ptr), "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  ");
 #else /* little endian */
     /*
     ** Write low-endian output only.
     ** This ensures no output endian-translation.
     */
-    
+
     sprintf(ptr+strlen(ptr), "HOST='PC'  INTFMT='LOW'  REALFMT='RIEEE'  ");
 #endif /* WORDS_BIGENDIAN */
 
@@ -357,7 +357,7 @@ iom_WriteVicar(
         return 0;
         break;
     }
-    
+
     sprintf(ptr+strlen(ptr),
             "TYPE='IMAGE'  BUFSIZ=%d  DIM=%d  EOL=0  RECSIZE=%d  ",
             24576, dim, rec);
@@ -399,7 +399,7 @@ iom_WriteVicar(
     ** BHOST, BINTFMT, BREALFMT, BLTYPE and TASK are not used by
     ** us but they are required by the standard.
     */
-    
+
 #ifdef WORDS_BIGENDIAN
     sprintf(ptr+strlen(ptr), "BHOST='SUN-SOLR'  BINTFMT='HIGH'  ");
 #else /* little endian */
@@ -407,7 +407,7 @@ iom_WriteVicar(
 #endif /* WORDS_BIGENDIAN */
 
     sprintf(ptr+strlen(ptr), "BREALFMT='IEEE'  BLTYPE=''  TASK='IOMEDLEY'  ");
-    
+
 #ifdef _WIN32
     sprintf(ptr+strlen(ptr), "USER='%s'  ", "MSDOS");
 #else
@@ -415,13 +415,13 @@ iom_WriteVicar(
 #endif
 
     sprintf(ptr+strlen(ptr), "DAT_TIM='%24.24s'  ", ctime(&t));
-    
+
 	sprintf(lblsizebuff, lblsizefmt, 0);
     /**
-     ** Compute the size of final label and write it to the output file 
-	 ** before writing the rest of the label (as constructed in the 
+     ** Compute the size of final label and write it to the output file
+	 ** before writing the rest of the label (as constructed in the
 	 ** above code).
-	 ** 
+	 **
 	 ** "2" leaves the gap for label terminator.
      **/
     len = (((strlen(ptr)+strlen(lblsizebuff)+2) / rec)+1) * rec;
@@ -430,20 +430,20 @@ iom_WriteVicar(
     if (VERBOSE > 1) {
         fprintf(stderr, "Writing %s: VICAR %s %dx%dx%d %d bit IMAGE\n",
                 filename,
-                iom_Org2Str(org), 
+                iom_Org2Str(org),
                 iom_GetSamples(h->size, h->org),
                 iom_GetLines(h->size, h->org),
                 iom_GetBands(h->size, h->org),
                 iom_NBYTESI(h->format) * 8);
         fflush(stderr);
     }
-#endif 
+#endif
 
     fprintf(fp, lblsizefmt,len);
     fwrite(ptr, strlen(ptr), 1, fp);
 
 	/*
-	** "2" leaves the gap for label terminator which is a 
+	** "2" leaves the gap for label terminator which is a
 	** binary-zero short.
 	*/
     fprintf(fp, "%*s", (int)(len-strlen(ptr)-strlen(lblsizebuff)-2), "");
@@ -452,7 +452,7 @@ iom_WriteVicar(
 		short i = 0;
 		fwrite(&i, 1, sizeof(i), fp);
 	}
-    
+
     /*
     ** Write Data
     **
@@ -475,6 +475,6 @@ iom_WriteVicar(
     }
 
     fclose(fp);
-    
+
     return(1);
 }

@@ -1628,7 +1628,7 @@ KEYWORD *OdlNextKwd (const KEYWORD *start_keyword,
   {
     start_object = start_keyword->parent;
     obj = start_object;
-    kwd = start_keyword;
+    kwd = (KEYWORD*)start_keyword;
 
     do
     {
@@ -3210,7 +3210,7 @@ short OdlPrintMessage (const char *message_fname, FILE *message_fptr,
   if (! odl_suppress_messages)
   {
     m_ptr = (message_fptr != NULL) ? message_fptr :
-        (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+        (FILE *) OdlOpenMessageFile((char*)message_fname, message_fptr);
 
     if (line_number == 0)
       strcpy(line_prompt, "");
@@ -3294,7 +3294,7 @@ short OdlPrintLine (const char *message_fname, FILE *message_fptr,
   if (! odl_suppress_messages)
   {
     m_ptr = (message_fptr != NULL) ? message_fptr :
-        (FILE *) OdlOpenMessageFile(message_fname, message_fptr);
+        (FILE *) OdlOpenMessageFile((char*)message_fname, message_fptr);
 
     if (text == NULL)
     {

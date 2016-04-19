@@ -25,7 +25,7 @@
 /**
  ** ENVI I/O routines
  **
- ** is_ENVI()  - detect ENVI magic cookie 
+ ** is_ENVI()  - detect ENVI magic cookie
  ** GetENVIHeader() - read and parse a ENVI header
  ** LoadENVI() - Load ENVI data file
  **/
@@ -76,7 +76,7 @@ envi_get_value(const char *s1, const char *s2)
 /**
  ** GetENVIHeader() - read and parse a envi header
  **
- ** This routine returns 
+ ** This routine returns
  **         0 if the specified file is not a ENVI file.
  **         1 on success
  **/
@@ -86,7 +86,7 @@ iom_GetENVIHeader(FILE *fp, char *fname, struct iom_iheader *h)
 {
     char *p, *q;
     int i;
-    
+
     int org=-1;
     int format=-1;
 	int offset = 0;
@@ -158,14 +158,13 @@ iom_GetENVIHeader(FILE *fp, char *fname, struct iom_iheader *h)
 				case iom_MSB_IEEE_REAL_4: format = iom_LSB_IEEE_REAL_4; break;
 				case iom_MSB_IEEE_REAL_8: format = iom_LSB_IEEE_REAL_8; break;
 			}
-		} 
+		}
 	}
 
     if (format == iom_EDF_INVALID) {
 		if (iom_is_ok2print_unsupp_errors()){
 			fprintf(stderr, "%s has unsupported/invalid format.", fname);
 		}
-        free(p);
         return(0);
     }
 
@@ -191,7 +190,7 @@ iom_GetENVIHeader(FILE *fp, char *fname, struct iom_iheader *h)
 }
 
 void
-stradd(char *ptr, const char *fmt, ...) 
+stradd(char *ptr, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -239,7 +238,7 @@ iom_WriteENVI(
                 filename, strerror(errno));
         return 0;
     }
-    
+
     memset(ptr, 0, sizeof(ptr));
 	stradd(ptr, envi_header_init);
 
