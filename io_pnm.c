@@ -442,44 +442,6 @@ iom_ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
 }
 
 
-/*
-**                        >>>>>    C A U T I O N    <<<<<
-**
-**  T H I S    F U N C T I O N    M U S T    B E    R E M O V E D    F R O M    H E R E
-*/
-static int
-iom_LoadPNM(
-    FILE *fp,
-    char *fname,
-    struct iom_iheader *h
-    )
-{
-  int   x, y, z, bits;
-  unsigned char *data;
-  int offset;
-
-  iom_init_iheader(h);
-
-  if (!iom_isPNM(fp)){ return 0; }
-
-  if (iom_ReadPNM(fp, fname, &x, &y, &z, &bits, &data, &offset) == 0){
-    return 0;
-  }
-
-  h->data = data;
-
-  if (bits == 16){ h->format = iom_SHORT; }
-  else { h->format = iom_BYTE; }
-
-  h->dim[0] = x;
-  h->dim[1] = y;
-  h->dim[2] = z;
-  /* h->dptr = offset; */
-
-  return 1;
-}
-
-
 static int
 get_int(FILE *fp)
 {

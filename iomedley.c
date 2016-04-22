@@ -49,7 +49,7 @@ const char *iom_EFORMAT2STR[] = {
     "MSB BYTE",
     "MSB SHORT",
     "(invalid)",
-    "MSB INT",	
+    "MSB INT",
     "(invalid)",
     "(invalid)",
     "(invalid)",
@@ -94,7 +94,7 @@ const char *iom_FORMAT2STR[] = {
     "float",
     "double"
 };
- 
+
 const char *iom_ORG2STR[] = {
     "bsq",
     "bil",
@@ -131,7 +131,7 @@ iom_init_iheader(struct iom_iheader *h)
     int i;
 
     memset(h, 0, sizeof(struct iom_iheader));
-    
+
     h->gain = 1.0;
     h->offset = 0.0;
 
@@ -142,7 +142,7 @@ iom_init_iheader(struct iom_iheader *h)
         h->prefix[i] = 0;
         h->suffix[i] = 0;
     }
-    
+
     h->corner = 0;
 }
 
@@ -164,7 +164,7 @@ iom_detach_iheader_data(struct iom_iheader *h)
 
     data = h->data;
     h->data = NULL;
-    
+
     return(data);
 }
 
@@ -213,7 +213,7 @@ iom_iheaderDataSize(struct iom_iheader *h)
 {
     int i;
     size_t dsize = 1;
-    
+
     for(i = 0; i < 3; i++){
         dsize *= h->size[i];
     }
@@ -268,7 +268,7 @@ iom_LoadHeader(
     if (!success) success = iom_GetIMathHeader(fp, fname, header);
     if (!success) success = iom_GetENVIHeader(fp, fname, header);
 	
-    
+
 	/*
 	** We don't have header loaders any more, try loading the
 	** image and gather header info from the loaded image.
@@ -292,7 +292,7 @@ iom_PrintImageHeader(
     struct iom_iheader *header
     )
 {
-    fprintf(stream, "Image %s is %s, %s %dx%dx%d\n", 
+    fprintf(stream, "Image %s is %s, %s %dx%dx%d\n",
             (fname == NULL ? "": fname),
             iom_Org2Str(header->org),
             iom_EFormat2Str(header->eformat),
@@ -336,7 +336,7 @@ iom_SetSliceInHeader(
     int org;
 	
     if (s != NULL) {
-            /** 
+            /**
              ** Set subsets
              **/
         org = h->org;
@@ -380,7 +380,7 @@ iom_ClearSliceInHeader(
 }
 
 
-static ssize_t 
+static ssize_t
 read_fully(int fd, void *buff, size_t maxSingleReadSize, size_t nbytes){
 	size_t nread = 0;
 	ssize_t err;
@@ -417,7 +417,7 @@ read_fully(int fd, void *buff, size_t maxSingleReadSize, size_t nbytes){
  ** data file's header loaded already. This is done using the
  ** iom_LoadHeader(). Such a header will cause read_qube_data()
  ** to read the entire raster/qube.
- ** 
+ **
  ** If one desires to read a portion/slice/sub-selection of the
  ** data instead, one must call iom_SetSliceInHeader() before
  ** calling read_qube_data().
@@ -480,7 +480,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         if (h->s_lo[i] == 0) h->s_lo[i] = 1;
         if (h->s_hi[i] == 0) h->s_hi[i] = h->size[i];
         if (h->s_hi[i] > h->size[i]) h->s_hi[i]=h->size[i];
-        if (h->s_skip[i] == 0) h->s_skip[i] = 1;  
+        if (h->s_skip[i] == 0) h->s_skip[i] = 1;
 
         h->s_lo[i]--;           /* value is 1-N.  Switch to 0-(N-1) */
         h->s_hi[i]--;
@@ -499,7 +499,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         }
 
             /* compute the size of the entire ouput block; s_skip contains stride value */
-        dsize *= (dim[i] - 1) / h->s_skip[i] + 1; 
+        dsize *= (dim[i] - 1) / h->s_skip[i] + 1;
     }
     if (h->gain == 0.0)
         h->gain = 1.0;
@@ -515,7 +515,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
         return (NULL);
     }
-    
+
         /**
          ** Allocate some temporary storage space
          **/
@@ -535,11 +535,11 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     for (z = 0; z < dim[2]; z += h->s_skip[2]) {
 
             /**
-             ** read part of an entire plane 
+             ** read part of an entire plane
              **/
 
             /*........label.....plane.....offset............. */
-        offset = h->dptr + (z + h->s_lo[2]) * 
+        offset = h->dptr + (z + h->s_lo[2]) *
             (d[0] * h->size[1] + (size_t)h->size[0] * (h->prefix[1]+h->suffix[1]) + h->corner) +
             d[0] * h->s_lo[1];
 
@@ -548,14 +548,14 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
                 ** If this file supports read_qube_data() then the image
                 ** directly from the file.
                 */
-            
+
             if ((err = lseek(fd, offset, 0)) != offset){
                 if (iom_is_ok2print_errors()){
                     fprintf(stderr, "Seek failed (offset: %ld): %s.\n", offset, strerror(errno));
                 }
                 break; /* return partial data */
 			}
-            
+
             if ((err = read_fully(fd, p_data, 1073741824L, plane)) != plane) {
                 if (iom_is_ok2print_errors()){
                     fprintf(stderr, "Early EOF.\n");
@@ -579,18 +579,18 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
         for (y = 0; y < dim[1]; y += h->s_skip[1]) {
 
                 /**
-                 ** find the line we are interested in 
+                 ** find the line we are interested in
                  **/
 
             if (h->s_skip[0] == 1) {
                 memcpy((char *) data + count,
-                       (char *) p_data + (h->prefix[0] + h->s_lo[0] * nbytes + y * d[0]), 
+                       (char *) p_data + (h->prefix[0] + h->s_lo[0] * nbytes + y * d[0]),
                        (size_t)dim[0] * nbytes);
                 count += (size_t)dim[0] * nbytes;
             } else {
                 for (x = 0; x < dim[0]; x += h->s_skip[0]) {
                     memcpy((char *) data + count,
-                           (char *) p_data + (h->prefix[0] + (h->s_lo[0] + x) * nbytes + y * d[0]), 
+                           (char *) p_data + (h->prefix[0] + (h->s_lo[0] + x) * nbytes + y * d[0]),
                            nbytes);
                     count += nbytes;
                 }
@@ -603,7 +603,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
 
         /**
          ** do byte swap,
-         ** find data limits, 
+         ** find data limits,
          ** apply multiplier.
          **/
     if (!h->data){
@@ -617,7 +617,7 @@ iom_read_qube_data(int fd, struct iom_iheader *h)
     }
 
     for(i=0; i<3; i++){ h->s_lo[i]++; h->s_hi[i]++; }
-    
+
     free(p_data);
     return (data);
 }
@@ -1137,7 +1137,7 @@ iom__ConvertToBIP(unsigned char *data,
         xsize = h->size[0];
         zsize = h->size[1];
         ysize = h->size[2];
-    } else {    
+    } else {
         if (iom_is_ok2print_unsupp_errors()) {
                 /* FIX: report file and line? */
             fprintf(stderr, "ERROR: org %d not supported by iom__ConvertToBIP()", h->org);
@@ -1162,14 +1162,14 @@ iom__ConvertToBIP(unsigned char *data,
         for (y = 0; y < ysize; y++) {
             for (x = 0; x < xsize; x++) {
                 for (z = 0; z < zsize; z++) {
-                    switch (h->org) { 
+                    switch (h->org) {
                         case iom_BIP: offset = ((size_t)y) * (xsize * zsize) + (((size_t)x) * zsize) + (size_t)z; break;
-                        case iom_BSQ: offset = ((size_t)z) * (ysize * xsize) + (((size_t)y) * xsize) + (size_t)x; break; 
+                        case iom_BSQ: offset = ((size_t)z) * (ysize * xsize) + (((size_t)y) * xsize) + (size_t)x; break;
                         case iom_BIL: offset = ((size_t)y) * (xsize * zsize) + (((size_t)z) * xsize) + (size_t)x; break;
                                 /* No default; other orgs already excluded above. */
                     }
                     offset2 = ((size_t)y) * (xsize * zsize) + (((size_t)x) * zsize) + (size_t)z;
-                    memcpy((bip_data + (offset2*nbytes)), 
+                    memcpy((bip_data + (offset2*nbytes)),
                            (data + (offset*nbytes)), nbytes);
                 }
             }
@@ -1228,7 +1228,7 @@ iom_Xpos(size_t i, int org, int size[3], int *x, int *y, int *z)
 void iom_swp(iom_cptr pc1, iom_cptr pc2)
 {
     char cTmp;
-    
+
     cTmp = *pc1;
     *pc1 = *pc2;
     *pc2 = cTmp;
