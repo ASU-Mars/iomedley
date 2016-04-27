@@ -18,7 +18,7 @@
 #include "iomedley.h"
 
 
-#define VICAR_MAGIC		"LBLSIZE="
+#define VICAR_MAGIC     "LBLSIZE="
 
 /**
  ** Vicar I/O routines

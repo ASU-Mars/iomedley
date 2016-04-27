@@ -19,45 +19,43 @@
 */
 int
 iom_WriteRaw(
-    char *fname,
-    void *data,
-    struct iom_iheader *h,
-    int force_write
-    )
+	char *fname,
+	void *data,
+	struct iom_iheader *h,
+	int force_write
+	)
 {
-    long item_ct_out, item_ct_in;
-    FILE *fp = NULL;
+	long item_ct_out, item_ct_in;
+	FILE *fp = NULL;
 
-    if (!force_write && access(fname, F_OK) == 0){
+	if (!force_write && access(fname, F_OK) == 0){
 		if (iom_is_ok2print_errors()){
 			fprintf(stderr, "File %s already exists.\n", fname);
 		}
-        return 0;
-    }
+		return 0;
+	}
 
-    if ((fp = fopen(fname, "wb")) == NULL){
+	if ((fp = fopen(fname, "wb")) == NULL){
 		if (iom_is_ok2print_sys_errors()){
-			fprintf(stderr, "Unable to write %s. Reason: %s.\n",
-					fname, strerror(errno));
+			fprintf(stderr, "Unable to write %s. Reason: %s.\n", fname, strerror(errno));
 		}
-        return 0;
-    }
+		return 0;
+	}
 
-    item_ct_in = iom_iheaderDataSize(h);
-    item_ct_out = fwrite(data, iom_NBYTESI(h->format), item_ct_in, fp);
-    
-    if (item_ct_in != item_ct_out){
+	item_ct_in = iom_iheaderDataSize(h);
+	item_ct_out = fwrite(data, iom_NBYTESI(h->format), item_ct_in, fp);
+
+	if (item_ct_in != item_ct_out){
 		if (iom_is_ok2print_sys_errors()){
-			fprintf(stderr, "Failed to write to %s. Reason: %s.\n",
-					fname, strerror(errno));
+			fprintf(stderr, "Failed to write to %s. Reason: %s.\n", fname, strerror(errno));
 		}
-        fclose(fp);
-        unlink(fname);
-        return 0;
-    }
+		fclose(fp);
+		unlink(fname);
+		return 0;
+	}
 
-    fclose(fp);
-    
-    return(1);
+	fclose(fp);
+
+	return(1);
 }
 
