@@ -22,7 +22,7 @@
 #include <unistd.h>
 #endif /* _WIN32 */
 #include "iomedley.h"
-#include "libpng-1.2.3/png.h"
+#include "png.h"
 #include <string.h>
 #include <sys/types.h>
 
@@ -100,20 +100,20 @@ int iom_GetPNGHeader(FILE* fp, char* filename, struct iom_iheader* h)
 	h->size[0] = z;
 	h->size[1] = x;
 	h->size[2] = y;
-	h->org = iom_BIP;
+	h->org     = iom_BIP;
 
 	/* All PNGs are scaled to 8 or 16 bits by iom_ReadPNG(). */
 
 	if (bits == 8) {
 		h->eformat = iom_MSB_INT_1;
-		h->format = iom_BYTE;
+		h->format  = iom_BYTE;
 	} else if (bits == 16) {
 		/* h->eformat = iom_MSB_INT_2;
 		h->format = iom_SHORT; */
 		/* switch to next higher data width - since we don't have 16-bit unsigned shorts */
 		data = (unsigned char*)toInts((unsigned short*)data, (size_t)x * (size_t)y * (size_t)z);
 		h->eformat = iom_MSB_INT_4;
-		h->format = iom_INT;
+		h->format  = iom_INT;
 	} else {
 		if (iom_is_ok2print_unsupp_errors()) {
 			fprintf(stderr, "ERROR: can't handle %d-bit PNG data\n", bits);
@@ -222,7 +222,7 @@ int iom_ReadPNG(FILE* fp, char* filename, int* xout, int* yout, int* zout, int* 
 
 	/* Expand grayscale images to the full 8 bits from 1, 2, or 4 bits/pixel. */
 	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-		png_set_gray_1_2_4_to_8(png_ptr);
+		png_set_expand_gray_1_2_4_to_8(png_ptr);
 	}
 
 	/* Expand paletted or RGB images with transparency to full alpha channels
@@ -241,9 +241,9 @@ int iom_ReadPNG(FILE* fp, char* filename, int* xout, int* yout, int* zout, int* 
 	/* This might not be necessary with the conversions used, but won't hurt. */
 	png_read_update_info(png_ptr, info_ptr);
 
-	z = png_get_channels(png_ptr, info_ptr);
+	z          = png_get_channels(png_ptr, info_ptr);
 	row_stride = png_get_rowbytes(png_ptr, info_ptr);
-	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+	bit_depth  = png_get_bit_depth(png_ptr, info_ptr);
 
 #ifndef WORDS_BIGENDIAN
 	if (bit_depth > 8) {
