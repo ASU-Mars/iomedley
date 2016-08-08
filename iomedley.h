@@ -23,10 +23,10 @@ typedef enum {
 	iom_MSB_INT_4   = 14,
 
 	iom_MSB_IEEE_REAL_4 = 24, /* SUN REAL */
-	iom_MSB_IEEE_REAL_8 = 28, /* SUN DOUBLE */
+	iom_MSB_IEEE_REAL_8 = 28, /* SUN DV_DOUBLE */
 
 	iom_LSB_IEEE_REAL_4 = 34, /* PC REAL */
-	iom_LSB_IEEE_REAL_8 = 38, /* PC DOUBLE */
+	iom_LSB_IEEE_REAL_8 = 38, /* PC DV_DOUBLE */
     
 #ifdef WORDS_BIGENDIAN
 
@@ -128,7 +128,7 @@ struct iom_iheader {
                     	/*   -- comes from iom_edf enum above      */
                     	/* this is what the file says it has       */
 
-	int format;         /* data format (INT, FLOAT, etc)           */
+	int format;         /* data format (DV_INT32, DV_FLOAT, etc)           */
 	/*   -- comes from iom_idf enum above    */
                     	/* this is what read_qube_data() returns   */
 

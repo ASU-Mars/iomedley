@@ -18,9 +18,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
+
+//mingw64 has unistd.h
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif /* _WIN32 */
+#endif
+
 #include "iomedley.h"
 #include "png.h"
 #include <string.h>
@@ -147,7 +150,7 @@ int iom_ReadPNG(FILE* fp, char* filename, int* xout, int* yout, int* zout, int* 
 {
 	png_uint_32 x, y;
 	unsigned int z;
-	unsigned int bit_depth; /* Bits per channel. */
+	int bit_depth; /* Bits per channel. */
 	unsigned int color_type;
 	unsigned int i;
 	size_t row_stride; /* Bytes per scanline. */
@@ -378,7 +381,7 @@ int iom_WritePNG(char* filename, unsigned char* indata, struct iom_iheader* h, i
     /* FIX: handle?  ok2p etc */
     /* NOTE: need to change row_stride calculation below if other bit
        depths are supported! */
-    fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/SHORT\n");
+    fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in DV_UINT8/DV_INT16\n");
     fprintf(stderr, "eformat = %d\tformat = %d\n", h->eformat, h->format);
     return 0;
   }
@@ -392,7 +395,7 @@ int iom_WritePNG(char* filename, unsigned char* indata, struct iom_iheader* h, i
 	} else {
 		/* NOTE: need to change row_stride calculation below if other bit depths are supported! */
 		if (iom_is_ok2print_unsupp_errors()) {
-			fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/SHORT\n");
+			fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in DV_UINT8/DV_INT16\n");
 			fprintf(stderr, "eformat = %d\tformat = %d\n", h->eformat, h->format);
 		}
 		return 0;

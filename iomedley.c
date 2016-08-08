@@ -30,15 +30,15 @@
 int iom_orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 const char* iom_EFORMAT2STR[] = {
-    "(invalid)",      "LSB BYTE",  "LSB SHORT",       "(invalid)", "LSB INT",         "(invalid)",
-    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB BYTE",
-    "MSB SHORT",      "(invalid)", "MSB INT",         "(invalid)", "(invalid)",       "(invalid)",
+    "(invalid)",      "LSB DV_UINT8",  "LSB DV_INT16",       "(invalid)", "LSB DV_INT32",         "(invalid)",
+    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB DV_UINT8",
+    "MSB DV_INT16",      "(invalid)", "MSB DV_INT32",         "(invalid)", "(invalid)",       "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "(invalid)",
-    "MSB IEEE FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DOUBLE", "(invalid)",
-    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE FLOAT",  "(invalid)",
-    "(invalid)",      "(invalid)", "LSB IEEE DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
-    "VAX INTEGER",    "(invalid)", "VAX FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
-    "VAX DOUBLE"};
+    "MSB IEEE DV_FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DV_DOUBLE", "(invalid)",
+    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE DV_FLOAT",  "(invalid)",
+    "(invalid)",      "(invalid)", "LSB IEEE DV_DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
+    "VAX INTEGER",    "(invalid)", "VAX DV_FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
+    "VAX DV_DOUBLE"};
 
 const char* iom_FORMAT2STR[] = {0, "byte", "short", "int", "float", "double"};
 
