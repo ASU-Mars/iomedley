@@ -16,18 +16,16 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
 #include <string.h>
 #include <sys/types.h>
 #include <tiffio.h>
 
-#include "iomedley.h"
 
 /* Photometric names. */
 
@@ -147,7 +145,7 @@ int iom_GetTIFFHeader(FILE* fp, char* filename, struct iom_iheader* h)
 
 	int byte_size = bits / 8;
 
-	/* type == -1 means sampleformat tag was missing and we assume unsigned int type */
+	/* type == 0 means sampleformat tag was missing and we assume unsigned int type */
 	if (bits == 8) {
 		if (type == SAMPLEFORMAT_INT &&
 		    uchar_overflow(h->data, dsize) <
@@ -517,7 +515,7 @@ int iom_WriteTIFF(char* filename, unsigned char* indata, struct iom_iheader* h, 
 
 	/* Check for file existence if force overwrite not set. */
 
-	if (!force && access(filename, F_OK) == 0) {
+	if (!force && file_exists(filename)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", filename);
 		}
@@ -546,7 +544,7 @@ int iom_WriteTIFF(char* filename, unsigned char* indata, struct iom_iheader* h, 
 		sample_fmt = SAMPLEFORMAT_IEEEFP;
 	} else {
 		if (iom_is_ok2print_errors()) {
-			fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_FORMAT2STR[h->format]);
+			fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_ifmt_to_str(h->format));
 		}
 		return 0;
 	}

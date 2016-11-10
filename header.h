@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include "tools.h"
 
+
 #ifdef _WIN32
 #include <io.h>
 
@@ -26,10 +27,14 @@ typedef unsigned long ulong;
 #endif /* 0 */
 
 #else
-#include <unistd.h>
 #include <sys/mman.h>
 #endif
 
+#include <unistd.h>
+
+#ifndef file_exists
+#define file_exists(filename) (access(filename, F_OK) == 0)
+#endif
 
 enum _external_format {
     INVALID_EFORMAT = -1,

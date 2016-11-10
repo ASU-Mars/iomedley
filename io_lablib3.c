@@ -2114,9 +2114,11 @@ TB_STRING_LIST* OdlGetAllKwdValues(KEYWORD* keyword)
 				for (val_start = (char*)OdlValueStart(keyword->value); *val_start != '\0';
 				     val_start = (char*)OdlValueStart(val_stop + 1)) {
 					val_stop        = (char*)OdlValueEnd(val_start);
-					save_ch         = *(val_stop + 1);
-					*(val_stop + 1) = '\0';
-					AddStringToList(val_start, value_list) * (val_stop + 1) = save_ch;
+
+					save_ch         = val_stop[1];
+					val_stop[1]     = '\0';
+					AddStringToList(val_start, value_list)
+					val_stop[1] = save_ch;
 				}
 			} else {
 				/*
@@ -2151,8 +2153,12 @@ int OdlGetAllKwdValuesArray(KEYWORD* keyword, char*** array)
 	value_list = OdlGetAllKwdValues(keyword);
 
 	if (value_list) {
+		// NOTE(rswinkle): all that crap above creating a stupid macro based list just to
+		// turn it into an array?  Why not just create a vector/array in the first place?
+		// use cvector_str for all of this directly
 		return (ListToArray(value_list, array));
 	} else {
+		*array = NULL;
 		return (0);
 	}
 
@@ -2806,7 +2812,7 @@ char* OdlGetFileSpec(char* fname, char* orig_fspec) /* this is still TBD */
 			CopyString(fspec, fname);
 		}
 
-		if (access(fspec, F_OK) != 0) {
+		if (!file_exists(fspec)) {
 			/**
 			 ** Try some alternate versions
 			 **/
@@ -3802,15 +3808,18 @@ OBJDESC* OdlParseFile(char* label_fname, FILE* label_fptr, char* message_fname, 
 	    "\n--------------------------------------------------------------------------\n\n");
 
 	/*  if we opened the label file in this routine then close it  */
-	if (label_fptr == NULL)
+	if (label_fptr == NULL) {
 		CloseMe(l_ptr)
+	}
 
-		    /*  if we opened the message file in this routine then close it  */
-		    if ((m_ptr != stdout) && (message_fptr == NULL)) CloseMe(m_ptr)
+	/*  if we opened the message file in this routine then close it  */
+	if ((m_ptr != stdout) && (message_fptr == NULL)) {
+		CloseMe(m_ptr)
+	}
 
-		        LemmeGo(text)
+	LemmeGo(text)
 
-		            return (root);
+	return (root);
 
 } /*  End routine:  OdlParseFile  */
 
@@ -5378,6 +5387,15 @@ int ListToArray(TB_STRING_LIST* list, char*** array)
 	return (i);
 }
 
+void free_str_array(char** array, int num)
+{
+	int i;
+	for (i=0; i<num; ++i) {
+		free(array[i]);
+	}
+	free(array);
+}
+
 #if 0
 /*
  * helper functions
@@ -5431,18 +5449,20 @@ static char* uppercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		if (islower(*p)) *p = *p - 'a' + 'A';
+		*p = toupper(*p);
 	}
 	return (s);
 }
+
 static char* lowercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		if (isupper(*p)) *p = *p - 'A' + 'a';
+		*p = tolower(*p);
 	}
 	return (s);
 }
+
 char* find_file(char* fname)
 {
 	if (!access(fname, R_OK)) return (fname);
@@ -5490,19 +5510,19 @@ char* find_file(char* fname)
 			} else {
 				sprintf(buf3, "%s", p);
 			}
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}
 
 			sprintf(buf3, "%s/%s", buf2, uppercase(p));
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}
 
 			sprintf(buf3, "%s/%s", buf2, lowercase(p));
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}

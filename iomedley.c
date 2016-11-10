@@ -26,23 +26,63 @@
 /**
  ** Indices at which X,Y & Z (or Samples, Lines & Bands)
  ** dimensions end up at.
+ **
+ ** NOTE(rswinkle): All of this mirrors globals in globals.c and array.c
+ ** Why did we have to duplicate all this effort?  Because iomedley is compiled as a separate library?
+ ** and why did we make that retarded decision?  Is it honestly used *anywhere* outside of davinci?
+ ** even if it were it'd have been easy to pull out the common globals/enums and use them in both
  **/
 int iom_orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 const char* iom_EFORMAT2STR[] = {
-    "(invalid)",      "LSB DV_UINT8",  "LSB DV_INT16",       "(invalid)", "LSB DV_INT32",         "(invalid)",
-    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB DV_UINT8",
-    "MSB DV_INT16",      "(invalid)", "MSB DV_INT32",         "(invalid)", "(invalid)",       "(invalid)",
+    "(invalid)",      "LSB UINT8", "LSB INT16",       "(invalid)", "LSB INT32",       "(invalid)",
+    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB UINT8",
+    "MSB INT16",      "(invalid)", "MSB INT32",       "(invalid)", "(invalid)",       "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "(invalid)",
-    "MSB IEEE DV_FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DV_DOUBLE", "(invalid)",
-    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE DV_FLOAT",  "(invalid)",
-    "(invalid)",      "(invalid)", "LSB IEEE DV_DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
-    "VAX INTEGER",    "(invalid)", "VAX DV_FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
-    "VAX DV_DOUBLE"};
-
-const char* iom_FORMAT2STR[] = {0, "byte", "short", "int", "float", "double"};
+    "MSB IEEE FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DOUBLE", "(invalid)",
+    "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE FLOAT",  "(invalid)",
+    "(invalid)",      "(invalid)", "LSB IEEE DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
+    "VAX INTEGER",    "(invalid)", "VAX FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
+    "VAX DOUBLE"};
 
 const char* iom_ORG2STR[] = {"bsq", "bil", "bip"};
+
+
+int iom_ifmt_size(int type)
+{
+	switch (type) {
+	case iom_BYTE:
+		return 1;
+
+	case iom_SHORT:
+		return 2;
+
+	case iom_INT:
+		return 4;
+
+	case iom_FLOAT:
+		return sizeof(float);
+
+	case iom_DOUBLE:
+		return sizeof(double);
+	default:
+		;
+	}
+}
+const char* iom_ifmt_to_str(int type)
+{
+	switch (type) {
+	case iom_BYTE: return "uint8";
+	case iom_SHORT: return "int16";
+	case iom_INT: return "int32";
+
+	case iom_FLOAT: return "float";
+	case iom_DOUBLE: return "double";
+	default:
+		;
+	}
+}
+
 
 FILE* iom_uncompress(FILE* fp, const char* fname);
 char* iom_expand_filename(const char* s);
