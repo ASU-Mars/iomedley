@@ -7,21 +7,6 @@
 #include <string.h>
 #include "io_lablib3.h"
 
-
-// for access()
-//
-// probably not even worth guarding since every platform including
-// windows (via mingw) has it
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-// NOTE(rswinkle): rename to fexists() to match davinci function?
-//int file_exists(const char* filename);
-#ifndef file_exists
-#define file_exists(filename) (access(filename, F_OK) == 0)
-#endif
-
 /*
 ** CAUTION:
 ** iom_EFORMAT2STR[] in iomedley.c depends upon these values
@@ -38,10 +23,10 @@ typedef enum {
 	iom_MSB_INT_4   = 14,
 
 	iom_MSB_IEEE_REAL_4 = 24, /* SUN REAL */
-	iom_MSB_IEEE_REAL_8 = 28, /* SUN DV_DOUBLE */
+	iom_MSB_IEEE_REAL_8 = 28, /* SUN DOUBLE */
 
 	iom_LSB_IEEE_REAL_4 = 34, /* PC REAL */
-	iom_LSB_IEEE_REAL_8 = 38, /* PC DV_DOUBLE */
+	iom_LSB_IEEE_REAL_8 = 38, /* PC DOUBLE */
     
 #ifdef WORDS_BIGENDIAN
 
@@ -66,26 +51,24 @@ typedef enum {
 	iom_VAX_INT     = 42,
 	iom_VAX_REAL_4  = 44,
 	iom_VAX_REAL_8  = 48
-} iom_edf;             /* davinci I/O external data formats */
+} iom_edf;             /* daVinci I/O external data formats */
 
 #define iom_NBYTES(ef) ((ef) > 40 ? ((ef) - 40) : ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef)))))
 
 
-//TODO(rswinkle): Not sure it's worth the effort (why on earth do we have an entirely separate type system
-// for iomedley?) but could try adding the new int types here as well
+/*
+** CAUTION:
+** iom_FORMAT2STR[] in iomedley.c depends upon these values
+*/
 typedef enum {
 	iom_BYTE   = 1,
 	iom_SHORT  = 2,
 	iom_INT    = 3,
 	iom_FLOAT  = 4,
 	iom_DOUBLE = 5
-} iom_idf;             /* davinci I/O internal data formats */
+} iom_idf;             /* daVinci I/O internal data formats */
 
-
-int iom_ifmt_size(int type);
-const char* iom_ifmt_to_str(int type);
-
-#define iom_NBYTESI(ifmt) iom_ifmt_size(ifmt)
+#define iom_NBYTESI(ifmt) ((ifmt) == 5 ? 8 : ((ifmt) == 3 ? 4 : (ifmt)))
 
 /**
  ** Data axis order
@@ -106,7 +89,7 @@ typedef enum {
 } iom_order;
 
 #define iom_EFormat2Str(i)  iom_EFORMAT2STR[(i)]
-#define iom_Format2Str(i)   iom_ifmt_to_str(i)
+#define iom_Format2Str(i)   iom_FORMAT2STR[(i)]
 #define iom_Org2Str(i)      iom_ORG2STR[(i)]
 
 #define iom_GetSamples(s,org)   (s)[((org) == iom_BIP ? 1 : 0)]
@@ -115,49 +98,51 @@ typedef enum {
 
 extern int iom_orders[3][3];
 extern const char *iom_EFORMAT2STR[];
+extern const char *iom_FORMAT2STR[];
 extern const char *iom_ORG2STR[];
 /* extern int iom_VERBOSE; */
 
 
 
 struct iom_iheader {
-	size_t dptr;        /* offset in bytes to first data value     */
-	int prefix[3];      /* size of prefix data (bytes)             */
-	int suffix[3];      /* size of suffix data (bytes)             */
-
-	int size[3];        /* dimension of file data (pixels) (org-order)  */
-
+    size_t dptr;        /* offset in bytes to first data value     */
+    int prefix[3];      /* size of prefix data (bytes)             */
+    int suffix[3];      /* size of suffix data (bytes)             */
+    
+    int size[3];        /* dimension of file data (pixels) (org-order)  */
+    
 	/* Sub-select relavant.                                        */
-	int s_lo[3];        /* subset lower range (pixels)             */
-	int s_hi[3];        /* subset upper range (pixels)             */
-	int s_skip[3];      /* subset skip interval (pixels)           */
-
+    int s_lo[3];        /* subset lower range (pixels)             */
+    int s_hi[3];        /* subset upper range (pixels)             */
+    int s_skip[3];      /* subset skip interval (pixels)           */
+    
 	/* Set by read_qube_data() once the data read is successful.   */
 	/* It is derived from sub-selects.                             */
-	int dim[3];         /* sub-selected (or final dimension) (pixels) (org-order) */
+    int dim[3];	        /* sub-selected (or final dimension) (pixels) (org-order) */
+    
+    size_t corner;         /* size of 1 whole plane */
+    
+    int byte_order;	    /* byteorder of data - don't use                 */
+    
+    iom_edf eformat;    /* extrnal format of data                  */
+                        /*   -- comes from iom_edf enum above      */
+                        /* this is what the file says it has       */
+    
+    int format;         /* data format (INT, FLOAT, etc)           */
+    /*   -- comes from iom_idf enum above    */
+                        /* this is what read_qube_data() returns   */
+    
+    int transposed;     /* IMath data is transposed                */
 
-	size_t corner;      /* size of 1 whole plane */
+    int org;            /* data organization                       */
 
-	int byte_order;     /* byteorder of data - don't use                 */
+    float gain, offset; /* data multiplier and additive offset     */
 
-	iom_edf eformat;    /* extrnal format of data                  */
-                    	/*   -- comes from iom_edf enum above      */
-                    	/* this is what the file says it has       */
+    unsigned char *data;         /* non-NULL if all of the image is loaded  */
 
-	int format;         /* data format (DV_INT32, DV_FLOAT, etc)           */
-	/*   -- comes from iom_idf enum above    */
-                    	/* this is what read_qube_data() returns   */
+    char *ddfname;      /* detached data-file name (if any)        */
+                        /* see io_isis.c                           */
 
-	int transposed;     /* IMath data is transposed                */
-
-	int org;            /* data organization                       */
-
-	float gain, offset; /* data multiplier and additive offset     */
-
-	unsigned char *data;         /* non-NULL if all of the image is loaded  */
-
-	char *ddfname;      /* detached data-file name (if any)        */
-                    	/* see io_isis.c                           */
 };
 
 
@@ -237,11 +222,6 @@ int iom_isGOES(FILE *fp);
 int iom_isAVARIS(FILE *fp);
 int iom_isPNM(FILE *fp);
 int iom_isENVI(FILE *fp);
-int iom_isBMP(FILE *);
-int iom_isGIF(FILE *);
-int iom_isJPEG(FILE *);
-int iom_isTIFF(FILE *);
-int iom_isPNG(FILE *);
 
 
 /*
@@ -267,13 +247,6 @@ int iom_GetGOESHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetAVIRISHeader(FILE *fp, char *fname, struct iom_iheader *h);
 int iom_GetENVIHeader(FILE *fp, char *fnmae, struct iom_iheader *h);
 
-int iom_GetBMPHeader(FILE *, char *, struct iom_iheader *);
-int iom_GetGIFHeader(FILE *, char *, struct iom_iheader *);
-int iom_GetJPEGHeader(FILE *, char *, struct iom_iheader *);
-int iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
-int iom_GetPNMHeader(FILE *, char *, struct iom_iheader *);
-int iom_GetPNGHeader(FILE *, char *, struct iom_iheader *);
-
 /*
 ** The following functions do not support reading data cubes
 ** from them.
@@ -289,6 +262,12 @@ int iom_GetPNGHeader(FILE *, char *, struct iom_iheader *);
 **
 */
 
+/* FIX: get rid of these, insert the ones referenced in dvio_iomedley.c
+
+int iom_GetPNMHeader(FILE *fp, char *fname, struct iom_iheader *h);
+int iom_GetGFXHeader(FILE *fp, char *fname, struct iom_iheader *h);
+
+*/
 
 /*
 ** Unified header loader.
@@ -318,16 +297,14 @@ int iom_LoadHeader(FILE *fp, char *fname, struct iom_iheader *header);
 int iom_WriteIMath(char *fname, void *data, struct iom_iheader *h, int force_write);
 int iom_WriteERS(char *fname, void *data, struct iom_iheader *h, int force_write);
 int iom_WriteVicar(char *filename, void *data, struct iom_iheader *h, int force_write);
+int iom_WritePNM(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
 int iom_WriteISIS(char *fname, void *data, struct iom_iheader *h, int force_write, char *title);
 int iom_WriteGRD(char *fname, void *data, struct iom_iheader *h, int force_write, char *title, char *pgm);
+int iom_WriteGFXImage(char *fname, void *data, struct iom_iheader *h, int force_write, char *GFX_type);
 int iom_WriteRaw(char *fname, void *data, struct iom_iheader *h, int force_write);
 int iom_WriteJPEG(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
 int iom_WriteGIF(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
 int iom_WriteTIFF(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
-int iom_WriteBMP(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
-int iom_WritePNG(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
-int iom_WritePNM(char *fname, unsigned char *data, struct iom_iheader *h, int force_write);
-
 
 /*
 ** Support Functions

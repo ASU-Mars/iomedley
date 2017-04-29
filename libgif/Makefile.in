@@ -78,11 +78,8 @@ RANLIB=@RANLIB@
 
 LIBGIF=libgif.a
 
-#OBJS = dev2gif.o egif_lib.o dgif_lib.o gifalloc.o gif_font.o gif_hash.o \
-#	gif_err.o quantize.o qprintf.o getarg.o
-
-OBJS = dgif_lib.o egif_lib.o gif_font.o gif_hash.o \
-	gifalloc.o openbsd-reallocarray.o gif_err.o quantize.o
+OBJS = dev2gif.o egif_lib.o dgif_lib.o gifalloc.o gif_font.o gif_hash.o \
+	gif_err.o quantize.o qprintf.o getarg.o
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEVS) $<
@@ -103,36 +100,36 @@ $(LIBGIF): $(OBJS)
 #	rm -f libgif.so.$(V)
 #	gcc -shared -o $(SHLIB) $(OBJS)
 
-#dev2gif.o: gif_lib.h
-#egif_lib.o: gif_lib.h gif_hash.h
-#dgif_lib.o: gif_lib.h gif_hash.h
-#gif_hash.o: gif_lib.h gif_hash.h
-#gif_err.o: gif_lib.h
-#gifalloc.o: gif_lib.h
-#gif_font.o: gif_lib.h
-#quantize.o: gif_lib.h
-#qprintf.o: gif_lib.h
-#getarg.o: getarg.h
-#
-#DISTFILES =  \
-#	dev2gif.c \
-#	dgif_lib.c \
-#	egif_lib.c \
-#	getarg.c \
-#	gif_err.c \
-#	gif_font.c \
-#	gif_hash.c \
-#	gifalloc.c \
-#	qprintf.c \
-#	quantize.c \
-#	getarg.h \
-#	gif_hash.h \
-#	gif_lib.h \
-#	Makefile \
-#	Makefile.in \
-#	makefile.tc \
-#	configure \
-#	configure.in
+dev2gif.o: gif_lib.h
+egif_lib.o: gif_lib.h gif_hash.h
+dgif_lib.o: gif_lib.h gif_hash.h
+gif_hash.o: gif_lib.h gif_hash.h
+gif_err.o: gif_lib.h
+gifalloc.o: gif_lib.h
+gif_font.o: gif_lib.h
+quantize.o: gif_lib.h
+qprintf.o: gif_lib.h
+getarg.o: getarg.h
+
+DISTFILES =  \
+	dev2gif.c \
+	dgif_lib.c \
+	egif_lib.c \
+	getarg.c \
+	gif_err.c \
+	gif_font.c \
+	gif_hash.c \
+	gifalloc.c \
+	qprintf.c \
+	quantize.c \
+	getarg.h \
+	gif_hash.h \
+	gif_lib.h \
+	Makefile \
+	Makefile.in \
+	makefile.tc \
+	configure \
+	configure.in
 
 distdir:
 	rm -rf $(distdir)

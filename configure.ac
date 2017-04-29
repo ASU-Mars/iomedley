@@ -60,10 +60,10 @@ dnl Warn the user if zlib not found
 if test "$found_libz" = "yes"; then
 	AC_DEFINE(HAVE_LIBZ, 1, [ define to 1 if you have libz ] )
 	AC_DEFINE(HAVE_LIBPNG, 1, [ define to 1 if you have libpng ] )
-	libpng="libpng16.a"
-	libpngdir="libpng-1.6.23"
+	libpng="libpng.a"
+	libpngdir="libpng-1.2.3"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng16" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
 else
 	echo "**********************************************************************"
 	echo "*                                                                    *"
@@ -91,9 +91,9 @@ AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
-AC_CONFIG_SUBDIRS(libjpeg libgif tiff-4.0.6)
+AC_CONFIG_SUBDIRS(libjpeg libgif tiff-4.0.3)
 if test "$found_libz" = "yes"; then
-	AC_CONFIG_SUBDIRS(libpng-1.6.23)
+	AC_CONFIG_SUBDIRS(libpng-1.2.3)
 fi
 
 AC_OUTPUT(Makefile)
