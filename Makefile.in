@@ -15,7 +15,9 @@ LIBGIFDIR = libgif
 
 LIBPNG = libpng.a
 LIBPNGOBJ = @libpng@
-LIBPNGDIR = @libpngdir@
+# LIBPNGDIR = @libpngdir@
+LIBPNGDIR = libpng-1.2.3
+
 
 CC=@CC@
 DEFS=@DEFS@

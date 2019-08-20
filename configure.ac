@@ -47,29 +47,46 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(math.h string.h strings.h)
 
 dnl Check for X
-dnl AC_PATH_XTRA
+AC_PATH_XTRA
+dnl AC_ARG_WITH([x],[AS_HELP_STRING([--with-x], [build with X11 @<:@default=check@:>@])],[],[with_x=check])
+AS_IF([test "x$with_x" != "x"], [echo "************** Building with X ***************"])
+AS_IF([test "x$with_x" != "x"], [LDFLAGS="$LDFLAGS $X_LIBS"; CFLAGS="$CFLAGS $X_CFLAGS"])
 dnl CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 dnl LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
 dnl AC_CHECK_LIB(X11, XOpenDisplay)
 dnl AC_CHECK_LIB(Xt, XtToolkitInitialize)
 dnl AC_CHECK_LIB(Xext, XShmPutImage)
 
-AC_CHECK_LIB(z, compress, [found_libz=yes], [found_libz=no])
+AC_ARG_WITH(ext-libpng,
+    [  --with-ext-libpng=<path>     prefix of external libpng installation. e.g. /opt/X11],
+    [LDFLAGS="$LDFLAGS -L$withval/lib"; CFLAGS="$CFLAGS -I$withval/include"]
+)
 
-dnl Warn the user if zlib not found
-if test "$found_libz" = "yes"; then
-	AC_DEFINE(HAVE_LIBZ, 1, [ define to 1 if you have libz ] )
-	AC_DEFINE(HAVE_LIBPNG, 1, [ define to 1 if you have libpng ] )
-	libpng="libpng.a"
-	libpngdir="libpng-1.2.3"
-	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
+dnl AC_CHECK_LIB(z, compress, [found_libz=yes; AC_DEFINE(HAVE_LIBZ,1)], [found_libz=no])
+AC_CHECK_LIB(z, compress)
+AS_IF([test "x$ac_cv_lib_z_compress" = "xyes"], [found_libz=yes], [found_libz=no])
+AC_CHECK_LIB(png, png_init_io)
+
+dnl Only do this if PNG wasn't already included somehow
+if test "x$ac_cv_lib_png_png_init_io" = "xyes"; then
+    libpng=""
+    libpngdir=""
 else
-	echo "**********************************************************************"
-	echo "*                                                                    *"
-	echo "*     Warning: zlib not found - PNG support will not be included     *"
-	echo "*                                                                    *"
-	echo "**********************************************************************"
+    dnl Warn the user if zlib not found
+    if test "$found_libz" = "yes"; then
+        AC_DEFINE(HAVE_LIBZ, 1, [ define to 1 if you have libz ] )
+        AC_DEFINE(HAVE_LIBPNG, 1, [ define to 1 if you have libpng ] )
+        libpng="libpng.a"
+        libpngdir="libpng-1.2.3"
+        save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
+        CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
+    else
+        echo "**********************************************************************"
+        echo "*                                                                    *"
+        echo "*     Warning: zlib not found - PNG support will not be included     *"
+        echo "*                                                                    *"
+        echo "**********************************************************************"
+    fi
 fi
 
 dnl Checks for library functions.
@@ -92,7 +109,7 @@ dnl AC_SUBST(LTLIBOBJS)
 dnl AC_SUBST(LTALLOCA)
 
 AC_CONFIG_SUBDIRS(libjpeg libgif tiff-4.0.3)
-if test "$found_libz" = "yes"; then
+if test "$found_libz" = "yes" -a "x$ac_cv_lib_png_png_init_io" = "xno"; then
 	AC_CONFIG_SUBDIRS(libpng-1.2.3)
 fi
 
