@@ -86,7 +86,7 @@ $(LIBJPEG):
 clean:
 	rm -f *.o $(LIBIOMEDLEY)
 	cd $(LIBTIFFDIR) && make clean && rm -f $(LIBTIFF) &&  cd ..
-	cd $(LIBPNGDIR) && make clean && cd ..
+	-cd $(LIBPNGDIR) && make clean && cd ..
 	cd $(LIBJPEGDIR) && make clean && cd ..
 	cd $(LIBGIFDIR) && make clean && cd ..
 
