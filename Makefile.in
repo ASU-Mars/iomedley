@@ -4,19 +4,19 @@ libdir=@libdir@
 
 SHELL = /bin/sh
 
-LIBTIFF = libtiff.a
 LIBTIFFDIR = tiff-4.0.3
+LIBTIFF = $(LIBTIFFDIR)/libtiff/.libs/libtiff.a
 
-LIBJPEG = libjpeg.a
 LIBJPEGDIR = libjpeg
+LIBJPEG = $(LIBJPEGDIR)/libjpeg.a
 
-LIBGIF = libgif.a
 LIBGIFDIR = libgif
+LIBGIF = $(LIBGIFDIR)/libgif.a
 
-LIBPNG = libpng.a
-LIBPNGOBJ = @libpng@
-# LIBPNGDIR = @libpngdir@
 LIBPNGDIR = libpng-1.2.3
+# LIBPNGDIR = @libpngdir@
+LIBPNG = $(LIBPGNDIR)/libpng.a
+LIBPNGOBJ = @libpng@
 
 
 CC=@CC@
@@ -63,9 +63,10 @@ all: $(LIBIOMEDLEY)
 test: test.c $(LIBIOMEDLEY)
 	$(CC) -g test.c -L. -ljpeg -liomedley -lz -lm -o $@
 
-$(LIBIOMEDLEY):	$(OBJS) $(LIBTIFF) $(LIBJPEG) $(LIBGIF) $(LIBPNGOBJ)
-	ar -ruv $@ $(OBJS)
-	./mungelibs
+arch_objects=$(shell ar xv $(arche) | grep -v SYMDEF | cut -d' ' -f3)
+
+$(LIBIOMEDLEY):	$(OBJS) $(LIBTIFF) $(LIBJPEG) $(LIBGIF) $(patsubst %,$(LIBPNG),$(LIBPNGOBJ))
+	ar -ruv $@ $(filter %.o,$?) $(foreach arche, $(filter %.a,$?), $(arch_objects))
 	$(RANLIB) $@
 
 .c.o:
@@ -78,10 +79,10 @@ $(LIBTIFF):
 	cd $(LIBTIFFDIR) && $(MAKE)
 
 $(LIBPNG):
-	cd $(LIBPNGDIR) && $(MAKE) $(LIBPNG)
+	cd $(LIBPNGDIR) && $(MAKE) $(notdir $(LIBPNG))
 
 $(LIBJPEG):
-	cd $(LIBJPEGDIR) && $(MAKE) $(LIBJPEG)
+	cd $(LIBJPEGDIR) && $(MAKE) $(notdir $(LIBJPEG))
 
 clean:
 	rm -f *.o $(LIBIOMEDLEY)
