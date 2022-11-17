@@ -461,8 +461,8 @@ int iom__ConvertToBIP(unsigned char *,       /* Image data */
 		      unsigned char **       /* BIP image data output */
 		      );
 
-size_t iom_Cpos(int x, int y, int z, int org, int size[3]);
-void iom_Xpos(size_t i, int org, int size[3], int *x, int *y, int *z);
+size_t iom_Cpos(int x, int y, int z, int org, const int size[3]);
+void iom_Xpos(size_t i, int org, const int size[3], int *x, int *y, int *z);
 
 int iom_isAVIRIS(FILE *);
 int iom_WriteENVI(char *, void *, struct iom_iheader *, int);

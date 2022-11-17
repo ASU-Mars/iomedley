@@ -1189,7 +1189,7 @@ iom__ConvertToBIP(unsigned char *data,
  ** for BSQ it is {x,y,z}, for BIL it is {z,x,y} etc.
  **/
 size_t
-iom_Cpos(int x, int y, int z, int org, int size[3])
+iom_Cpos(int x, int y, int z, int org, const int size[3])
 {
     switch(org) {
     case iom_BSQ: return((size_t)x + size[0] * ((size_t)y + (size_t)z * size[1]));
@@ -1209,7 +1209,7 @@ iom_Cpos(int x, int y, int z, int org, int size[3])
  ** for BSQ it is {x,y,z}, for BIL it is {z,x,y} etc.
  **/
 void
-iom_Xpos(size_t i, int org, int size[3], int *x, int *y, int *z)
+iom_Xpos(size_t i, int org, const int size[3], int *x, int *y, int *z)
 {
     /**
     ** Given i, where does it fall in V
