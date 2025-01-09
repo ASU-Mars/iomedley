@@ -17,10 +17,12 @@ typedef enum {
 	iom_LSB_INT_1   = 1,
 	iom_LSB_INT_2   = 2,
 	iom_LSB_INT_4   = 4,
+	iom_LSB_INT_8   = 8,
 
 	iom_MSB_INT_1   = 11,
 	iom_MSB_INT_2   = 12,
 	iom_MSB_INT_4   = 14,
+	iom_MSB_INT_8   = 18,
 
 	iom_MSB_IEEE_REAL_4 = 24, /* SUN REAL */
 	iom_MSB_IEEE_REAL_8 = 28, /* SUN DOUBLE */
@@ -33,6 +35,7 @@ typedef enum {
 	iom_NATIVE_INT_1 = iom_MSB_INT_1,
 	iom_NATIVE_INT_2 = iom_MSB_INT_2,
 	iom_NATIVE_INT_4 = iom_MSB_INT_4,
+	iom_NATIVE_INT_8 = iom_MSB_INT_8,
 
 	iom_NATIVE_IEEE_REAL_4 = iom_MSB_IEEE_REAL_4,
 	iom_NATIVE_IEEE_REAL_8 = iom_MSB_IEEE_REAL_8,
@@ -42,6 +45,7 @@ typedef enum {
 	iom_NATIVE_INT_1 = iom_LSB_INT_1,
 	iom_NATIVE_INT_2 = iom_LSB_INT_2,
 	iom_NATIVE_INT_4 = iom_LSB_INT_4,
+	iom_NATIVE_INT_8 = iom_LSB_INT_8,
 
 	iom_NATIVE_IEEE_REAL_4 = iom_LSB_IEEE_REAL_4,
 	iom_NATIVE_IEEE_REAL_8 = iom_LSB_IEEE_REAL_8,
@@ -64,11 +68,12 @@ typedef enum {
 	iom_BYTE   = 1,
 	iom_SHORT  = 2,
 	iom_INT    = 3,
-	iom_FLOAT  = 4,
-	iom_DOUBLE = 5
+	iom_LONG   = 4,
+	iom_FLOAT  = 5,
+	iom_DOUBLE = 6
 } iom_idf;             /* daVinci I/O internal data formats */
 
-#define iom_NBYTESI(ifmt) ((ifmt) == 5 ? 8 : ((ifmt) == 3 ? 4 : (ifmt)))
+#define iom_NBYTESI(ifmt) (((ifmt) == 4 || (ifmt) == 6) ? 8 : ((ifmt) == 3 ? 4 : (ifmt)))
 
 /**
  ** Data axis order

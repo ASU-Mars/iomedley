@@ -43,7 +43,7 @@ const char *iom_EFORMAT2STR[] = {
     "(invalid)",
     "(invalid)",
     "(invalid)",
-    "(invalid)",
+    "LSB LONG",
     "(invalid)",
     "(invalid)",
     "MSB BYTE",
@@ -53,7 +53,7 @@ const char *iom_EFORMAT2STR[] = {
     "(invalid)",
     "(invalid)",
     "(invalid)",
-    "(invalid)",
+    "MSB LONG",
     "(invalid)",
     "(invalid)",
     "(invalid)",
@@ -91,6 +91,7 @@ const char *iom_FORMAT2STR[] = {
     "byte",
     "short",
     "int",
+    "long",
     "float",
     "double"
 };
@@ -668,6 +669,13 @@ iom_byte_swap_data(
             format = iom_INT;
             break;
 
+	case iom_MSB_INT_8:        /* MSB-Longs to Longs */
+#ifndef WORDS_BIGENDIAN
+            for (i = 0 ; i < dsize ; i++) { iom_MSB8(&((long *)data)[i]); }
+#endif /* WORDS_BIGENDIAN */
+            format = iom_LONG;
+            break;
+
 	case iom_LSB_INT_1:        /* LSB-Bytes to Bytes */
             format = iom_BYTE;
             break;
@@ -685,6 +693,13 @@ iom_byte_swap_data(
             for (i = 0 ; i < dsize ; i++) { iom_LSB4(&((int *)data)[i]); }
 #endif /* WORDS_BIGENDIAN */
             format = iom_INT;
+            break;
+
+	case iom_LSB_INT_8:        /* LSB-Longs to Longs */
+#ifdef WORDS_BIGENDIAN
+            for (i = 0 ; i < dsize ; i++) { iom_LSB8(&((long *)data)[i]); }
+#endif /* WORDS_BIGENDIAN */
+            format = iom_LONG;
             break;
 
 	case iom_MSB_IEEE_REAL_4:  /* MSB-IEEE-Floats to Floats */
@@ -748,6 +763,11 @@ iom_Eformat2Iformat(iom_edf efmt)
         case iom_MSB_INT_4:
         case iom_LSB_INT_4:
             ifmt = iom_INT;
+            break;
+
+        case iom_MSB_INT_8:
+        case iom_LSB_INT_8:
+            ifmt = iom_LONG;
             break;
 
         case iom_MSB_IEEE_REAL_4:
